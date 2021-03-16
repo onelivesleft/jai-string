@@ -32,7 +32,7 @@ boyer_moore_first_index_of :: (haystack: string, needle: string, from_index: int
 }
 
 
-boyer_moore_last_index_of :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+boyer_moore_last_index_of :: (haystack: string, needle: string, from_index: int, $$cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
     if needle == ""  return from_index - 1, true;
     if from_index < needle.count  return -1, false;
     from_index = haystack.count - from_index;

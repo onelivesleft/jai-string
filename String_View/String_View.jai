@@ -3,6 +3,7 @@
 // TODO
 // [ ] bake cmp?
 // [ ] trim string characters?
+// [ ] ask about autobaking problem
 // [x] default_compare
 
 
@@ -17,12 +18,12 @@
 #import "Basic";
 
 
-use_first_index_of := default_first_index_of;
-use_last_index_of := default_last_index_of;
+current_first_index_of := default_first_index_of;
+current_last_index_of := default_last_index_of;
 
 set_index_of_algorithm :: (first_index_of_proc := default_first_index_of, last_index_of_proc := default_last_index_of) {
-    use_first_index_of = first_index_of_proc;
-    use_last_index_of = last_index_of_proc;
+    current_first_index_of = first_index_of_proc;
+    current_last_index_of = last_index_of_proc;
 }
 
 
@@ -207,9 +208,9 @@ validate_from_index :: (str: string) #expand {
 first_index_of :: (haystack: string, needle: u8, from_index := 0) -> index: int #must, found: bool {
     validate_from_index(haystack);
 
-    for from_index .. haystack.count - 1
-        if haystack[it] == needle
-            return it, true;
+    for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
+        if <<cast(*u8)it == needle
+            return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
@@ -218,18 +219,29 @@ first_index_of :: (haystack: string, needle: u8, from_index := 0) -> index: int 
 first_index_of :: (haystack: string, needle: [] u8, from_index := 0) -> index: int #must, found: bool {
     validate_from_index(haystack);
 
-    for index: from_index .. haystack.count - 1
-        if is_any(haystack[index], needle)
-            return index, true;
+    for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
+        if is_any(<<cast(*u8)it, needle)
+            return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
 
 
-first_index_of :: inline (haystack: string, needle: string, from_index := 0, $$cmp := default_compare) -> index: int #must, found: bool {
+first_index_of :: inline (haystack: string, needle: string, from_index := 0, cmp := default_compare) -> index: int #must, found: bool {
     validate_from_index(haystack);
-    index, found := use_first_index_of(haystack, needle, from_index, cmp);
-    return index, found;
+    if needle.count == 0 {
+        return from_index, true;
+    }
+    else if needle.count == 1 {
+        for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
+            if cmp(<<cast(*u8)it, <<needle.data)
+                return cast(int)(it - cast(u64)haystack.data), true;
+        return -1, false;
+    }
+    else {
+        index, found := current_first_index_of(haystack, needle, from_index, cmp);
+        return index, found;
+    }
 }
 
 
@@ -239,31 +251,41 @@ first_index_of :: inline (haystack: string, needle: string, compare: Character_C
 }
 
 
+// @Note `needle` is guaranteed to be at least 2 characters long
+
 naive_first_index_of :: (haystack: string, needle: string, from_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
-    for index: from_index .. haystack.count - needle.count {
-        remainder := unsafe_slice(haystack, index);
-        if starts_with(remainder, needle, cmp = cmp)
-            return index, true;
+    if from_index > haystack.count - needle.count  return -1, false;
+
+    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+    needle_end := cast(u64)needle.count - 1;
+    for start_of_word: cast(u64)haystack.data + cast(u64)from_index .. end {
+        needle_index := needle.data;
+        for character: start_of_word .. start_of_word + needle_end {
+            if !cmp(<<cast(*u8)character, <<needle_index)
+                continue start_of_word;
+            needle_index += 1;
+        }
+        return cast(int)(start_of_word - cast(u64)haystack.data), true;
     }
 
     return -1, false;
 }
 
 
-
 last_index_of :: (haystack: string, needle: u8) -> index: int #must, found: bool {
-    for < haystack.count - 1 .. 0
-        if haystack[it] == needle
-            return it, true;
+    for < cast(u64)haystack.data + cast(u64)haystack.count - 1 .. cast(u64)haystack.data
+        if <<cast(*u8)it == needle
+            return cast(int)(it - cast(u64)haystack.data), true;
+
 
     return -1, false;
 }
 
 
 last_index_of :: (haystack: string, needle: [] u8) -> index: int #must, found: bool {
-    for < haystack.count - 1 .. 0
-        if is_any(haystack[it], needle)
-            return it, true;
+    for < cast(u64)haystack.data + cast(u64)haystack.count - 1 .. cast(u64)haystack.data
+        if is_any(<<cast(*u8)it, needle)
+            return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
@@ -275,9 +297,9 @@ last_index_of :: (haystack: string, needle: u8, from_index : int) -> index: int 
     from_index -= 1;
     validate_from_index(haystack);
 
-    for < from_index..0
-        if haystack[it] == needle
-            return it, true;
+    for < cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data
+        if <<cast(*u8)it == needle
+            return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
@@ -289,22 +311,29 @@ last_index_of :: (haystack: string, needle: [] u8, from_index : int) -> index: i
     from_index -= 1;
     validate_from_index(haystack);
 
-    for < from_index..0
-        if is_any(haystack[it], needle)
-            return it, true;
+    for < cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data
+        if is_any(<<cast(*u8)it, needle)
+            return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
 
 
-naive_last_index_of :: (haystack: string, needle: string, from_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
-    if from_index < needle.count
-        return -1, false;
+// @Note `needle` is guaranteed to be at least 2 characters long
 
-    for < index: from_index - needle.count .. 0 {
-        remainder := unsafe_slice(haystack, index);
-        if starts_with(remainder, needle, cmp = cmp)
-            return index, true;
+naive_last_index_of :: (haystack: string, needle: string, from_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
+    if from_index < needle.count  return -1, false;
+
+    start := cast(u64)haystack.data + cast(u64)(from_index - needle.count);
+    needle_end := cast(u64)needle.count - 1;
+    for < start_of_word: start .. cast(u64)haystack.data {
+        needle_index := needle.data;
+        for character: start_of_word .. start_of_word + needle_end {
+            if !cmp(<<cast(*u8)character, <<needle_index)
+                continue start_of_word;
+            needle_index += 1;
+        }
+        return cast(int)(start_of_word - cast(u64)haystack.data), true;
     }
 
     return -1, false;
@@ -313,8 +342,19 @@ naive_last_index_of :: (haystack: string, needle: string, from_index: int, cmp: 
 
 last_index_of :: inline (haystack: string, needle: string, from_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
     validate_from_index(haystack);
-    index, found := use_last_index_of(haystack, needle, from_index, cmp);
-    return index, found;
+    if needle.count == 0 {
+        return from_index, true;
+    }
+    else if needle.count == 1 {
+        for < cast(u64)haystack.data + cast(u64)from_index - 1.. cast(u64)haystack.data
+            if cmp(<<cast(*u8)it, needle[0])
+                return cast(int)(it - cast(u64)haystack.data), true;
+        return -1, false;
+    }
+    else {
+        index, found := current_last_index_of(haystack, needle, from_index, cmp);
+        return index, found;
+    }
 }
 
 
@@ -500,7 +540,7 @@ replace :: (haystack: string, needle: [] u8, replacement: u8, max_replacements :
 }
 
 
-replace :: inline (haystack: string, needle: string, replacement: u8, compare: Character_Compare) -> change_count: int {
+replace :: inline (haystack: string, needle: string, replacement: u8, $$compare: Character_Compare) -> change_count: int {
     return replace(haystack, needle, replacement, 0, compare);
 }
 
@@ -646,7 +686,7 @@ fill_split_struct :: (reversed: bool) #expand {
 #scope_export
 
 
-forward_split :: inline (text: string, separator: string, compare: Character_Compare, skip_empty := false) -> Split_By_String #must {
+forward_split :: inline (text: string, separator: string, $$compare: Character_Compare, skip_empty := false) -> Split_By_String #must {
     return forward_split(text, separator, 0, compare, skip_empty);
 }
 
@@ -659,7 +699,7 @@ forward_split :: (text: string, separator: string, max_results := 0, $$cmp := de
 }
 
 
-reverse_split :: inline (text: string, separator: string, compare: Character_Compare, skip_empty := false) -> Split_By_String #must {
+reverse_split :: inline (text: string, separator: string, $$compare: Character_Compare, skip_empty := false) -> Split_By_String #must {
     return reverse_split(text, separator, 0, compare, skip_empty);
 }
 
