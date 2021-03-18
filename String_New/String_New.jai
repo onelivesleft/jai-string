@@ -10,16 +10,17 @@
     debug := false
 );
 
+
 // TODO
 // [ ] repeat
 // [ ] snake_from_camel / camel_from_snake
 // [ ] capitalize (maybe not ^)
 // [ ] justify / pad
-// [ ] maybe conflate separators in split?
 // [ ] maybe split_lines?
 // [ ] forward_til?
 // [ ] fast string compare
-// [ ] null_terminate parameter?
+// [x] null_terminate parameter?
+// [x] maybe conflate separators in split?
 
 
 #import "Basic";
@@ -107,9 +108,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
 join :: (parts: [] string, separator: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if parts.count == 0 {
-        result : Allocator_Wrapper;
-        set_result_allocator();
-        return copy_string("", result.allocator, result.allocator_data, null_terminate);
+        return "";
     }
 
     if parts.count == 1 {
@@ -131,8 +130,10 @@ join :: (parts: [] string, separator: string, allocator: Allocator = null, alloc
     memcpy(joined.data, parts[0].data, parts[0].count);
     position := joined.data + parts[0].count;
     for 1 .. parts.count - 1 {
-        memcpy(position, separator.data, separator.count);
-        position += separator.count;
+        if separator {
+            memcpy(position, separator.data, separator.count);
+            position += separator.count;
+        }
         memcpy(position, parts[it].data, parts[it].count);
         position += parts[it].count;
     }
@@ -143,9 +144,25 @@ join :: (parts: [] string, separator: string, allocator: Allocator = null, alloc
 }
 
 
+join :: inline (parts: [] string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return join(parts, "", allocator, allocator_data, null_terminate);
+}
+
+
+join :: inline (separator: string, parts: [] string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return join(parts, separator, allocator, allocator_data, null_terminate);
+}
+
+
 join :: (parts: [] string, separator: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     return join(parts, string_from_char(*separator), allocator, allocator_data);
 }
+
+
+join :: (separator: u8, parts: [] string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return join(parts, string_from_char(*separator), allocator, allocator_data);
+}
+
 
 
 split :: inline (text: string, separator: string, cmp: type_of(default_compare), skip_empty := false, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {

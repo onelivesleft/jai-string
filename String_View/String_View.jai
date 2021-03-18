@@ -601,6 +601,8 @@ count :: (haystack: string, needle: u8) -> total: int #must {
 
 
 count :: (haystack: string, needle: [] u8) -> total: int #must {
+    if needle.count == 0  return 0;
+
     total := 0;
     for 0 .. haystack.count - 1 {
         if is_any(haystack[it], needle) {
@@ -613,6 +615,8 @@ count :: (haystack: string, needle: [] u8) -> total: int #must {
 
 
 count :: (haystack: string, needle: string, $$cmp := default_compare) -> total: int #must {
+    if needle == ""  return 0;
+
     total := 0;
     index, found := first_index_of(haystack, needle, cmp);
     while found {
@@ -625,6 +629,8 @@ count :: (haystack: string, needle: string, $$cmp := default_compare) -> total: 
 
 
 count :: (haystack: string, translation: [] Character_Translation) -> total: int {
+    if translation.count == 0  return 0;
+
     total := 0;
     for 0 .. haystack.count - 1 {
         for entry: translation {

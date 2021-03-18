@@ -1,6 +1,6 @@
 #import "Basic";
 #import "String_View"; // @TODO investigate: (default_first_index_of = boyer_moore_first_index_of);
-new :: #import "String_New"(debug = false)  #unshared;
+new :: #import "String_New"(null, debug = false)  #unshared;
 temp :: #import "String_New"(__temporary_allocator, debug = false) #unshared;
 String :: #import "String";
 
@@ -24,8 +24,13 @@ main :: () {
             print("\nAll OK!\n");
     }
 
+    print("new: %\n", new.default_allocator);
+    print("temp: %\n", temp.default_allocator);
+
+    exit(0);
+
     //set_index_of_algorithm(boyer_moore_first_index_of, boyer_moore_last_index_of);
-    //set_index_of_algorithm(knuth_morris_pratt_first_index_of, knuth_morris_pratt_last_index_of);
+    set_index_of_algorithm(knuth_morris_pratt_first_index_of, knuth_morris_pratt_last_index_of);
 
     test(1, slice(test_string, 0, 999), test_string);
     test(2, slice(test_string, -999, -888), "");

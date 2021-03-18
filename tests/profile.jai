@@ -1,6 +1,8 @@
 #import "Basic";
+#import "Random";
 #import "Sort";
-#import "String_View";
+#import "String_View"();
+#import "Time";
 
 #load "common_words.jai";
 #load "shakespeare.jai";
@@ -10,35 +12,53 @@
 #load "../String_View/knuth_morris_pratt.jai";
 
 
-times :: 9;
+times :: 21;
 
 
 main :: () {
+    dynamic := get_command_line_arguments().count > 1;
+    while dynamic {
+        random_seed(cast,no_check(s32) get_current_file_time());
+        if random_get() % 2 {
+            word := common_words[random_get() % common_words.count];
+            test(word, (word: string) -> int {
+                return count(shakespeare, word, cmp = cmp);
+            });
+        }
+        else {
+            i := random_get() % (dna.count - 100);
+            length := random_get() % 100;
+            pattern := substring(dna, i, length);
+            test(pattern, (pattern: string) -> int {
+                return count(dna, pattern, cmp = cmp);
+            });
+        }
+    }
     //test("foo", () -> int {
     //    return count("foo foo foo foo foo", "foo");
     //});
     //exit(0);
-    test("#char a", () -> int {
+    test("#char a", (needle: string) -> int {
         return count(shakespeare, #char "a");
     });
 
-    test("a", () -> int {
-        return count(shakespeare, "a");
+    test("a", (needle: string) -> int {
+        return count(shakespeare, needle, cmp = cmp);
     });
 
-    test("of", () -> int {
-        return count(shakespeare, "of");
+    test("of", (needle: string) -> int {
+        return count(shakespeare, needle, cmp = cmp);
     });
 
-    test("the", () -> int {
-        return count(shakespeare, "the");
+    test("the", (needle: string) -> int {
+        return count(shakespeare, needle, cmp = cmp);
     });
 
-    test("that", () -> int {
-        return count(shakespeare, "that");
+    test("that", (needle: string) -> int {
+        return count(shakespeare, needle, cmp = cmp);
     });
 
-    needle :: #string ___
+    lear :: #string ___
 Lear. O, reason not the need! Our basest beggars
      Are in the poorest thing superfluous.
      Allow not nature more than nature needs,
@@ -60,53 +80,94 @@ Lear. O, reason not the need! Our basest beggars
      The terrors of the earth! You think I'll weep.
      No, I'll not weep.
 ___
-    test("lear...", () -> int {
-        return count(shakespeare, needle);
+    test(lear, (needle: string) -> int {
+        return count(shakespeare, needle, cmp = cmp);
     });
 
-    test("cc", () -> int {
-        return count(dna, "cc");
+    test("cc", (needle: string) -> int {
+        return count(dna, needle, cmp = cmp);
     });
 
-    test("ag", () -> int {
-        return count(dna, "ag");
+    test("ag", (needle: string) -> int {
+        return count(dna, needle, cmp = cmp);
     });
 
-    test("ccccatat...", () -> int {
-        return count(dna, "ccccatatctataagtactacgccgaagatatggaccgtgtcagagccggctccttggactcacggttctgggcaaaaagtggctctactcggggacc");
+    test("ccccatatctataagtactacgccgaagatatggaccgtgtcagagccggctccttggac", (needle: string) -> int {
+        return count(dna, needle, cmp = cmp);
     });
+
+    test("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", (needle: string) -> int {
+        return count(dna, needle, cmp = cmp);
+    });
+
 }
 
 
-test :: (label: string, call: () -> int) {
+test :: (needle: string, call: (string) -> int) {
     set_index_of_algorithm(naive_first_index_of, naive_last_index_of);
-    naive, naive_min, naive_med, naive_max := time_it(call, times);
+    naive_cmps := cmp_count;
+    naive, naive_min, naive_med, naive_max := time_it(call, needle, times);
+    naive_cmps = cmp_count - naive_cmps;
 
     set_index_of_algorithm(boyer_moore_first_index_of, boyer_moore_last_index_of);
-    boyer_moore, boyer_moore_min, boyer_moore_med, boyer_moore_max := time_it(call, times);
+    boyer_moore_cmps := cmp_count;
+    boyer_moore, boyer_moore_min, boyer_moore_med, boyer_moore_max := time_it(call, needle, times);
+    boyer_moore_cmps = cmp_count - boyer_moore_cmps;
 
     set_index_of_algorithm(knuth_morris_pratt_first_index_of, knuth_morris_pratt_last_index_of);
-    knuth_morris_pratt, knuth_morris_pratt_min, knuth_morris_pratt_med, knuth_morris_pratt_max := time_it(call, times);
+    knuth_morris_pratt_cmps := cmp_count;
+    knuth_morris_pratt, knuth_morris_pratt_min, knuth_morris_pratt_med, knuth_morris_pratt_max := time_it(call, needle, times);
+    knuth_morris_pratt_cmps = cmp_count - knuth_morris_pratt_cmps;
 
-    print("%\n", label);
+    if needle.count > 100
+        print("\"%(%)...\" ", substring(needle, 0, 10), needle.count);
+    else
+        print("\"%\" ", needle);
     print("% / % / % : %\n", naive, boyer_moore, knuth_morris_pratt,
-        ifx naive == boyer_moore && naive == knuth_morris_pratt then "OK" else "UH-OH!");
-    print("Naive:              % : % : %\n", naive_min, naive_med, naive_max);
-    print("Boyer-Moore:        % : % : %\n", boyer_moore_min, boyer_moore_med, boyer_moore_max);
-    print("Knuth-Morris-Pratt: % : % : %\n", knuth_morris_pratt_min, knuth_morris_pratt_med, knuth_morris_pratt_max);
+        ifx naive == boyer_moore && naive == knuth_morris_pratt then "OK" else "UH-OH! UH-OH! UH-OH! UH-OH! UH-OH! UH-OH!");
+    new_context := context;
+
+    quickest := min(naive_min, boyer_moore_min, knuth_morris_pratt_min);
+    push_context new_context {
+        format_float := *context.print_style.default_format_float;
+        format_float.zero_removal = .NO;
+
+        if quickest == naive_min
+            print("Naive:              %1%2%3  % (%)\n", "\e[1;32m", naive_min, "\e[0m", "        ", naive_cmps);
+        else
+            print("Naive:              %1%2%3 +% (%)\n", "", naive_min, "", naive_min - quickest, naive_cmps);
+
+        if quickest == boyer_moore_min
+            print("Boyer-Moore:        %1%2%3  % (%)\n", "\e[1;32m", boyer_moore_min, "\e[0m", "        ", boyer_moore_cmps);
+        else
+            print("Boyer-Moore:        %1%2%3 +% (%)\n", "", boyer_moore_min, "", boyer_moore_min - quickest, boyer_moore_cmps);
+
+        if quickest == knuth_morris_pratt_min
+            print("Knuth-Morris-Pratt: %1%2%3  % (%)\n", "\e[1;32m", knuth_morris_pratt_min, "\e[0m", "        ", knuth_morris_pratt_cmps);
+        else
+            print("Knuth-Morris-Pratt: %1%2%3 +% (%)\n", "", knuth_morris_pratt_min, "", knuth_morris_pratt_min - quickest, knuth_morris_pratt_cmps);
+    }
     print("\n");
 }
 
 
-time_it :: (call: () -> int, times: int) -> result: int, minimum: float64, median: float64, maximum: float64 {
+time_it :: (call: (string) -> int, needle: string, times: int) -> result: int, minimum: float64, median: float64, maximum: float64 {
     result : int;
     dt := NewArray(times, float64);
     for i: 0 .. times - 1 {
         start_time := get_time();
-        result = call();
+        result = call(needle);
         dt[i] = get_time() - start_time;
     }
 
     quick_sort(dt, (x: float64) -> float64 { return x; });
     return result, dt[0], dt[times / 2], dt[times - 1];
+}
+
+
+cmp_count := 0;
+
+cmp :: inline (a: u8, b: u8) -> bool #must {
+    cmp_count += 1;
+    return a == b;
 }
