@@ -128,7 +128,7 @@ Returns a string view on the character specified.
 
 
 * `slice (str: string, from_index: int, to_index: int) -> string, normalized_from_index: int, normalized_to_index: int`<br>
-Returns a string view inside `str`, between the specified indices.  You may use a negative index to specify backwards from the end.  If you do not specify a `to_index` then it will go to the end of the string.
+Returns a string view inside `str`, between the specified indices.  You may use a negative index to specify backwards from the end.  If you do not specify a `to_index` then it will go to the end of the string.  The last two return parameters are the positive indexes the slice ends up using, after validation.
 
 * `slice_index (str: string, index: int) -> normalized_index: int, valid_when_strict: bool`<br>
 Returns the validated and normalized index which would be used with the provided string, as well as whether such an input would be valid in `strict` mode.
@@ -251,7 +251,7 @@ By default the module will be fairly permissive of inputs, doing the Right Thing
 
 * `add_convenience_functions`<br>
 When enabled the module will provide these additional procedures:
-  * `print` - identical to `spring`, set to use this modules allocator.
+  * `print` - identical to `sprint`, set to use this modules allocator.
   * `builder_to_string` - identical to `builder_to_string`, set to use this modules allocator.
 
 * `debug`<br>
