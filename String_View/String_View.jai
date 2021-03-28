@@ -16,7 +16,7 @@
 current_first_index := default_first_index;
 current_last_index := default_last_index;
 
-set_index_algorithm :: (first_index_proc: type_of(naive_first_index), last_index_proc: type_of(naive_last_index)) {
+set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := def) {
     current_first_index = first_index_proc;
     current_last_index = last_index_proc;
 }
@@ -1039,6 +1039,483 @@ line_split :: (text: string, skip_empty := false, max_results := 0, keep_eol := 
 
 
 for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #expand {
+	#assert(flags == 0);
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if splitter.reverse {
+            end_index := splitter.text.count;
+            index, found := last_index(splitter.text, splitter.separator, splitter.cmp);
+            while found {
+                it = unsafe_slice(splitter.text, index + splitter.separator.count, end_index);
+                end_index = index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                index, found = last_index(splitter.text, splitter.separator, index, splitter.cmp);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            index, found := first_index(splitter.text, splitter.separator, splitter.cmp);
+            while found {
+                it = unsafe_slice(splitter.text, start_index, index);
+                start_index = index + splitter.separator.count;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.cmp);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expand {
+	#assert(flags == 0);
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if splitter.reverse {
+            end_index := splitter.text.count;
+            from_index, to_index, found := splitter.index_proc(splitter.text, splitter.separator, splitter.text.count, true);
+            while found {
+                it = unsafe_slice(splitter.text, to_index, end_index);
+                end_index = from_index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, from_index, true);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            from_index, to_index, found := splitter.index_proc(splitter.text, splitter.separator, 0, false);
+            while found {
+                it = unsafe_slice(splitter.text, start_index, from_index);
+                start_index = to_index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, to_index, false);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expand {
+	#assert(flags == 0);
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if splitter.reverse {
+            end_index := splitter.text.count;
+            for < index: splitter.text.count - 1 .. 0 {
+                if is_any(splitter.text[index], splitter.separator) {
+                    it = unsafe_slice(splitter.text, index + 1, end_index);
+                    end_index = index;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            for index: 0 .. splitter.text.count - 1 {
+                if is_any(splitter.text[index], splitter.separator) {
+                    it = unsafe_slice(splitter.text, start_index, index);
+                    start_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+
+for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expand {
+	#assert(flags == 0);
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if splitter.reverse {
+            end_index := splitter.text.count;
+            for < index: splitter.text.count - 1 .. 0 {
+                if splitter.text[index] == splitter.separator {
+                    it = unsafe_slice(splitter.text, index + 1, end_index);
+                    end_index = index;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            for index: 0 .. splitter.text.count - 1 {
+                if splitter.text[index] == splitter.separator {
+                    it = unsafe_slice(splitter.text, start_index, index);
+                    start_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expand {
+    #assert(flags == 0);
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if splitter.reverse {
+            end_index := splitter.text.count;
+            upper_bound := splitter.text.count;
+            for < index, splitter_index: splitter.indexes {
+                it, end_index = slice(splitter.text, index, end_index);
+                if end_index < upper_bound
+                    upper_bound = end_index;
+                else
+                    end_index = upper_bound;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            lower_bound := 0;
+            for index, splitter_index: splitter.indexes {
+                _ : int;
+                it, _, start_index = slice(splitter.text, start_index, index);
+                if start_index > lower_bound
+                    lower_bound = start_index;
+                else
+                    start_index = lower_bound;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expand {
+    #assert(flags == 0);
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if splitter.reverse {
+            assert(false, "Cannot (currently) iterate over lines in reverse"); // @TODO
+        }
+        else {
+            start_index := 0;
+
+            for index: 0 .. splitter.text.count - 1 {
+                if splitter.text[index] == LF {
+                    if splitter.keep_eol {
+                        it = unsafe_slice(splitter.text, start_index, index + 1);
+                    }
+                    else {
+                        it = unsafe_slice(splitter.text, start_index, index);
+                        if ends_with(it, CR)  it = unsafe_slice(it, 0, it.count - 1);
+                    }
+                    start_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+#scope_module
+
+
+SPACE :: #char " ";
+TAB   :: #char "\t";
+CR    :: #char "\r";
+LF    :: #char "\n";
+
+NBSP  :: #char " "; // careful!
+
+WHITESPACE :: u8.[SPACE, TAB, CR, LF, NBSP];
+
+Character_Compare :: #type(a: u8, b: u8) -> bool #must;
+
+
+/*
+
+for_expansion_internal :: (splitter: *Split_By, body: Code, flags: For_Flags, reverse_block: Code, forward_block: Code) #expand {
+	#assert(flags == 0);
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        #if strict {
+            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
+        }
+
+        `it = splitter.text;
+        `it_index = 0;
+
+        #insert body;
+    }
+    else {
+        `max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        `process_remainder := true;
+
+        if splitter.reverse {
+            `end_index := splitter.text.count;
+
+            #insert reverse_block;
+
+            if process_remainder  `it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            `start_index := 0;
+
+            #insert forward_block;
+            if process_remainder  `it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || `it != "") {
+            `it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #expand {
     `it : string = ---;
     `it_index : int = -1;
 
@@ -1294,57 +1771,4 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
     );
 }
 
-
-#scope_module
-
-
-SPACE :: #char " ";
-TAB   :: #char "\t";
-CR    :: #char "\r";
-LF    :: #char "\n";
-
-NBSP  :: #char " "; // careful!
-
-WHITESPACE :: u8.[SPACE, TAB, CR, LF, NBSP];
-
-Character_Compare :: #type(a: u8, b: u8) -> bool #must;
-
-
-for_expansion_internal :: (splitter: *Split_By, body: Code, flags: For_Flags, reverse_block: Code, forward_block: Code) #expand {
-	#assert(flags == 0);
-
-    if splitter.max_results != 0 && splitter.max_results < 2 {
-        #if strict {
-            assert(splitter.max_results >= 0, "split.max_results cannot be negative.");
-        }
-
-        `it = splitter.text;
-        `it_index = 0;
-
-        #insert body;
-    }
-    else {
-        `max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        `process_remainder := true;
-
-        if splitter.reverse {
-            `end_index := splitter.text.count;
-
-            #insert reverse_block;
-
-            if process_remainder  `it = unsafe_slice(splitter.text, 0, end_index);
-        }
-        else {
-            `start_index := 0;
-
-            #insert forward_block;
-            if process_remainder  `it = unsafe_slice(splitter.text, start_index);
-        }
-
-        if process_remainder && (!splitter.skip_empty || `it != "") {
-            `it_index += 1;
-
-            #insert body;
-        }
-    }
-}
+*/

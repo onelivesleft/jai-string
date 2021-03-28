@@ -70,12 +70,12 @@ capitalize :: (str: string, preserve_caps: = false, allocator: Allocator = null,
 }
 
 
-replace :: (haystack: string, needle: string, replacement: string, cmp: type_of(default_compare), allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return replace(haystack, needle, replacement, 0, cmp, allocator, allocator_data, null_terminate);
+replace :: (haystack: string, needle: string, replacement: string, compare: type_of(default_compare), allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return replace(haystack, needle, replacement, 0, compare, allocator, allocator_data, null_terminate);
 }
 
 
-replace :: (haystack: string, needle: string, replacement: string, max_replacements := 0, $$cmp := default_compare, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+replace :: (haystack: string, needle: string, replacement: string, max_replacements := 0, $$compare := default_compare, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     #if strict {
         assert(needle != "", "You cannot replace an empty string");
         assert(max_replacements >= 0, "max_replacements cannot be negative");
@@ -96,7 +96,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     first_loop := true;
     last_string := "";
-    for forward_split(haystack, needle, cmp, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
+    for forward_split(haystack, needle, compare, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
         if first_loop  first_loop = false;
         else           append(*result, replacement);
         append(*result, it);
@@ -218,16 +218,16 @@ join :: (strings: [] string, separator: u8, allocator: Allocator = null, allocat
 
 
 
-split :: inline (text: string, separator: string, $$cmp: type_of(default_compare), reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: inline (text: string, separator: string, $$compare: type_of(default_compare), reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
 
     if reversed {
-        for reverse_split(text, separator, cmp, skip_empty, max_results)
+        for reverse_split(text, separator, compare, skip_empty, max_results)
             array_add(*result, it);
     }
     else {
-        for forward_split(text, separator, cmp, skip_empty, max_results)
+        for forward_split(text, separator, compare, skip_empty, max_results)
             array_add(*result, it);
     }
 
