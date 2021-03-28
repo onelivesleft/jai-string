@@ -1,17 +1,9 @@
 // All functions return a string view and/or mutate a string view in-place
 
 
-#module_parameters (
-    default_first_index := naive_first_index,  // default proc to find first index of substring in string
-    default_last_index := naive_last_index,    // default proc to find last index of substring in string
-    default_compare := case_sensitive,               // default character comparison check
-    strict := false                                  // Asserts when indices fall outside the range of the string
-);
-
-
 // TODO
 // [ ] bake cmp?
-// [ ] ask about autobaking problem
+// [ ] ask about autobaking problem on first_index (when cmp is autobaked you cannot switch proc using set_index_algorithm)
 // [ ] unicode support
 // [x] first_index lambda needle
 // [x] split at
@@ -21,11 +13,10 @@
 
 #import "Basic";
 
-
 current_first_index := default_first_index;
 current_last_index := default_last_index;
 
-set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := default_last_index) {
+set_index_algorithm :: (first_index_proc: type_of(naive_first_index), last_index_proc: type_of(naive_last_index)) {
     current_first_index = first_index_proc;
     current_last_index = last_index_proc;
 }
@@ -117,7 +108,6 @@ substring :: (str: string, from_index: int, count: int) -> string #must {
 
 
 case_sensitive :: inline (a: u8, b: u8) -> bool #must {
-    //print("% == %: %\n", a, b, a == b);
     return a == b;
 }
 
@@ -208,7 +198,7 @@ ends_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> b
 // @TODO check back here after compiler can optimize code, to see if nicely written
 //       version is just as fast.
 
-naive_first_index :: (haystack: string, needle: string, start_index: int, $$cmp: Character_Compare) -> index: int #must, found: bool {
+naive_first_index :: (haystack: string, needle: string, start_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
     if start_index > haystack.count - needle.count  return -1, false;
 
     end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
@@ -226,7 +216,8 @@ naive_first_index :: (haystack: string, needle: string, start_index: int, $$cmp:
     return -1, false;
 }
 
-naive_last_index :: (haystack: string, needle: string, start_index: int, $$cmp: Character_Compare) -> index: int #must, found: bool {
+
+naive_last_index :: (haystack: string, needle: string, start_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
     if start_index < needle.count  return -1, false;
 
     start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);

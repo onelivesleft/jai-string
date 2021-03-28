@@ -7,22 +7,60 @@
 #load "common_words.jai";
 #load "shakespeare.jai";
 #load "dna.jai";
+#load "degenerate.jai";
 
 #load "../String_View/boyer_moore.jai";
 #load "../String_View/knuth_morris_pratt.jai";
 
 
-times :: 21;
+times :: 23;
 
 
 main :: () {
     dynamic := get_command_line_arguments().count > 1;
+    random_word : [3] u8;
     while dynamic {
         random_seed(cast,no_check(s32) get_current_file_time());
-        if random_get() % 2 {
+        dice := random_get() % 3;
+        if dice == 1 {
             word := common_words[random_get() % common_words.count];
             test(word, (word: string) -> int {
                 return count(shakespeare, word, cmp = cmp);
+            });
+        }
+        else if dice == 2 {
+            length := random_get() % 2 + 2;
+            for i: 0 .. length - 1 {
+                random_word[i] = cast,no_check(u8)(random_get() % 26 + #char "a");
+            }
+            //random_word_string := cast(string) random_word; //@TODO huh?
+            random_word_string : string = ---;
+            random_word_string.count = 3;
+            random_word_string.data = *random_word[0];
+            pattern := substring(random_word_string, 0, length);
+            test(pattern, (pattern: string) -> int {
+                return count(shakespeare, pattern, cmp = cmp_ignore);
+            });
+        }
+        else if dice == 3 {
+            random_word_string := "wf";
+            pattern := slice(random_word_string, 0, 2);
+            test(pattern, (pattern: string) -> int {
+                return count(shakespeare, pattern, cmp = cmp_ignore);
+            });
+        }
+        else if dice == 4 {
+            random_word_string := "gas";
+            pattern := slice(random_word_string, 0, 3);
+            test(pattern, (pattern: string) -> int {
+                return count(shakespeare, pattern, cmp = cmp_ignore);
+            });
+        }
+        else if dice == 5 {
+            random_word_string := "vdb";
+            pattern := slice(random_word_string, 0, 3);
+            test(pattern, (pattern: string) -> int {
+                return count(shakespeare, pattern, cmp = cmp_ignore);
             });
         }
         else {
@@ -100,21 +138,25 @@ ___
         return count(dna, needle, cmp = cmp);
     });
 
+    test("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffnffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", (needle: string) -> int {
+        return count(degenerate, needle, cmp = cmp);
+    });
 }
 
 
 test :: (needle: string, call: (string) -> int) {
-    set_index_of_algorithm(naive_first_index_of, naive_last_index_of);
+    set_index_algorithm(naive_first_index, naive_last_index);
     naive_cmps := cmp_count;
     naive, naive_min, naive_med, naive_max := time_it(call, needle, times);
     naive_cmps = cmp_count - naive_cmps;
 
-    set_index_of_algorithm(boyer_moore_first_index_of, boyer_moore_last_index_of);
+    set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
     boyer_moore_cmps := cmp_count;
     boyer_moore, boyer_moore_min, boyer_moore_med, boyer_moore_max := time_it(call, needle, times);
     boyer_moore_cmps = cmp_count - boyer_moore_cmps;
 
-    set_index_of_algorithm(knuth_morris_pratt_first_index_of, knuth_morris_pratt_last_index_of);
+
+    set_index_algorithm(knuth_morris_pratt_first_index, knuth_morris_pratt_last_index);
     knuth_morris_pratt_cmps := cmp_count;
     knuth_morris_pratt, knuth_morris_pratt_min, knuth_morris_pratt_med, knuth_morris_pratt_max := time_it(call, needle, times);
     knuth_morris_pratt_cmps = cmp_count - knuth_morris_pratt_cmps;
@@ -170,4 +212,9 @@ cmp_count := 0;
 cmp :: inline (a: u8, b: u8) -> bool #must {
     cmp_count += 1;
     return a == b;
+}
+
+cmp_ignore :: inline (a: u8, b: u8) -> bool #must {
+    cmp_count += 1;
+    return ignore_case(a, b);
 }

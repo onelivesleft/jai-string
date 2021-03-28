@@ -1,13 +1,13 @@
 #import "Basic";
-#import "String_View"; // @TODO investigate: (default_first_index = boyer_moore_first_index);
+String :: #import "String";
+
+#import "String_View";
 new :: #import "String_New"(null, debug = false) #unshared;
 temp :: #import "String_New"(__temporary_allocator, debug = false) #unshared;
-String :: #import "String";
 
 //#load "../String_View/knuth_morris_pratt.jai";
 
 // TODO
-// [.] null_terminate
 // [x] replace translate
 // [x] count
 // [x] reversed / reverse
