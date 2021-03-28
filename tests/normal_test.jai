@@ -1,18 +1,16 @@
 #import "Basic";
-#import "String_View"; // @TODO investigate: (default_first_index_of = boyer_moore_first_index_of);
-new :: #import "String_New"(null, debug = false)  #unshared;
+#import "String_View"; // @TODO investigate: (default_first_index = boyer_moore_first_index);
+new :: #import "String_New"(null, debug = false) #unshared;
 temp :: #import "String_New"(__temporary_allocator, debug = false) #unshared;
 String :: #import "String";
 
-
-#load "../String_View/boyer_moore.jai";
-#load "../String_View/knuth_morris_pratt.jai";
+//#load "../String_View/knuth_morris_pratt.jai";
 
 // TODO
-// [ ] reversed / reverse
-// [ ] replace translate
-// [ ] count
-// [ ] null_terminate
+// [.] null_terminate
+// [x] replace translate
+// [x] count
+// [x] reversed / reverse
 
 
 
@@ -24,13 +22,8 @@ main :: () {
             print("\nAll OK!\n");
     }
 
-    print("new: %\n", new.default_allocator);
-    print("temp: %\n", temp.default_allocator);
-
-    exit(0);
-
-    //set_index_of_algorithm(boyer_moore_first_index_of, boyer_moore_last_index_of);
-    set_index_of_algorithm(knuth_morris_pratt_first_index_of, knuth_morris_pratt_last_index_of);
+    //set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
+    //set_index_algorithm(knuth_morris_pratt_first_index, knuth_morris_pratt_last_index);
 
     test(1, slice(test_string, 0, 999), test_string);
     test(2, slice(test_string, -999, -888), "");
@@ -42,73 +35,76 @@ main :: () {
     This := substring(short_string, 1, 4);
     end_it := substring(short_string, -4);
 
-    test( 6, first_index_of("Hello", #char "l"), 2);
-    test( 7, first_index_of("Hello", #char "l", 2), 2);
-    test( 8, first_index_of("Hello", #char "l", 3), 3);
-    test( 9, first_index_of("Hello", #char "l", 4), -1);
-    test(10, first_index_of("Hello", #char "l", -3), 2);
-    test(11, first_index_of("Hello", #char "l", -2), 3);
-    test(12, first_index_of("Hello", #char "l", -1), -1);
-    test(13, first_index_of("Hello", .[#char "l"]), 2);
-    test(14, first_index_of("Hello", .[#char "l"], 2), 2);
-    test(15, first_index_of("Hello", .[#char "l"], 3), 3);
-    test(16, first_index_of("Hello", .[#char "l"], 4), -1);
-    test(17, first_index_of("Hello", .[#char "l"], -3), 2);
-    test(18, first_index_of("Hello", .[#char "l"], -2), 3);
-    test(19, first_index_of("Hello", .[#char "l"], -1), -1);
-    test(20, first_index_of("Hello", "el"), 1);
-    test(21, first_index_of("Hello", "el", 0), 1);
-    test(22, first_index_of("Hello", "el", 1), 1);
-    test(23, first_index_of("Hello", "el", 2), -1);
-    test(24, first_index_of("Hello", "el", -5), 1);
-    test(25, first_index_of("Hello", "el", -4), 1);
-    test(26, first_index_of("Hello", "el", -3), -1);
-    test(27, last_index_of("Hello", #char "l"), 3);
-    test(28, last_index_of("Hello", #char "l", 4), 3);
-    test(29, last_index_of("Hello", #char "l", 3), 2);
-    test(30, last_index_of("Hello", #char "l", 2), -1);
-    test(31, last_index_of("Hello", #char "l", -3), -1);
-    test(32, last_index_of("Hello", #char "l", -2), 2);
-    test(33, last_index_of("Hello", #char "l", -1), 3);
-    test(34, last_index_of("Hello", .[#char "l"]), 3);
-    test(35, last_index_of("Hello", .[#char "l"], 2), -1);
-    test(36, last_index_of("Hello", .[#char "l"], 3), 2);
-    test(37, last_index_of("Hello", .[#char "l"], 4), 3);
-    test(38, last_index_of("Hello", .[#char "l"], -3), -1);
-    test(39, last_index_of("Hello", .[#char "l"], -2), 2);
-    test(40, last_index_of("Hello", .[#char "l"], -1), 3);
+    test( 6, first_index("Hello", #char "l"), 2);
+    test( 7, first_index("Hello", #char "l", 2), 2);
+    test( 8, first_index("Hello", #char "l", 3), 3);
+    test( 9, first_index("Hello", #char "l", 4), -1);
+    test(10, first_index("Hello", #char "l", -3), 2);
+    test(11, first_index("Hello", #char "l", -2), 3);
+    test(12, first_index("Hello", #char "l", -1), -1);
+    test(13, first_index("Hello", .[#char "l"]), 2);
+    test(14, first_index("Hello", .[#char "l"], 2), 2);
+    test(15, first_index("Hello", .[#char "l"], 3), 3);
+    test(16, first_index("Hello", .[#char "l"], 4), -1);
+    test(17, first_index("Hello", .[#char "l"], -3), 2);
+    test(18, first_index("Hello", .[#char "l"], -2), 3);
+    test(19, first_index("Hello", .[#char "l"], -1), -1);
+    test(20, first_index("Hello", "el"), 1);
+    test(21, first_index("Hello", "el", 0), 1);
+    test(22, first_index("Hello", "el", 1), 1);
+    test(23, first_index("Hello", "el", 2), -1);
+    test(24, first_index("Hello", "el", -5), 1);
+    test(25, first_index("Hello", "el", -4), 1);
+    test(26, first_index("Hello", "el", -3), -1);
+    test(27, last_index("Hello", #char "l"), 3);
+    test(28, last_index("Hello", #char "l", 4), 3);
+    test(29, last_index("Hello", #char "l", 3), 2);
+    test(30, last_index("Hello", #char "l", 2), -1);
+    test(31, last_index("Hello", #char "l", -3), -1);
+    test(32, last_index("Hello", #char "l", -2), 2);
+    test(33, last_index("Hello", #char "l", -1), 3);
+    test(34, last_index("Hello", .[#char "l"]), 3);
+    test(35, last_index("Hello", .[#char "l"], 2), -1);
+    test(36, last_index("Hello", .[#char "l"], 3), 2);
+    test(37, last_index("Hello", .[#char "l"], 4), 3);
+    test(38, last_index("Hello", .[#char "l"], -3), -1);
+    test(39, last_index("Hello", .[#char "l"], -2), 2);
+    test(40, last_index("Hello", .[#char "l"], -1), 3);
 
-    test(41, last_index_of("Hello", "el"), 1);
-    test(42, last_index_of("Hello", "el", 0), -1);
-    test(43, last_index_of("Hello", "el", 1), -1);
-    test(44, last_index_of("Hello", "el", 2), -1);
-    test(45, last_index_of("Hello", "el", 3), 1);
-    test(46, last_index_of("Hello", "el", -3), -1);
-    test(47, last_index_of("Hello", "el", -2), 1);
-    test(477, last_index_of("Hello", "ell", -1), 1);
+    test(41, last_index("Hello", "el"), 1);
+    test(42, last_index("Hello", "el", 0), -1);
+    test(43, last_index("Hello", "el", 1), -1);
+    test(44, last_index("Hello", "el", 2), -1);
+    test(45, last_index("Hello", "el", 3), 1);
+    test(46, last_index("Hello", "el", -3), -1);
+    test(47, last_index("Hello", "el", -2), 1);
+    test(477, last_index("Hello", "ell", -1), 1);
 
     test(48, trim(short_string), "This is wrong, empirically, and we should stop teaching it.");
-    test(49, trim_left(short_string), "This is wrong, empirically, and we should stop teaching it.\n");
-    test(50, trim_right(short_string), " This is wrong, empirically, and we should stop teaching it.");
+    test(488, trim(short_string, cast([]u8)" \n"), "This is wrong, empirically, and we should stop teaching it.");
+    test(49, trim_start(short_string), "This is wrong, empirically, and we should stop teaching it.\n");
+    test(50, trim_end(short_string), " This is wrong, empirically, and we should stop teaching it.");
     test(51, trim(short_string, "\n"), " This is wrong, empirically, and we should stop teaching it.");
     test(52, trim(short_string, " "), "This is wrong, empirically, and we should stop teaching it.\n");
+    test(522, trim(short_string, " This "), "is wrong, empirically, and we should stop teaching it.\n");
+    test(523, trim(short_string, " it.\n"), " This is wrong, empirically, and we should stop teaching");
 
-    trimmed := copy_string(trim(short_string));
+    trimmed := new.copy(trim(short_string));
 
     to_upper(trimmed);
     test(53, trimmed, "THIS IS WRONG, EMPIRICALLY, AND WE SHOULD STOP TEACHING IT.");
     to_lower(trimmed);
     test(54, trimmed, "this is wrong, empirically, and we should stop teaching it.");
 
-    simple := copy_string("foo bar bar qux quux");
+    simple := new.copy("foo bar bar qux quux");
     replace(simple, #char "a", #char "u");
     test(55, simple, "foo bur bur qux quux");
 
-    simple = copy_string("foo bar bar qux quux");
+    simple = new.copy("foo bar bar qux quux");
     replace(simple, cast([]u8) "aeiou", #char "y");
     test(555, simple, "fyy byr byr qyx qyyx");
 
-    passwords := copy_string("type in the password to enter the password then push enter");
+    passwords := new.copy("type in the password to enter the password then push enter");
     changes := replace(passwords, "password", #char "*");
     test(56, changes, 16);
     test(57, passwords, "type in the ******** to enter the ******** then push enter");
@@ -201,7 +197,7 @@ main :: () {
     test(91, temp_parts, string.["some", "text", "here"]);
 
     joined := temp.join(temp_parts, " ");
-    i := last_index_of(joined, " ");
+    i := last_index(joined, " ");
     joined[i] = #char "\t";
     test(92, joined, some_text);
 
@@ -264,11 +260,11 @@ main :: () {
     test(124, contains(some_text, "her"), true);
 
     rls_parts := temp.split(really_long_string, "\n");
-    test(125, trim_right(rls_parts[0], #char "\r"), rls_0);
-    test(126, trim_right(rls_parts[1], #char "\r"), rls_1);
-    test(127, trim_right(rls_parts[2], #char "\r"), rls_2);
-    test(128, trim_right(rls_parts[3], #char "\r"), rls_3);
-    test(129, trim_right(rls_parts[4], #char "\r"), rls_4);
+    test(125, trim_end(rls_parts[0], #char "\r"), rls_0);
+    test(126, trim_end(rls_parts[1], "\r"), rls_1);
+    test(127, trim_end(rls_parts[2], cast([]u8)"\r"), rls_2);
+    test(128, trim_end(rls_parts[3], #char "\r"), rls_3);
+    test(129, trim_end(rls_parts[4], #char "\r"), rls_4);
 
     index = 0;
     for line_split(really_long_string) {
@@ -297,7 +293,291 @@ main :: () {
 
     c : u8 = xx #char "H";
     test(141, string_from_char(*c), "H");
+
+    test(142, starts_with("Hello world", "Hello"), true);
+    test(143, starts_with("Hello world", "hello"), false);
+    test(144, starts_with("Hello world", "hello", ignore_case), true);
+    test(145, ends_with("Hello world", "world"), true);
+    test(146, ends_with("Hello world", "World"), false);
+    test(147, ends_with("Hello world", "World", ignore_case), true);
+
+    test(148, trim_start("Hello world", "Hello"), " world");
+    test(149, trim_start("Hello world", "hello", ignore_case), " world");
+    test(150, trim_start("Hello world", "hello"), "Hello world");
+    test(151, trim_end("Hello world", "world"), "Hello ");
+    test(152, trim_end("Hello world", "World"), "Hello world");
+    test(153, trim_end("Hello world", "World", ignore_case), "Hello ");
+
+    test(154, trim("xxxxxHelloxxxxx", "xx"), "xHellox");
+    test(155, trim("xxxxxxHelloxxxxxx", "xx"), "Hello");
+
+    parts = new.split(forward_split(" aa bb cc ", " "));
+    test(156, parts, string.["", "aa", "bb", "cc", ""]);
+
+    parts = new.split(line_split(" aa\nbb\r\ncc "));
+    test(157, parts, string.[" aa", "bb", "cc "]);
+
+    test(158, new.concatenate("Hello ", "to ", "the ", "world."), "Hello to the world.");
+
+    test(159, new.pad_start("Hello", 8), "   Hello");
+    test(160, new.pad_start("Hello", 8, "Hello"), "HelHello");
+    test(161, new.pad_start("Hello", 8, #char "x"), "xxxHello");
+    test(162, new.pad_start("Hello", 12, "xyz"), "xyzxyzxHello");
+
+    test(163, new.pad_end("Hello", 8), "Hello   ");
+    test(164, new.pad_end("Hello", 8, "Hello"), "Hellollo");
+    test(165, new.pad_end("Hello", 8, #char "x"), "Helloxxx");
+    test(166, new.pad_end("Hello", 12, "xyz"), "Hellozxyzxyz");
+
+    test(167, new.pad_center("Hello", 8), " Hello  ");
+    test(168, new.pad_center("Hello", 9), "  Hello  ");
+    test(169, new.pad_center("Hola", 8), "  Hola  ");
+    test(170, new.pad_center("Hola", 9), "  Hola   ");
+    test(171, new.pad_center("Hello", 8, "Hello"), "HHellolo");
+    test(172, new.pad_center("Hello", 8, #char "x"), "xHelloxx");
+    test(173, new.pad_center("Hello", 12, "xyz"), "xyzHellozxyz");
+
+    test(174, new.repeat("Hello", 5), "HelloHelloHelloHelloHello");
+
+    test(175, new.snake_from_camel("HelloHelloHelloHelloHello"), "hello_hello_hello_hello_hello");
+    test(176, new.snake_from_camel("HelloHelloHelloHelloHello", true), "Hello_Hello_Hello_Hello_Hello");
+
+    test(177, new.snake_from_camel("HELLOHelloHello"), "hello_hello_hello");
+    test(178, new.snake_from_camel("HELLOHelloHello", true), "Hello_Hello_Hello");
+
+    blah := new.copy("blAh");
+    capitalize(blah);
+    test(179, blah, "BlAh");
+    capitalize(blah, false);
+    test(180, blah, "Blah");
+
+    test(181, new.camel_from_snake("hello_hello_hello_hello_hello"), "HelloHelloHelloHelloHello");
+    test(182, new.camel_from_snake("heLlo_helLo_hEllo_Hello_hellO", true), "HeLloHelLoHElloHelloHellO");
+    test(183, new.camel_from_snake("HELLO_hello_hello", true), "HELLOHelloHello");
+    test(184, new.camel_from_snake("Hello_Hello_Hello"), "HelloHelloHello");
+
+    test(185, temp.capitalize("blAh", true), "BlAh");
+    test(186, temp.capitalize("blAh"), "Blah");
+
+    rev := temp.reverse("gnat");
+    test(187, rev, "tang");
+    reverse(rev);
+    test(188, rev, "gnat");
+
+    rev = temp.reverse("ognat");
+    test(189, rev, "tango");
+    reverse(rev);
+    test(190, rev, "ognat");
+
+    test(191, count(really_long_string, "I"), 11);
+    test(192, count(really_long_string, "I", ignore_case), 38);
+
+
+    index = 0;
+    for forward_split(" aa bb cc ", -15, -13, 1, 3, 1, 4, 6, 7, 9, 15, 21) {
+        if index == {
+            case  0; test(193, it, "");
+            case  1; test(194, it, "");
+            case  2; test(195, it, " ");
+            case  3; test(196, it, "aa");
+            case  4; test(197, it, "");
+            case  5; test(198, it, " ");
+            case  6; test(199, it, "bb");
+            case  7; test(200, it, " ");
+            case  8; test(201, it, "cc");
+            case  9; test(202, it, " ");
+            case 10; test(203, it, "");
+            case 11; test(204, it, "");
+        }
+        index += 1;
+    }
+
+    index = 0;
+    for reverse_split(" aa bb cc ", -15, -13, 1, 4, 3, 4, 6, 7, 9, 15, 21) {
+        if index == {
+            case  0; test(205, it, "");
+            case  1; test(206, it, "");
+            case  2; test(207, it, " ");
+            case  3; test(208, it, "cc");
+            case  4; test(209, it, " ");
+            case  5; test(210, it, "bb");
+            case  6; test(211, it, " ");
+            case  7; test(212, it, "");
+            case  8; test(213, it, "aa");
+            case  9; test(214, it, " ");
+            case 10; test(215, it, "");
+            case 11; test(216, it, "");
+        }
+        index += 1;
+    }
+
+    temp_parts = temp.split("  aa    bb \t cc ", 2, 4, 8, 10, 13, 15);
+    test(217, temp_parts, string.["  ", "aa", "    ", "bb", " \t ", "cc", " "]);
+
+    valid : bool;
+    index, valid = slice_index("Hello", -6);
+    test(218, valid, false);
+    index, valid = slice_index("Hello", 0);
+    test(219, valid, true);
+    index, valid = slice_index("Hello", 5);
+    test(220, valid, true);
+    index, valid = slice_index("Hello", 6);
+    test(221, valid, false);
+    index, valid = slice_index("Hello", -3);
+    test(222, valid, true);
+
+
+    index = 0;
+    for forward_split(" aa bb cc ", -15, -13, 1, 3, 1, 4, 6, 7, 9, 15, 21, skip_empty = true) {
+        if index == {
+            case  0; test(223, it, " ");
+            case  1; test(224, it, "aa");
+            case  2; test(225, it, " ");
+            case  3; test(226, it, "bb");
+            case  4; test(227, it, " ");
+            case  5; test(228, it, "cc");
+            case  6; test(229, it, " ");
+        }
+        index += 1;
+    }
+
+
+    index = 0;
+    for reverse_split(" aa bb cc ", -15, -13, 1, 4, 3, 4, 6, 7, 9, 15, 21, skip_empty = true) {
+        if index == {
+            case  0; test(230, it, " ");
+            case  1; test(231, it, "cc");
+            case  2; test(232, it, " ");
+            case  3; test(233, it, "bb");
+            case  4; test(234, it, " ");
+            case  5; test(235, it, "aa");
+            case  6; test(236, it, " ");
+        }
+        index += 1;
+    }
+
+    index = 0;
+    for line_split(really_long_string, keep_eol = true) {
+        if index == {
+            case 0; test(237, starts_with(it, rls_0), true);
+                    test(238, ends_with(it, "\n"), true);
+            case 1; test(237, starts_with(it, rls_1), true);
+                    test(238, ends_with(it, "\n"), true);
+            case 2; test(237, starts_with(it, rls_2), true);
+                    test(238, ends_with(it, "\n"), true);
+            case 3; test(237, starts_with(it, rls_3), true);
+                    test(238, ends_with(it, "\n"), true);
+            case 4; test(237, starts_with(it, rls_4), true);
+                    test(238, ends_with(it, "\n"), true);
+        }
+        index += 1;
+    }
+
+    map := new.copy("How about a nice game of chess?");
+    replace(map, Character_Translation.[
+        .{#char " ", #char "-"},
+        .{#char "a", #char "A"}]);
+    test(239, map, "How-About-A-nice-gAme-of-chess?");
+
+
+    question_mark_index :: (haystack: string, needle: string, boundary_index: int, $$reverse: bool) -> from_index: int, to_index: int, found: bool {
+        if reverse {
+            from_index, to_index, found := reverse_index_proc(question_mark_index, haystack, needle, boundary_index);
+            return from_index, to_index, found;
+        }
+        else {
+            index := slice_index(haystack, boundary_index);
+            if index >= haystack.count  return -1, -1, false;
+
+            for haystack_index: index .. haystack.count - needle.count {
+                for needle_index: 0 .. needle.count - 1 {
+                    c := needle[needle_index];
+                    if c != #char "?" && c != haystack[haystack_index + needle_index]
+                        continue haystack_index;
+                }
+
+                return haystack_index, haystack_index + needle.count, true;
+            }
+
+            return -1, -1, false;
+        }
+    }
+
+
+    test(240, starts_with(map, "Ho?", question_mark_index), true);
+    test(241, starts_with(map, "ho?", question_mark_index), false);
+    test(242, ends_with(map, "c?e?s?", question_mark_index), true);
+    test(243, ends_with(map, "ho?", question_mark_index), false);
+
+    test(244, contains(map, "?ni?e?", question_mark_index), true);
+    test(245, contains(map, "?Ni?e?", question_mark_index), false);
+
+    test(246, trim(map, "???-", question_mark_index), slice(map, 4));
+    test(247, trim(map, "-??????", question_mark_index), slice(map, 0, -7));
+    test(248, trim("aaaBBBaa", "a?", question_mark_index), "BB");
+
+    test(249, trim_start(map, "???-", question_mark_index), slice(map, 4));
+    test(250, trim_start(map, "-??????", question_mark_index), map);
+    test(251, trim_start("aaaBBBaa", "a?", question_mark_index), "BBaa");
+
+    test(252, trim_end(map, "???-", question_mark_index), map);
+    test(253, trim_end(map, "-??????", question_mark_index), slice(map, 0, -7));
+    test(254, trim_end("aaaBBBaa", "a?", question_mark_index), "aaaBBB");
+
+    replace(map, "?-?", question_mark_index, #char "*", 2);
+    test(255, map, "Ho**About-A-nice-gAme-of-chess?");
+    replace(map, "?-?", question_mark_index, #char "*");
+    test(256, map, "Ho**Abou***-nic***Am******hess?");
+
+    test(257, count(map, "*?", question_mark_index), 8);
+
+    index = 0;
+    for forward_split(map, "*?", question_mark_index) {
+        if index == {
+            case  0; test(258, it, "Ho");
+            case  1; test(259, it, "Abou");
+            case  2; test(260, it, "");
+            case  3; test(261, it, "nic");
+            case  4; test(262, it, "");
+            case  5; test(263, it, "m");
+            case  6; test(264, it, "");
+            case  7; test(265, it, "");
+            case  8; test(266, it, "hess?");
+        }
+        index += 1;
+    }
+
+
+    index = 0;
+    for reverse_split(map, "*?", question_mark_index) {
+        if index == {
+            case  0; test(267, it, "ess?");
+            case  1; test(268, it, "");
+            case  2; test(269, it, "");
+            case  3; test(270, it, "m*");
+            case  4; test(271, it, "");
+            case  5; test(272, it, "nic");
+            case  6; test(273, it, "");
+            case  7; test(274, it, "bou");
+            case  8; test(275, it, "Ho*");
+        }
+        index += 1;
+    }
+
+    test(276, temp.replace(map, "*?", question_mark_index, "-"),   "Ho-Abou--nic--m---hess?");
+    test(277, temp.replace(map, "?o?", question_mark_index, "---"),   "---*A---***-nic***Am******hess?");
+
+    replace(some_text, #char "\t", #char " ");
+    temp_parts = temp.split(some_text, "? ?", question_mark_index);
+    test(278, temp_parts, string.["som", "ex", "ere"]);
+
+    temp_parts = temp.split(some_text, "? ?", question_mark_index, true);
+    test(279, temp_parts, string.["ere", "ex", "som"]);
+
+    for forward_split("How about a nice game of chess?", #char " ")
+        print("%\n", it);
 }
+
 
 
 errors : [..] int;

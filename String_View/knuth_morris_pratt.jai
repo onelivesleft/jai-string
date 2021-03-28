@@ -1,7 +1,7 @@
 #import "String_View";
 
 
-knuth_morris_pratt_first_index_of :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
     if needle == ""  return from_index, true;
     if from_index >= haystack.count - needle.count  return -1, false;
 
@@ -15,29 +15,19 @@ knuth_morris_pratt_first_index_of :: (haystack: string, needle: string, from_ind
 
     j := 0;
     needle_end := needle.count - 1;
-    for i: from_index .. haystack.count - 1 {
-        while j >= 0 && !cmp(haystack[i], needle[j])
+    end := cast(u64)haystack.data + cast(u64)haystack.count;
+    for i: cast(u64)haystack.data + cast(u64)from_index .. end {
+        while j >= 0 && !cmp(<<cast(*u8)i, needle[j])
             j = needle_table[j];
-        if j == needle_end  return i - j, true;
+        if j == needle_end  return cast(s64)((i - cast(u64)j) - cast(u64)haystack.data), true;
         j += 1;
     }
-
-//    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
-//
-//    for start_of_word: cast(u64)haystack.data + cast(u64)from_index .. end {
-//        while j >= 0 && !cmp(<<cast(*u8)(start_of_word), needle[j])
-//            j = needle_table[j];
-//
-//        j += 1;
-//        if j == needle.count
-//            return cast(int)(start_of_word - cast(u64)haystack.data), true;
-//    }
 
     return -1, false;
 }
 
 
-knuth_morris_pratt_last_index_of :: (haystack: string, needle: string, from_index: int, $$cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: int, $$cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
     if needle == ""  return from_index - 1, true;
     if from_index < needle.count  return -1, false;
     from_index = haystack.count - from_index;
@@ -50,20 +40,13 @@ knuth_morris_pratt_last_index_of :: (haystack: string, needle: string, from_inde
         make_needle_table(*needle_table, needle, cmp, true);
     }
 
-    j := from_index;
-    k := 0;
-
-    while j < haystack.count {
-        if cmp(get(needle, k, true), get(haystack, j, true)) {
-            if k == needle.count - 1  return haystack.count - (needle.count + j - k), true;
-            j += 1; k += 1;
-        }
-        else {
-            k = needle_table[k];
-            if k < 0 {
-                j += 1; k += 1;
-            }
-        }
+    j := 0;
+    needle_end := needle.count - 1;
+    for i: from_index .. haystack.count - 1 {
+        while j >= 0 && !cmp(get(haystack, i, true), get(needle, j, true))
+            j = needle_table[j];
+        if j == needle_end  return haystack.count - needle.count - (i - j), true;
+        j += 1;
     }
 
     return -1, false;
