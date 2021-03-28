@@ -251,8 +251,8 @@ By default the module will be fairly permissive of inputs, doing the Right Thing
 
 * `add_convenience_functions`<br>
 When enabled the module will provide these additional procedures:
-  * `print` - identical to `sprint`, set to use this modules allocator.
-  * `builder_to_string` - identical to `builder_to_string`, set to use this modules allocator.
+  * `print` - identical to `sprint`, set to use this module's allocator.
+  * `builder_to_string` - identical to `builder_to_string`, set to use this module's allocator.
 
 * `debug`<br>
 When set to true some debug info will be displayed for allocations.
