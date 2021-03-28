@@ -181,7 +181,7 @@ Mutates `str` in-place, overwritting any upper-case characters with their lower-
 * `to_upper (str: string)`<br>
 Mutates `str` in-place, overwritting any lower-case characters with their upper-case equivalent.
 
-* `reverse :: (str: string)`<br>
+* `reverse (str: string)`<br>
 Reverses the characters in `str` in-place.
 
 * `replace (haystack: string, needle: %Tool, replacement: u8, max_replacements := 0) -> change_count: int`<br>
@@ -197,7 +197,7 @@ Character_Translation :: struct {
 }
 ```
 
-* `capitalize :: (str: string, preserve_caps := true)`<br>
+* `capitalize (str: string, preserve_caps := true)`<br>
 Sets the first letter of `str` to upper-case.  If `preserve_caps` is set to false, will set all following letters to lower-case.
 
 
