@@ -60,7 +60,7 @@ reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = nu
 }
 
 
-capitalize :: (str: string, preserve_caps: = false, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+capitalize :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if !str return_empty();
 
     result := copy(str, allocator, allocator_data, null_terminate);
