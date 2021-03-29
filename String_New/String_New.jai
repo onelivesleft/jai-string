@@ -500,6 +500,19 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
 }
 
 
+lower :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    result := copy(str, allocator, allocator_data, null_terminate);
+    to_lower(result);
+    return result;
+}
+
+
+upper :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    result := copy(str, allocator, allocator_data, null_terminate);
+    to_upper(result);
+    return result;
+}
+
 
 snake_from_camel :: (str: string, preserve_caps := false, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if str == ""  return_empty();

@@ -2,8 +2,8 @@
 
 
 // TODO
-// [ ] bake cmp?
-// [ ] ask about autobaking problem on first_index (when cmp is autobaked you cannot switch proc using set_index_algorithm)
+// [ ] bake compare?
+// [ ] ask about autobaking problem on first_index (when compare is autobaked you cannot switch proc using set_index_algorithm)
 // [ ] unicode support
 // [x] first_index lambda needle
 // [x] split at
@@ -16,7 +16,7 @@
 current_first_index := default_first_index;
 current_last_index := default_last_index;
 
-set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := def) {
+set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := default_compare) {
     current_first_index = first_index_proc;
     current_last_index = last_index_proc;
 }
@@ -119,9 +119,9 @@ ignore_case :: inline (a: u8, b: u8) -> bool #must {
 }
 
 
-is_any :: inline (needle: u8, characters: [] u8, $$cmp := default_compare) -> bool #must {
+is_any :: inline (needle: u8, characters: [] u8, $$compare := default_compare) -> bool #must {
     for character: characters
-        if cmp(needle, character)  return true;
+        if compare(needle, character)  return true;
 
     return false;
 }
@@ -135,11 +135,22 @@ string_from_char :: (char: *u8) -> string #must {
 }
 
 
-starts_with :: (haystack: string, needle: string, $$cmp := default_compare) -> bool #must {
+equals :: (a: string, b: string, $$compare := default_compare) -> bool #must {
+    if a.count != b.count  return false;
+
+    for index: 0 .. a.count - 1
+        if !compare(a[index], b[index])
+            return false;
+
+    return true;
+}
+
+
+starts_with :: (haystack: string, needle: string, $$compare := default_compare) -> bool #must {
     if haystack.count < needle.count  return false;
 
     for 0 .. needle.count - 1
-        if !cmp(haystack[it], needle[it])
+        if !compare(haystack[it], needle[it])
             return false;
 
     return true;
@@ -161,13 +172,13 @@ starts_with :: inline (haystack: string, needle: string, $$index: Index_Proc) ->
 }
 
 
-ends_with :: (haystack: string, needle: string, $$cmp := default_compare) -> bool #must {
+ends_with :: (haystack: string, needle: string, $$compare := default_compare) -> bool #must {
     if haystack.count < needle.count  return false;
 
     needle_index := 0;
 
     for haystack.count - needle.count .. haystack.count - 1 {
-        if !cmp(haystack[it], needle[needle_index])
+        if !compare(haystack[it], needle[needle_index])
             return false;
 
         needle_index += 1;
@@ -198,7 +209,7 @@ ends_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> b
 // @TODO check back here after compiler can optimize code, to see if nicely written
 //       version is just as fast.
 
-naive_first_index :: (haystack: string, needle: string, start_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
+naive_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int #must, found: bool {
     if start_index > haystack.count - needle.count  return -1, false;
 
     end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
@@ -206,7 +217,7 @@ naive_first_index :: (haystack: string, needle: string, start_index: int, cmp: C
     for start_of_word: cast(u64)haystack.data + cast(u64)start_index .. end {
         needle_index := needle.data;
         for character: start_of_word .. start_of_word + needle_end {
-            if !cmp(<<cast(*u8)character, <<needle_index)
+            if !compare(<<cast(*u8)character, <<needle_index)
                 continue start_of_word;
             needle_index += 1;
         }
@@ -217,7 +228,7 @@ naive_first_index :: (haystack: string, needle: string, start_index: int, cmp: C
 }
 
 
-naive_last_index :: (haystack: string, needle: string, start_index: int, cmp: Character_Compare) -> index: int #must, found: bool {
+naive_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int #must, found: bool {
     if start_index < needle.count  return -1, false;
 
     start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
@@ -225,7 +236,7 @@ naive_last_index :: (haystack: string, needle: string, start_index: int, cmp: Ch
     for < start_of_word: start .. cast(u64)haystack.data {
         needle_index := needle.data;
         for character: start_of_word .. start_of_word + needle_end {
-            if !cmp(<<cast(*u8)character, <<needle_index)
+            if !compare(<<cast(*u8)character, <<needle_index)
                 continue start_of_word;
             needle_index += 1;
         }
@@ -276,26 +287,26 @@ first_index :: (haystack: string, needle: [] u8, start_index := 0) -> index: int
 }
 
 
-first_index :: inline (haystack: string, needle: string, start_index := 0, $$cmp := default_compare) -> index: int #must, found: bool {
+first_index :: inline (haystack: string, needle: string, start_index := 0, $$compare := default_compare) -> index: int #must, found: bool {
     validate_start_index(haystack);
     if needle.count == 0 {
         return start_index, true;
     }
     else if needle.count == 1 {
         for cast(u64)haystack.data + cast(u64)start_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
-            if cmp(<<cast(*u8)it, <<needle.data)
+            if compare(<<cast(*u8)it, <<needle.data)
                 return cast(int)(it - cast(u64)haystack.data), true;
         return -1, false;
     }
     else {
-        index, found := current_first_index(haystack, needle, start_index, cmp);
+        index, found := current_first_index(haystack, needle, start_index, compare);
         return index, found;
     }
 }
 
 
-first_index :: inline (haystack: string, needle: string, $$cmp: Character_Compare) -> index: int #must, found: bool {
-    index, found := first_index(haystack, needle, 0, cmp);
+first_index :: inline (haystack: string, needle: string, $$compare: Character_Compare) -> index: int #must, found: bool {
+    index, found := first_index(haystack, needle, 0, compare);
     return index, found;
 }
 
@@ -368,26 +379,26 @@ last_index :: (haystack: string, needle: [] u8, start_index : int) -> index: int
 }
 
 
-last_index :: inline (haystack: string, needle: string, start_index: int, $$cmp: Character_Compare) -> index: int #must, found: bool {
+last_index :: inline (haystack: string, needle: string, start_index: int, $$compare: Character_Compare) -> index: int #must, found: bool {
     validate_start_index(haystack);
     if needle.count == 0 {
         return start_index, true;
     }
     else if needle.count == 1 {
         for < cast(u64)haystack.data + cast(u64)start_index - 1.. cast(u64)haystack.data
-            if cmp(<<cast(*u8)it, needle[0])
+            if compare(<<cast(*u8)it, needle[0])
                 return cast(int)(it - cast(u64)haystack.data), true;
         return -1, false;
     }
     else {
-        index, found := current_last_index(haystack, needle, start_index, cmp);
+        index, found := current_last_index(haystack, needle, start_index, compare);
         return index, found;
     }
 }
 
 
-last_index :: inline (haystack: string, needle: string, $$cmp: Character_Compare) -> index: int #must, found: bool {
-    index, found := last_index(haystack, needle, haystack.count, cmp);
+last_index :: inline (haystack: string, needle: string, $$compare: Character_Compare) -> index: int #must, found: bool {
+    index, found := last_index(haystack, needle, haystack.count, compare);
     return index, found;
 }
 
@@ -428,8 +439,8 @@ contains :: (haystack: string, needle: [] u8) -> bool #must {
 }
 
 
-contains :: (haystack: string, needle: string, $$cmp := default_compare) -> bool #must {
-    _, found := first_index(haystack, needle, cmp);
+contains :: (haystack: string, needle: string, $$compare := default_compare) -> bool #must {
+    _, found := first_index(haystack, needle, compare);
     return found;
 }
 
@@ -487,7 +498,7 @@ trim :: (str: string, chars : [] u8) -> string #must {
 }
 
 
-trim :: (str: string, string_to_remove: string, $$cmp := default_compare) -> string #must {
+trim :: (str: string, string_to_remove: string, $$compare := default_compare) -> string #must {
     #if strict {
         assert(string_to_remove != "", "You cannot trim nothing!");
     }
@@ -496,12 +507,12 @@ trim :: (str: string, string_to_remove: string, $$cmp := default_compare) -> str
     }
 
     s := str;
-    while s.count > string_to_remove.count && starts_with(s, string_to_remove, cmp = cmp)
+    while s.count > string_to_remove.count && starts_with(s, string_to_remove, compare = compare)
         s = unsafe_slice(s, string_to_remove.count);
 
     if !s  return "";
 
-    while s.count > string_to_remove.count && ends_with(s, string_to_remove, cmp = cmp)
+    while s.count > string_to_remove.count && ends_with(s, string_to_remove, compare = compare)
         s = unsafe_slice(s, 0, s.count - string_to_remove.count);
 
     return s;
@@ -566,7 +577,7 @@ trim_start :: inline (str: string, chars : [] u8) -> string #must {
 }
 
 
-trim_start :: (str: string, string_to_remove: string, $$cmp := default_compare) -> string #must {
+trim_start :: (str: string, string_to_remove: string, $$compare := default_compare) -> string #must {
     #if strict {
         assert(string_to_remove != "", "You cannot trim nothing!");
     }
@@ -575,7 +586,7 @@ trim_start :: (str: string, string_to_remove: string, $$cmp := default_compare) 
     }
 
     s := str;
-    while s.count > string_to_remove.count && starts_with(s, string_to_remove, cmp = cmp)
+    while s.count > string_to_remove.count && starts_with(s, string_to_remove, compare = compare)
         s = unsafe_slice(s, string_to_remove.count);
 
     return s;
@@ -633,7 +644,7 @@ trim_end :: inline (str: string, chars : [] u8) -> string #must {
 }
 
 
-trim_end :: (str: string, string_to_remove: string, $$cmp := default_compare) -> string #must {
+trim_end :: (str: string, string_to_remove: string, $$compare := default_compare) -> string #must {
     #if strict {
         assert(string_to_remove != "", "You cannot trim nothing!");
     }
@@ -642,7 +653,7 @@ trim_end :: (str: string, string_to_remove: string, $$cmp := default_compare) ->
     }
 
     s := str;
-    while s.count > string_to_remove.count && ends_with(s, string_to_remove, cmp = cmp)
+    while s.count > string_to_remove.count && ends_with(s, string_to_remove, compare = compare)
         s = unsafe_slice(s, 0, s.count - string_to_remove.count);
 
     return s;
@@ -733,15 +744,15 @@ replace :: (haystack: string, needle: [] u8, replacement: u8, max_replacements :
 }
 
 
-replace :: inline (haystack: string, needle: string, replacement: u8, $$cmp: Character_Compare) -> change_count: int {
-    return replace(haystack, needle, replacement, 0, cmp);
+replace :: inline (haystack: string, needle: string, replacement: u8, $$compare: Character_Compare) -> change_count: int {
+    return replace(haystack, needle, replacement, 0, compare);
 }
 
 
-replace :: (haystack: string, needle: string, replacement: u8, max_replacements := 0, $$cmp := default_compare) -> change_count: int {
+replace :: (haystack: string, needle: string, replacement: u8, max_replacements := 0, $$compare := default_compare) -> change_count: int {
     change_count := 0;
     over_limit := false;
-    index, found := first_index(haystack, needle, cmp);
+    index, found := first_index(haystack, needle, compare);
     while found && !over_limit {
         for index .. index + needle.count - 1 {
             haystack[it] = replacement;
@@ -751,7 +762,7 @@ replace :: (haystack: string, needle: string, replacement: u8, max_replacements 
                 break;
             }
         }
-        index, found = first_index(haystack, needle, index + needle.count, cmp);
+        index, found = first_index(haystack, needle, index + needle.count, compare);
     }
 
     return change_count;
@@ -829,14 +840,14 @@ count :: (haystack: string, needle: [] u8) -> total: int #must {
 }
 
 
-count :: (haystack: string, needle: string, $$cmp := default_compare) -> total: int #must {
+count :: (haystack: string, needle: string, $$compare := default_compare) -> total: int #must {
     if needle == ""  return 0;
 
     total := 0;
-    index, found := first_index(haystack, needle, cmp);
+    index, found := first_index(haystack, needle, compare);
     while found {
         total += 1;
-        index, found = first_index(haystack, needle, index + needle.count, cmp);
+        index, found = first_index(haystack, needle, index + needle.count, compare);
     }
 
     return total;
@@ -892,7 +903,7 @@ Split_By :: struct {
 Split_By_String :: struct {
     using base: Split_By;
     separator : string;
-    cmp       : Character_Compare;
+    compare       : Character_Compare;
 }
 
 
@@ -941,19 +952,19 @@ fill_split_struct :: (reversed: bool) #expand {
 #scope_export
 
 
-forward_split :: (text: string, separator: string, $$cmp: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_String #must {
+forward_split :: (text: string, separator: string, $$compare: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_String #must {
     result : Split_By_String = ---;
     fill_split_struct(false);
     result.separator = separator;
-    result.cmp = cmp;
+    result.compare = compare;
     return result;
 }
 
-reverse_split :: (text: string, separator: string, $$cmp: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_String #must {
+reverse_split :: (text: string, separator: string, $$compare: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_String #must {
     result : Split_By_String = ---;
     fill_split_struct(true);
     result.separator = separator;
-    result.cmp = cmp;
+    result.compare = compare;
     return result;
 }
 
@@ -1060,7 +1071,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
 
         if splitter.reverse {
             end_index := splitter.text.count;
-            index, found := last_index(splitter.text, splitter.separator, splitter.cmp);
+            index, found := last_index(splitter.text, splitter.separator, splitter.compare);
             while found {
                 it = unsafe_slice(splitter.text, index + splitter.separator.count, end_index);
                 end_index = index;
@@ -1074,14 +1085,14 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 if splitter.max_results != 0 && it_index >= max_it_index
                     break;
 
-                index, found = last_index(splitter.text, splitter.separator, index, splitter.cmp);
+                index, found = last_index(splitter.text, splitter.separator, index, splitter.compare);
             }
 
             if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
-            index, found := first_index(splitter.text, splitter.separator, splitter.cmp);
+            index, found := first_index(splitter.text, splitter.separator, splitter.compare);
             while found {
                 it = unsafe_slice(splitter.text, start_index, index);
                 start_index = index + splitter.separator.count;
@@ -1095,7 +1106,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 if splitter.max_results != 0 && it_index >= max_it_index
                     break;
 
-                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.cmp);
+                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.compare);
             }
 
             if process_remainder  it = unsafe_slice(splitter.text, start_index);
@@ -1521,7 +1532,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
 
     for_expansion_internal(splitter, body, flags,
         reverse_block = #code {
-            index, found := last_index(splitter.text, splitter.separator, splitter.cmp);
+            index, found := last_index(splitter.text, splitter.separator, splitter.compare);
             while found {
                 `it = unsafe_slice(splitter.text, index + splitter.separator.count, end_index);
                 end_index = index;
@@ -1535,11 +1546,11 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 if splitter.max_results != 0 && `it_index >= max_it_index
                     break;
 
-                index, found = last_index(splitter.text, splitter.separator, index, splitter.cmp);
+                index, found = last_index(splitter.text, splitter.separator, index, splitter.compare);
             }
         },
         forward_block = #code {
-            index, found := first_index(splitter.text, splitter.separator, splitter.cmp);
+            index, found := first_index(splitter.text, splitter.separator, splitter.compare);
             while found {
                 `it = unsafe_slice(splitter.text, start_index, index);
                 start_index = index + splitter.separator.count;
@@ -1553,7 +1564,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 if splitter.max_results != 0 && `it_index >= max_it_index
                     break;
 
-                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.cmp);
+                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.compare);
             }
         }
     );
