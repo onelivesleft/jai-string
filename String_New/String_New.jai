@@ -587,20 +587,25 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 
 
 #if add_convenience_functions {
-    print :: (format_string: string, args: .. Any) -> string #must {
+    print :: (format_string: string, args: .., allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
         builder: String_Builder;
         defer free_buffers(*builder);
 
         print_to_builder(*builder, format_string, ..args);
 
-        a, ad := get_allocator();
-
-        return builder_to_string(*builder, allocator = a, allocator_data = ad);
+        return builder_to_string(*builder, allocator = allocator, allocator_data = allocator_data, null_terminate = null_terminate);
     } @PrintLike
 
 
-    builder_to_string :: inline (builder: String_Builder, extra_bytes_to_prepend := 0) -> string #must {
-        a, ad := get_allocator();
+    builder_to_string :: inline (builder: String_Builder, extra_bytes_to_prepend := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+        a, ad := get_allocator(allocator, allocator_data);
+
+        if null_terminate {
+            buffer := get_current_buffer(*builder);
+            if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+                append(*builder, #char "\0");
+        }
+
         return builder_to_string(*builder, allocator = a, allocator_data = ad, extra_bytes_to_prepend);
     }
 }
