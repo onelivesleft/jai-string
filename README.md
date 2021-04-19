@@ -39,7 +39,7 @@ By default characters being compared between two strings are compared using the 
 
 ### Tool types: u8 / []u8 / string / Index_Proc
 
-In a string library it is often the case that you have a string which you are applying an operation to using a *tool* parameter.  In this library there will generally be four version of such procedures, a version each for when the tool is: `u8`, `[] u8`, `string`, and `Index_Proc`.  As tools these types behave consistently across the libary.  The first three are simple, built-in types, and work like this:
+In a string library it is often the case that you have a string which you are applying an operation to using a *tool* parameter.  In this library there will generally be four version of such procedures, a version each for when the tool is: `u8`, `[] u8`, `string`, and `Index_Proc`.  As tools these types behave consistently across the library.  The first three are simple, built-in types, and work like this:
 
 * `u8`<br>
 The single character specified will be used.
