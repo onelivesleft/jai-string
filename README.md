@@ -164,7 +164,7 @@ How many times `needle` occurs within `haystack` (non-overlapping).
 Returns the string view of `str` with all characters from the start and end which are <= `#char " "` removed (in effect all whitespace and control codes).
 
 * `trim (str: string, tool: %Tool) -> string`<br>
-Returns the string view of `str` with all characters from the start and end which are match `tool` removed.
+Returns the string view of `str` with all characters from the start and end which match `tool` removed.
 
 * `trim_start`, `trim_end`<br>
 As per `trim`, except only remove characters from the start and end of the string, respectively.
@@ -329,8 +329,8 @@ Returns a copy of underscore-separated `str`, changed into programmer CamelCase;
 
 For example:
 ```jai
-    assert( camel_from_snake("play_RTS")       == "play_rts" );
-    assert( camel_from_snake("play_RTS", true) == "play_RTS" );
+    assert( camel_from_snake("play_RTS")       == "playRts" );
+    assert( camel_from_snake("play_RTS", true) == "playRTS" );
 ```
 
 * `snake_from_camel (str: string, preserve_caps := false) -> string`<br>
