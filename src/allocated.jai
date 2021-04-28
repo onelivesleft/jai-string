@@ -51,7 +51,7 @@ reversed :: (str: string, allocator: Allocator = null, allocator_data: *void = n
 
     end := str.count - 1;
     for i: 0 .. end
-
+        result[i] = str[end - i];
 
     if terminating  result[str.count] = #char "\0";
 
