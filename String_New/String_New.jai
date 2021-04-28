@@ -587,7 +587,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 
 
 #if add_convenience_functions {
-    print :: (format_string: string, args: .., allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    print :: (format_string: string, args: .. Any, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
         builder: String_Builder;
         defer free_buffers(*builder);
 
