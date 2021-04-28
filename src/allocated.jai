@@ -16,10 +16,9 @@
 
 
 #import "Basic";
-#import "String_View";
 
 
-copy :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+copied :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if !str return_empty();
 
     result : string = ---;
@@ -39,7 +38,7 @@ copy :: (str: string, allocator: Allocator = null, allocator_data: *void = null,
 }
 
 
-reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+reversed :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if !str return_empty();
 
     a, ad := get_allocator(allocator, allocator_data);
@@ -52,7 +51,7 @@ reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = nu
 
     end := str.count - 1;
     for i: 0 .. end
-        result[i] = str[end - i];
+
 
     if terminating  result[str.count] = #char "\0";
 
@@ -60,22 +59,22 @@ reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = nu
 }
 
 
-capitalize :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+capitalized :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if !str return_empty();
 
-    result := copy(str, allocator, allocator_data, null_terminate);
+    result := copied(str, allocator, allocator_data, null_terminate);
     capitalize(result, preserve_caps);
 
     return result;
 }
 
 
-replace :: (haystack: string, needle: string, replacement: string, compare: type_of(default_compare), allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return replace(haystack, needle, replacement, 0, compare, allocator, allocator_data, null_terminate);
+replaced :: (haystack: string, needle: string, replacement: string, compare: type_of(default_compare), allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return replaced(haystack, needle, replacement, 0, compare, allocator, allocator_data, null_terminate);
 }
 
 
-replace :: (haystack: string, needle: string, replacement: string, max_replacements := 0, $$compare := default_compare, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+replaced :: (haystack: string, needle: string, replacement: string, max_replacements := 0, $$compare := default_compare, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     #if strict {
         assert(needle != "", "You cannot replace an empty string");
         assert(max_replacements >= 0, "max_replacements cannot be negative");
@@ -84,7 +83,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
         if needle == "" {
             result : Allocator_Wrapper;
             set_result_allocator();
-            return copy(haystack, result.allocator, result.allocator_data, null_terminate);
+            return copied(haystack, result.allocator, result.allocator_data, null_terminate);
         }
     }
 
@@ -113,7 +112,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 }
 
 
-replace :: (haystack: string, needle: string, index: Index_Proc, replacement: string, max_replacements := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+replaced :: (haystack: string, needle: string, index: Index_Proc, replacement: string, max_replacements := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if haystack == ""  return_empty();
 
     result : String_Builder;
@@ -139,13 +138,13 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 }
 
 
-concatenate :: (strings: .. string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+concatenated :: (strings: .. string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if strings.count == 0  return_empty();
 
     if strings.count == 1 {
         result : Allocator_Wrapper;
         set_result_allocator();
-        return copy(strings[0], result.allocator, result.allocator_data, null_terminate);
+        return copied(strings[0], result.allocator, result.allocator_data, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0");
@@ -171,13 +170,13 @@ concatenate :: (strings: .. string, allocator: Allocator = null, allocator_data:
 }
 
 
-join :: (strings: [] string, separator: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+joined :: (strings: [] string, separator: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if strings.count == 0  return_empty();
 
     if strings.count == 1 {
         result : Allocator_Wrapper;
         set_result_allocator();
-        return copy(strings[0], result.allocator, result.allocator_data, null_terminate);
+        return copied(strings[0], result.allocator, result.allocator_data, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0");
@@ -207,13 +206,13 @@ join :: (strings: [] string, separator: string, allocator: Allocator = null, all
 }
 
 
-join :: inline (strings: [] string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return join(strings, "", allocator, allocator_data, null_terminate);
+joined :: inline (strings: [] string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return joined(strings, "", allocator, allocator_data, null_terminate);
 }
 
 
-join :: (strings: [] string, separator: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return join(strings, string_from_char(*separator), allocator, allocator_data);
+joined :: (strings: [] string, separator: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return joined(strings, string_from_char(*separator), allocator, allocator_data);
 }
 
 
@@ -316,7 +315,7 @@ split :: inline (separator: $T/Split_By, allocator: Allocator = null, allocator_
 }
 
 
-pad_start :: (str: string, desired_count: int, pad_with := "        ", allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+padded_start :: (str: string, desired_count: int, pad_with := "        ", allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     assert(pad_with.count > 0, "pad_with cannot be empty");
 
     #if strict {
@@ -326,7 +325,7 @@ pad_start :: (str: string, desired_count: int, pad_with := "        ", allocator
     if str.count >= desired_count {
         result : Allocator_Wrapper;
         set_result_allocator();
-        return copy(str, result.allocator, result.allocator_data, null_terminate);
+        return copied(str, result.allocator, result.allocator_data, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0");
@@ -355,12 +354,12 @@ pad_start :: (str: string, desired_count: int, pad_with := "        ", allocator
 }
 
 
-pad_start :: (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_start(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+padded_start :: (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return padded_start(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
-pad_end :: (str: string, desired_count: int, pad_with := "        ", allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+padded_end :: (str: string, desired_count: int, pad_with := "        ", allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     assert(pad_with.count > 0, "pad_with cannot be empty");
 
     #if strict {
@@ -370,7 +369,7 @@ pad_end :: (str: string, desired_count: int, pad_with := "        ", allocator: 
     if str.count >= desired_count {
         result : Allocator_Wrapper;
         set_result_allocator();
-        return copy(str, result.allocator, result.allocator_data, null_terminate);
+        return copied(str, result.allocator, result.allocator_data, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0");
@@ -401,12 +400,12 @@ pad_end :: (str: string, desired_count: int, pad_with := "        ", allocator: 
 }
 
 
-pad_end :: (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_end(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+padded_end :: (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return padded_end(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
-pad_center :: (str: string, desired_count: int, pad_with := "        ", allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+padded_center :: (str: string, desired_count: int, pad_with := "        ", allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     assert(pad_with.count > 0, "pad_with cannot be empty");
 
     #if strict {
@@ -416,7 +415,7 @@ pad_center :: (str: string, desired_count: int, pad_with := "        ", allocato
     if str.count >= desired_count {
         result : Allocator_Wrapper;
         set_result_allocator();
-        return copy(str, result.allocator, result.allocator_data, null_terminate);
+        return copied(str, result.allocator, result.allocator_data, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0");
@@ -461,13 +460,13 @@ pad_center :: (str: string, desired_count: int, pad_with := "        ", allocato
 }
 
 
-pad_center :: (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_center(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+padded_center :: (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    return padded_center(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
 
-repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+repeated :: (str: string, times: int, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     #if strict {
         assert(str != "", "str cannot be empty");
         assert(times > 0, "count must be a positive number");
@@ -479,7 +478,7 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
     if times == 1 {
         result : Allocator_Wrapper;
         set_result_allocator();
-        return copy(str, result.allocator, result.allocator_data, null_terminate);
+        return copied(str, result.allocator, result.allocator_data, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0");
@@ -500,21 +499,21 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
 }
 
 
-lower :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    result := copy(str, allocator, allocator_data, null_terminate);
+lowered :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    result := copied(str, allocator, allocator_data, null_terminate);
     to_lower(result);
     return result;
 }
 
 
-upper :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    result := copy(str, allocator, allocator_data, null_terminate);
+uppered :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    result := copied(str, allocator, allocator_data, null_terminate);
     to_upper(result);
     return result;
 }
 
 
-snake_from_camel :: (str: string, preserve_caps := false, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+snaked_from_camel :: (str: string, preserve_caps := false, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if str == ""  return_empty();
 
     result : String_Builder;
@@ -555,7 +554,7 @@ snake_from_camel :: (str: string, preserve_caps := false, allocator: Allocator =
 }
 
 
-camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+camelled_from_snake :: (str: string, preserve_caps := false, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if str == ""  return_empty();
 
     result : String_Builder;
@@ -587,7 +586,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 
 
 #if add_convenience_functions {
-    print :: (format_string: string, args: .., allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    print :: (format_string: string, args: .. Any, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
         builder: String_Builder;
         defer free_buffers(*builder);
 
@@ -611,8 +610,6 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 }
 
 
-
-
 #scope_file
 
 
@@ -634,10 +631,16 @@ set_result_allocator :: () #expand {
         if `default_allocator_data
             `result.allocator_data = `default_allocator_data;
     }
+    else if context.allocator {
+        `result.allocator = context.allocator;
+        if context.allocator_data
+            `result.allocator_data = context.allocator_data;
+    }
 
     #if debug {
         print("Parameter allocator: %\n", `allocator);
         print("Default allocator:   %\n", `default_allocator);
+        print("Context allocator:   %\n", context.allocator);
         print("Used allocator:      %\n", `result.allocator);
     }
 }
@@ -657,10 +660,16 @@ get_allocator :: (parameter_allocator: Allocator = null, parameter_allocator_dat
         if default_allocator_data
             allocator_data = default_allocator_data;
     }
+    else if context.allocator {
+        allocator = context.allocator;
+        if context.allocator_data
+            allocator_data = context.allocator_data;
+    }
 
     #if debug {
         print("Parameter allocator: %\n", parameter_allocator);
         print("Default allocator:   %\n", default_allocator);
+        print("Context allocator:   %\n", context.allocator);
         print("Used allocator:      %\n", allocator);
     }
 
