@@ -900,10 +900,11 @@ Split_By :: struct {
     skip_empty  : bool;
 }
 
+
 Split_By_String :: struct {
     using base: Split_By;
     separator : string;
-    compare       : Character_Compare;
+    compare   : Character_Compare;
 }
 
 
@@ -938,7 +939,9 @@ Split_By_Proc :: struct {
 }
 
 
+
 #scope_file
+
 
 
 fill_split_struct :: (reversed: bool) #expand {
@@ -949,7 +952,9 @@ fill_split_struct :: (reversed: bool) #expand {
 }
 
 
+
 #scope_export
+
 
 
 forward_split :: (text: string, separator: string, $$compare: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_String #must {

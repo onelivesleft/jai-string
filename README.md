@@ -1,27 +1,25 @@
 # jai-string
 
-String modules for Jai
+String module for Jai.  Procedures follow a naming convention: past-tense names indicate
+the procedure allocates. All procedures which allocate will use the allocator specified as
+a module parameter (which defaults to the context allocator), but may be overridden with `allocator` and `allocator_data` parameters.
 
-* `String_View` provides procs which mutate strings in place or return information or string-views.
-* `String_New` provides procs which return allocated data.
-
-For example, you could import and use them like this:
+For example, you could import like this:
 
 ```jai
-#import "String_View";
-heap :: #import "String_New" #unshared;
-temp :: #import "String_New"(__temporary_allocator) #unshared;
+#import "Strings";
+temp :: #import "Strings"(__temporary_allocator);
 
 main :: () {
-    trimmed := trim("  Some test string  ");  // in String_View, does not allocate
+    no_outer_spaces := trim("  Some test string  ");  // does not allocate
 
     words := temp.split(trimmed, #char " "); // allocated in temporary storage
 
-    banner := heap.join(words, #char "\n"); // allocated with default allocator
+    banner := join(words, #char "\n"); // allocated with default allocator
 }
 ```
 
-To use clone the repo then copy the two `String_` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\String_View c:\repos\jai-string\String_View`
+To use clone the repo then copy the two `Strings` folder into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\Strings c:\repos\jai-string\Strings`
 
 
 ## Mechanics
@@ -66,30 +64,30 @@ This allows you to feed an arbitrarily complex pattern match into the procedure 
 
 For example:
 ```jai
-    question_mark_index :: (haystack: string, needle: string, boundary_index: int, $$reverse: bool) -> from_index: int, to_index: int, found: bool {
-        if reverse {
-            from_index, to_index, found := reverse_index_proc(question_mark_index, haystack, needle, boundary_index);
-            return from_index, to_index, found;
-        }
-        else {
-            index := slice_index(haystack, boundary_index);
-            if index >= haystack.count  return -1, -1, false;
+question_mark_index :: (haystack: string, needle: string, boundary_index: int, $$reverse: bool) -> from_index: int, to_index: int, found: bool {
+    if reverse {
+        from_index, to_index, found := reverse_index_proc(question_mark_index, haystack, needle, boundary_index);
+        return from_index, to_index, found;
+    }
+    else {
+        index := slice_index(haystack, boundary_index);
+        if index >= haystack.count  return -1, -1, false;
 
-            for haystack_index: index .. haystack.count - needle.count {
-                for needle_index: 0 .. needle.count - 1 {
-                    c := needle[needle_index];
-                    if c != #char "?" && c != haystack[haystack_index + needle_index]
-                        continue haystack_index;
-                }
-
-                return haystack_index, haystack_index + needle.count, true;
+        for haystack_index: index .. haystack.count - needle.count {
+            for needle_index: 0 .. needle.count - 1 {
+                c := needle[needle_index];
+                if c != #char "?" && c != haystack[haystack_index + needle_index]
+                    continue haystack_index;
             }
 
-            return -1, -1, false;
+            return haystack_index, haystack_index + needle.count, true;
         }
-    }
 
-    assert( starts_with("Hello World", "He??o", question_mark_index) == true );
+        return -1, -1, false;
+    }
+}
+
+assert( starts_with("Hello World", "He??o", question_mark_index) == true );
 ```
 
 Notice the use of `reverse_index_proc` to handle when the `reverse` parameter is set.  This is a library procedure that you can use if you don't want to write out the reverse algorithm yourself, but note that it is extremely inefficient!
@@ -102,17 +100,26 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 ### `#module_parameters`
 
+* `allocator`<br>
+Allocator used by default for all library procs which allocate.  If set to `null` (the default) then the context allocator will be used.
+
+* `default_compare`<br>
+Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
+
 * `default_first_index`<br>
 `first_index` procedure used to search through strings for substrings, and used internally (for `split`, `replace`, etc.).  By default this uses `boyer_moore_first_index`, which does allocate a small amount of data (increasing in size with the needle).  Swap to `naive_first_index` for a non-allocating albeit slower version (or roll your own).
 
 * `default_last_index`<br>
 As `default_first_index`, but searching backwards from the end of the string.
 
-* `default_compare`<br>
-Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
+* `add_convenience_functions`<br>
+Adds `print`, `init_string_builder`, & `builder_to_string` set to behave the same as every other allocated proc (i.e. if null use module allocator, which if null uses context allocator). Usually you would only enable this if you were importing the module into its own namespace.
 
 * `strict`<br>
 By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
+
+* `debug`<br>
+Provides a small amount of debug output.
 
 
 ### Procedures

@@ -156,15 +156,15 @@ concatenated :: (strings: .. string, allocator: Allocator = null, allocator_data
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    joined := alloc_string(count, result.allocator, result.allocator_data);
-    memcpy(joined.data, strings[0].data, strings[0].count);
-    position := joined.data + strings[0].count;
+    joined_string := alloc_string(count, result.allocator, result.allocator_data);
+    memcpy(joined_string.data, strings[0].data, strings[0].count);
+    position := joined_string.data + strings[0].count;
     for 1 .. strings.count - 1 {
         memcpy(position, strings[it].data, strings[it].count);
         position += strings[it].count;
     }
 
-    if terminating  joined[count] = #char "\0";
+    if terminating  joined_string[count] = #char "\0";
 
     return joined;
 }
@@ -307,7 +307,7 @@ split :: inline (text: string, indexes: .. int, reversed := false, skip_empty :=
 }
 
 
-split :: inline (separator: $T/Split_By, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: inline (separator: $T/interface Split_By, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
     for separator  array_add(*result, it);
@@ -596,6 +596,11 @@ camelled_from_snake :: (str: string, preserve_caps := false, allocator: Allocato
     } @PrintLike
 
 
+    init_string_builder :: (using builder: *String_Builder, allocator: Allocator = null, allocator_data: *void = null) {
+        allocator, allocator_data = get_allocator(allocator, allocator_data);
+    }
+
+
     builder_to_string :: inline (builder: String_Builder, extra_bytes_to_prepend := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
         a, ad := get_allocator(allocator, allocator_data);
 
@@ -610,7 +615,19 @@ camelled_from_snake :: (str: string, preserve_caps := false, allocator: Allocato
 }
 
 
+set_default_allocator :: (allocator: Allocator, allocator_data: *void) {
+    default_allocator = allocator;
+    default_allocator_data = allocator_data;
+}
+
+
+
 #scope_file
+
+
+
+default_allocator := allocator;
+default_allocator_data : *void = null;
 
 
 Allocator_Wrapper :: struct {
