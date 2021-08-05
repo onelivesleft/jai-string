@@ -15,7 +15,7 @@ main :: () {
 
     words := temp.split(trimmed, #char " "); // allocated in temporary storage
 
-    banner := join(words, #char "\n"); // allocated with default allocator
+    banner := joined(words, #char "\n"); // allocated with default allocator
 }
 ```
 
