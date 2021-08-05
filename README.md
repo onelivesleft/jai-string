@@ -96,7 +96,7 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 <hr>
 
-## String_View
+## API
 
 ### `#module_parameters`
 
@@ -122,7 +122,7 @@ By default the module will be fairly permissive of inputs, doing the Right Thing
 Provides a small amount of debug output.
 
 
-### Procedures
+### Procedures (non-allocating)
 
 * `set_index_algorithm (first_index_proc := default_first_index, last_index_proc := default_last_index)`<br>
 Sets the index procedures used internally when searching through strings (for `replace`, `split`, etc.)
@@ -238,35 +238,9 @@ Works like `forward_split` using `#char "\n"` as the tool, but will automaticall
 <hr>
 
 
-## String_New
+### Procedures (allocating)
 
-
-### `#module_parameters`
-
-
-* `default_allocator : Allocator`<br>
-`Allocator` used to allocate all returned values.  If `null` then the `context.allocator` will be used.  This may be overridden in each individual call.
-
-* `default_allocator_data : *void`<br>
-Allocator data used when allocating returned values.  If `null` then the `context.allocator_data` will be used.  This may be overridden in each individual call.
-
-* `default_compare`<br>
-Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
-
-* `strict`<br>
-By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
-
-* `add_convenience_functions`<br>
-When enabled the module will provide these additional procedures:
-  * `print` - identical to `sprint`, set to use this module's allocator.
-  * `builder_to_string` - identical to `builder_to_string`, set to use this module's allocator.
-
-* `debug`<br>
-When set to true some debug info will be displayed for allocations.
-
-### Procedures
-
-Every procedure in this module can take these three parameters (in addition to their listed parameters):
+Every procedure here can take these three parameters (in addition to their listed parameters):
 
 * `allocator: Allocator` - sets the `allocator` to use, overriding the default specified in the `module_parameters`.
 * `allocator_data: *void` - sets the `allocator_data` to use, overriding the default specified in the `module_parameters`.
@@ -274,29 +248,29 @@ Every procedure in this module can take these three parameters (in addition to t
 
 <hr>
 
-* `copy (str: string) -> string`<br>
+* `copied (str: string) -> string`<br>
 Returns of a copy of `str`.
 
-* `reverse (str: string) -> string`<br>
+* `reversed (str: string) -> string`<br>
 Returns a copy of `str` with the characters in the reverse order.
 
-* `capitalize (str: string, preserve_caps := true) -> string`<br>
+* `capitalized (str: string, preserve_caps := true) -> string`<br>
 Returns a copy of `str` with the first letter converted to upper-case.  If `preserve_caps` is disabled then all subsequent letters will be converted to lower-case.
 
-* `replace (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0) -> string`<br>
+* `replaced (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0) -> string`<br>
 Returns a copy of `str` with all (non-overlapping) instances of `needle` replaced with `replacement`.
 If `max_replacements` is non-zero then at most that many replacements will be made (starting at the beginning of the string).
 
-* `concatenate  (strings: .. string) -> string #`<br>
+* `concatenated  (strings: .. string) -> string #`<br>
 Returns a single string created by concatenating all the provided strings together.
 
-* `join (strings: [] string) -> string`<br>
+* `joined (strings: [] string) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together.
 
-* `join (strings: [] string, separator: string) -> string`<br>
+* `joined (strings: [] string, separator: string) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together with `separator` between them.
 
-* `join (strings: [] string, separator: u8) -> string`<br>
+* `joined (strings: [] string, separator: u8) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together with `separator` between them.
 
 * `split (text: string, separator: %Tool, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
@@ -310,28 +284,28 @@ As per `split`, but splitting the string at the specified indices.
 * `split (text: string, splitter: Split_By, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split`, but using the specified `Split_By` struct.  i.e. a struct retuned by `forward_split`, `reverse_split`, or `line_split`.
 
-* `pad_start (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `padded_start (str: string, desired_count: int, pad_with := "        ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
 
-* `pad_start (str: string, desired_count: int, pad_with: u8) -> string`<br>
+* `padded_start (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
 
-* `pad_end (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `padded_end (str: string, desired_count: int, pad_with := "        ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the end such that the string length reaches the `desired_count`.
 
-* `pad_end (str: string, desired_count: int, pad_with: u8) -> string`<br>
+* `padded_end (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the end such that the string length reaches the `desired_count`.
 
-* `pad_center (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `padded_center (str: string, desired_count: int, pad_with := "        ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the begining *and* from the end such that the string length reaches the `desired_count`.
 
-* `pad_center (str: string, desired_count: int, pad_with: u8) -> string`<br>
+* `padded_center (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the begining *and* from the end such that the string length reaches the `desired_count`.
 
-* `repeat (str: string, times: int) -> string`<br>
+* `repeated (str: string, times: int) -> string`<br>
 Returns a string consisting of `str` repeated `times` times.
 
-* `camel_from_snake (str: string, preserve_caps := false) -> string`<br>
+* `camelled_from_snake (str: string, preserve_caps := false) -> string`<br>
 Returns a copy of underscore-separated `str`, changed into programmer CamelCase; i.e. with the leading letter, and every letter after an underscore, converted to upper-case, and with underscores removed.  If `preserve_caps` is enabled then the the underscore removal still happens, but the case is kept.
 
 For example:
@@ -340,7 +314,7 @@ For example:
     assert( camel_from_snake("play_RTS", true) == "playRTS" );
 ```
 
-* `snake_from_camel (str: string, preserve_caps := false) -> string`<br>
+* `snaked_from_camel (str: string, preserve_caps := false) -> string`<br>
 Returns a copy of CamelCased `str`, changed into programmer snake case; i.e. converted to lower-case, but split by `_` at each formerly upper-case letter edge.  If `preserve_caps` is enabled then the the split still happens, but the case is kept.
 
 For example:
