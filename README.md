@@ -2,18 +2,18 @@
 
 String modules for Jai
 
-* `String_View` provides procs which mutate strings in place or return information or string-views.
-* `String_New` provides procs which return allocated data.
+* `Strings` provides procs which mutate strings in place or return information or string-views.
+* `Strings_Alloc` provides procs which return allocated data.
 
 For example, you could import and use them like this:
 
 ```jai
-#import "String_View";
-heap :: #import "String_New" #unshared;
-temp :: #import "String_New"(__temporary_allocator) #unshared;
+#import "Strings";
+heap :: #import "Strings_Alloc" #unshared;
+temp :: #import "Strings_Alloc"(__temporary_allocator) #unshared;
 
 main :: () {
-    trimmed := trim("  Some test string  ");  // in String_View, does not allocate
+    trimmed := trim("  Some test string  ");  // in Strings, does not allocate
 
     words := temp.split(trimmed, #char " "); // allocated in temporary storage
 
@@ -21,7 +21,7 @@ main :: () {
 }
 ```
 
-To use clone the repo then copy the two `String_` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\String_View c:\repos\jai-string\String_View`
+To use clone the repo then copy the `Strings` and `Strings_Alloc` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\Strings c:\repos\jai-string\Strings`
 
 
 ## Mechanics
@@ -98,7 +98,7 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 <hr>
 
-## String_View
+## Strings
 
 ### `#module_parameters`
 
@@ -231,7 +231,7 @@ Works like `forward_split` using `#char "\n"` as the tool, but will automaticall
 <hr>
 
 
-## String_New
+## Strings_Alloc
 
 
 ### `#module_parameters`
