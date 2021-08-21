@@ -1,25 +1,27 @@
 # jai-string
 
-String module for Jai.  Procedures follow a naming convention: past-tense names indicate
-the procedure allocates. All procedures which allocate will use the allocator specified as
-a module parameter (which defaults to the context allocator), but may be overridden with `allocator` and `allocator_data` parameters.
+String modules for Jai
 
-For example, you could import like this:
+* `String_View` provides procs which mutate strings in place or return information or string-views.
+* `String_New` provides procs which return allocated data.
+
+For example, you could import and use them like this:
 
 ```jai
-#import "Strings";
-temp :: #import "Strings"(__temporary_allocator);
+#import "String_View";
+heap :: #import "String_New" #unshared;
+temp :: #import "String_New"(__temporary_allocator) #unshared;
 
 main :: () {
-    no_outer_spaces := trim("  Some test string  ");  // does not allocate
+    trimmed := trim("  Some test string  ");  // in String_View, does not allocate
 
     words := temp.split(trimmed, #char " "); // allocated in temporary storage
 
-    banner := joined(words, #char "\n"); // allocated with default allocator
+    banner := heap.join(words, #char "\n"); // allocated with default allocator
 }
 ```
 
-To use clone the repo then copy the two `Strings` folder into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\Strings c:\repos\jai-string\Strings`
+To use clone the repo then copy the two `String_` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\String_View c:\repos\jai-string\String_View`
 
 
 ## Mechanics
@@ -64,30 +66,30 @@ This allows you to feed an arbitrarily complex pattern match into the procedure 
 
 For example:
 ```jai
-question_mark_index :: (haystack: string, needle: string, boundary_index: int, $$reverse: bool) -> from_index: int, to_index: int, found: bool {
-    if reverse {
-        from_index, to_index, found := reverse_index_proc(question_mark_index, haystack, needle, boundary_index);
-        return from_index, to_index, found;
-    }
-    else {
-        index := slice_index(haystack, boundary_index);
-        if index >= haystack.count  return -1, -1, false;
+    question_mark_index :: (haystack: string, needle: string, boundary_index: int, $$reverse: bool) -> from_index: int, to_index: int, found: bool {
+        if reverse {
+            from_index, to_index, found := reverse_index_proc(question_mark_index, haystack, needle, boundary_index);
+            return from_index, to_index, found;
+        }
+        else {
+            index := slice_index(haystack, boundary_index);
+            if index >= haystack.count  return -1, -1, false;
 
-        for haystack_index: index .. haystack.count - needle.count {
-            for needle_index: 0 .. needle.count - 1 {
-                c := needle[needle_index];
-                if c != #char "?" && c != haystack[haystack_index + needle_index]
-                    continue haystack_index;
+            for haystack_index: index .. haystack.count - needle.count {
+                for needle_index: 0 .. needle.count - 1 {
+                    c := needle[needle_index];
+                    if c != #char "?" && c != haystack[haystack_index + needle_index]
+                        continue haystack_index;
+                }
+
+                return haystack_index, haystack_index + needle.count, true;
             }
 
-            return haystack_index, haystack_index + needle.count, true;
+            return -1, -1, false;
         }
-
-        return -1, -1, false;
     }
-}
 
-assert( starts_with("Hello World", "He??o", question_mark_index) == true );
+    assert( starts_with("Hello World", "He??o", question_mark_index) == true );
 ```
 
 Notice the use of `reverse_index_proc` to handle when the `reverse` parameter is set.  This is a library procedure that you can use if you don't want to write out the reverse algorithm yourself, but note that it is extremely inefficient!
@@ -96,15 +98,9 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 <hr>
 
-## API
+## String_View
 
 ### `#module_parameters`
-
-* `allocator`<br>
-Allocator used by default for all library procs which allocate.  If set to `null` (the default) then the context allocator will be used.
-
-* `default_compare`<br>
-Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
 
 * `default_first_index`<br>
 `first_index` procedure used to search through strings for substrings, and used internally (for `split`, `replace`, etc.).  By default this uses `boyer_moore_first_index`, which does allocate a small amount of data (increasing in size with the needle).  Swap to `naive_first_index` for a non-allocating albeit slower version (or roll your own).
@@ -112,17 +108,14 @@ Default comparison procedure used to check if two characters are equal.  Default
 * `default_last_index`<br>
 As `default_first_index`, but searching backwards from the end of the string.
 
-* `add_convenience_functions`<br>
-Adds `print`, `init_string_builder`, & `builder_to_string` set to behave the same as every other allocated proc (i.e. if null use module allocator, which if null uses context allocator). Usually you would only enable this if you were importing the module into its own namespace.
+* `default_compare`<br>
+Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
 
 * `strict`<br>
 By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
 
-* `debug`<br>
-Provides a small amount of debug output.
 
-
-### Procedures (non-allocating)
+### Procedures
 
 * `set_index_algorithm (first_index_proc := default_first_index, last_index_proc := default_last_index)`<br>
 Sets the index procedures used internally when searching through strings (for `replace`, `split`, etc.)
@@ -238,9 +231,35 @@ Works like `forward_split` using `#char "\n"` as the tool, but will automaticall
 <hr>
 
 
-### Procedures (allocating)
+## String_New
 
-Every procedure here can take these three parameters (in addition to their listed parameters):
+
+### `#module_parameters`
+
+
+* `default_allocator : Allocator`<br>
+`Allocator` used to allocate all returned values.  If `null` then the `context.allocator` will be used.  This may be overridden in each individual call.
+
+* `default_allocator_data : *void`<br>
+Allocator data used when allocating returned values.  If `null` then the `context.allocator_data` will be used.  This may be overridden in each individual call.
+
+* `default_compare`<br>
+Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
+
+* `strict`<br>
+By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
+
+* `add_convenience_functions`<br>
+When enabled the module will provide these additional procedures:
+  * `print` - identical to `sprint`, set to use this module's allocator.
+  * `builder_to_string` - identical to `builder_to_string`, set to use this module's allocator.
+
+* `debug`<br>
+When set to true some debug info will be displayed for allocations.
+
+### Procedures
+
+Every procedure in this module can take these three parameters (in addition to their listed parameters):
 
 * `allocator: Allocator` - sets the `allocator` to use, overriding the default specified in the `module_parameters`.
 * `allocator_data: *void` - sets the `allocator_data` to use, overriding the default specified in the `module_parameters`.
@@ -248,29 +267,29 @@ Every procedure here can take these three parameters (in addition to their liste
 
 <hr>
 
-* `copied (str: string) -> string`<br>
+* `copy (str: string) -> string`<br>
 Returns of a copy of `str`.
 
-* `reversed (str: string) -> string`<br>
+* `reverse (str: string) -> string`<br>
 Returns a copy of `str` with the characters in the reverse order.
 
-* `capitalized (str: string, preserve_caps := true) -> string`<br>
+* `capitalize (str: string, preserve_caps := true) -> string`<br>
 Returns a copy of `str` with the first letter converted to upper-case.  If `preserve_caps` is disabled then all subsequent letters will be converted to lower-case.
 
-* `replaced (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0) -> string`<br>
+* `replace (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0) -> string`<br>
 Returns a copy of `str` with all (non-overlapping) instances of `needle` replaced with `replacement`.
 If `max_replacements` is non-zero then at most that many replacements will be made (starting at the beginning of the string).
 
-* `concatenated  (strings: .. string) -> string #`<br>
+* `concatenate  (strings: .. string) -> string #`<br>
 Returns a single string created by concatenating all the provided strings together.
 
-* `joined (strings: [] string) -> string`<br>
+* `join (strings: [] string) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together.
 
-* `joined (strings: [] string, separator: string) -> string`<br>
+* `join (strings: [] string, separator: string) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together with `separator` between them.
 
-* `joined (strings: [] string, separator: u8) -> string`<br>
+* `join (strings: [] string, separator: u8) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together with `separator` between them.
 
 * `split (text: string, separator: %Tool, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
@@ -284,28 +303,28 @@ As per `split`, but splitting the string at the specified indices.
 * `split (text: string, splitter: Split_By, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split`, but using the specified `Split_By` struct.  i.e. a struct retuned by `forward_split`, `reverse_split`, or `line_split`.
 
-* `padded_start (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `pad_start (str: string, desired_count: int, pad_with := "        ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
 
-* `padded_start (str: string, desired_count: int, pad_with: u8) -> string`<br>
+* `pad_start (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
 
-* `padded_end (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `pad_end (str: string, desired_count: int, pad_with := "        ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the end such that the string length reaches the `desired_count`.
 
-* `padded_end (str: string, desired_count: int, pad_with: u8) -> string`<br>
+* `pad_end (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the end such that the string length reaches the `desired_count`.
 
-* `padded_center (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `pad_center (str: string, desired_count: int, pad_with := "        ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the begining *and* from the end such that the string length reaches the `desired_count`.
 
-* `padded_center (str: string, desired_count: int, pad_with: u8) -> string`<br>
+* `pad_center (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the begining *and* from the end such that the string length reaches the `desired_count`.
 
-* `repeated (str: string, times: int) -> string`<br>
+* `repeat (str: string, times: int) -> string`<br>
 Returns a string consisting of `str` repeated `times` times.
 
-* `camelled_from_snake (str: string, preserve_caps := false) -> string`<br>
+* `camel_from_snake (str: string, preserve_caps := false) -> string`<br>
 Returns a copy of underscore-separated `str`, changed into programmer CamelCase; i.e. with the leading letter, and every letter after an underscore, converted to upper-case, and with underscores removed.  If `preserve_caps` is enabled then the the underscore removal still happens, but the case is kept.
 
 For example:
@@ -314,7 +333,7 @@ For example:
     assert( camel_from_snake("play_RTS", true) == "playRTS" );
 ```
 
-* `snaked_from_camel (str: string, preserve_caps := false) -> string`<br>
+* `snake_from_camel (str: string, preserve_caps := false) -> string`<br>
 Returns a copy of CamelCased `str`, changed into programmer snake case; i.e. converted to lower-case, but split by `_` at each formerly upper-case letter edge.  If `preserve_caps` is enabled then the the split still happens, but the case is kept.
 
 For example:

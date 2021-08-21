@@ -1,7 +1,7 @@
-#import "String_View";
+#import "Strings";
 
 
-knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int, found: bool {
     if needle == ""  return from_index, true;
     if from_index >= haystack.count - needle.count  return -1, false;
 
@@ -27,7 +27,7 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index:
 }
 
 
-knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int, found: bool {
     if needle == ""  return from_index - 1, true;
     if from_index < needle.count  return -1, false;
     from_index = haystack.count - from_index;

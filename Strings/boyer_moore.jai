@@ -1,7 +1,10 @@
 // Based on copypasta from wikipedia
 
 
-boyer_moore_first_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+#import "Strings";
+
+
+boyer_moore_first_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int, found: bool {
     if needle == ""  return from_index, true;
     if from_index >= haystack.count - needle.count  return -1, false;
 
@@ -44,7 +47,7 @@ boyer_moore_first_index :: (haystack: string, needle: string, from_index: int, c
 }
 
 
-boyer_moore_last_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int #must, found: bool {
+boyer_moore_last_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int, found: bool {
     if needle == ""  return from_index - 1, true;
     if from_index < needle.count  return -1, false;
     from_index = haystack.count - from_index;
