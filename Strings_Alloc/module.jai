@@ -3,22 +3,29 @@
 
 
 #module_parameters (
-    default_allocator : Allocator = null,             // default allocator: null will use context.allocator
+    // default allocator: null will use context.allocator
+    default_allocator : Allocator = null,
     default_allocator_data : *void = null,
 
-    //default_compare_proc := strings.case_sensitive,   // default compare function used when matching strings
-    //                                                  // other provided option is `ignore_case`
-    //default_first_index := strings.boyer_moore_first_index,   // default proc to find first index of substring in string
-    //default_last_index  := strings.boyer_moore_last_index,    // default proc to find last index of substring in string
+    // Adds `print`, `init_string_builder`, & `builder_to_string`set to behave the
+    // same as every other allocated proc (i.e. if null use module allocator, which
+    // if null uses the context allocator)
+    add_convenience_functions := false,
 
-    add_convenience_functions := false,               // Adds `print`, `init_string_builder`, & `builder_to_string`
-                                                      // set to behave the same as every other allocated proc
-                                                      // (i.e. if null use module allocator, which if null uses context
-                                                      //  allocator)
+    // Default compare function used to check for character equality.
+    // Can be overridden with `set_default_compare`.
+    //compare : enum { CASE_SENSITIVE; IGNORE_CASE; } = .CASE_SENSITIVE,
 
-    strict := false,                                  // Asserts when indices fall outside the range of the string
+    // Index algorithm used to find instance of string in other string.
+    // Can be overriden with `set_index_algorithm`
+    //index_algorithm : enum { NAIVE; BOYER_MOORE; KNUTH_MORRIS_PRATT; } = .BOYER_MOORE,
 
-    debug := false                                    // Provides some debug output
+    // When strict mode is enabled asserts will fail when indices fall outside
+    // the range of the string.
+    strict := false,
+
+    // Provides some debug output
+    debug := false
 );
 
 

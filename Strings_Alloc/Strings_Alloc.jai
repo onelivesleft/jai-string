@@ -16,7 +16,11 @@
 
 
 #import "Basic";
-#import "Strings";
+#import "Strings_Shared";
+
+strings :: #import "Strings";//(compare=xx compare, index_algorithm=xx index_algorithm, strict=strict);
+Index_Proc :: strings.Index_Proc;
+default_compare :: strings.default_compare;
 
 
 copy :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
@@ -96,7 +100,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     first_loop := true;
     last_string := "";
-    for forward_split(haystack, needle, compare, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
+    for strings.split(haystack, needle, compare, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
         if first_loop  first_loop = false;
         else           append(*result, replacement);
         append(*result, it);
@@ -122,7 +126,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 
     first_loop := true;
     last_string := "";
-    for forward_split(haystack, needle, index, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
+    for strings.split(haystack, needle, index, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
         if first_loop  first_loop = false;
         else           append(*result, replacement);
         append(*result, it);
@@ -223,11 +227,11 @@ split :: inline (text: string, separator: string, $$compare: type_of(default_com
     set_result_allocator();
 
     if reversed {
-        for reverse_split(text, separator, compare, skip_empty, max_results)
+        for strings.reverse_split(text, separator, compare, skip_empty, max_results)
             array_add(*result, it);
     }
     else {
-        for forward_split(text, separator, compare, skip_empty, max_results)
+        for strings.split(text, separator, compare, skip_empty, max_results)
             array_add(*result, it);
     }
 
@@ -245,11 +249,11 @@ split :: inline (text: string, separator: string, index: Index_Proc, reversed :=
     set_result_allocator();
 
     if reversed {
-        for reverse_split(text, separator, index, skip_empty, max_results)
+        for strings.reverse_split(text, separator, index, skip_empty, max_results)
             array_add(*result, it);
     }
     else {
-        for forward_split(text, separator, index, skip_empty, max_results)
+        for strings.split(text, separator, index, skip_empty, max_results)
             array_add(*result, it);
     }
 
@@ -262,11 +266,11 @@ split :: inline (text: string, separator: [] u8, reversed := false, skip_empty :
     set_result_allocator();
 
     if reversed {
-        for reverse_split(text, separator, skip_empty, max_results)
+        for strings.reverse_split(text, separator, skip_empty, max_results)
             array_add(*result, it);
     }
     else {
-        for forward_split(text, separator, skip_empty, max_results)
+        for strings.split(text, separator, skip_empty, max_results)
             array_add(*result, it);
     }
 
@@ -279,11 +283,11 @@ split :: inline (text: string, separator: u8, reversed := false, skip_empty := f
     set_result_allocator();
 
     if reversed {
-        for reverse_split(text, separator, skip_empty, max_results)
+        for strings.reverse_split(text, separator, skip_empty, max_results)
             array_add(*result, it);
     }
     else {
-        for forward_split(text, separator, skip_empty, max_results)
+        for strings.split(text, separator, skip_empty, max_results)
             array_add(*result, it);
     }
 
@@ -296,11 +300,11 @@ split :: inline (text: string, indexes: .. int, reversed := false, skip_empty :=
     set_result_allocator();
 
     if reversed {
-        for reverse_split(text, ..indexes, skip_empty, max_results)
+        for strings.reverse_split(text, ..indexes, skip_empty, max_results)
             array_add(*result, it);
     }
     else {
-        for forward_split(text, ..indexes, skip_empty, max_results)
+        for strings.split(text, ..indexes, skip_empty, max_results)
             array_add(*result, it);
     }
 
@@ -563,7 +567,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
     set_result_allocator();
     defer reset(*result);
 
-    for forward_split(str, #char "_") {
+    for strings.split(str, #char "_") {
         word := it; // @todo move to loop index when for_expansion bug fixed
         if word {
             append(*result, word);

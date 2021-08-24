@@ -9,8 +9,8 @@ For example, you could import and use them like this:
 
 ```jai
 #import "Strings";
-heap :: #import "Strings_Alloc" #unshared;
-temp :: #import "Strings_Alloc"(__temporary_allocator) #unshared;
+heap :: #import "Strings_Alloc";
+temp :: #import "Strings_Alloc"(__temporary_allocator);
 
 main :: () {
     trimmed := trim("  Some test string  ");  // in Strings, does not allocate
@@ -109,7 +109,7 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 As `default_first_index`, but searching backwards from the end of the string.
 
 * `default_compare`<br>
-Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
+Default comparison procedure used to check if two string characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.  Note that this is only used when the `%Tool` is a `string`: if the `%Tool` is a `u8` or `[]u8` then bitwise comparison is used.
 
 * `strict`<br>
 By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
@@ -118,10 +118,10 @@ By default the module will be fairly permissive of inputs, doing the Right Thing
 ### Procedures
 
 * `set_index_algorithm (first_index_proc := default_first_index, last_index_proc := default_last_index)`<br>
-Sets the index procedures used internally when searching through strings (for `replace`, `split`, etc.)
+Sets the index procedures used internally when searching through strings with strings (for `replace`, `split`, etc.)
 
 * `is_any (needle: u8, characters: [] u8, compare := default_compare) -> bool`<br>
-Returns whether `needle` compares true to any of `characters`.  This is used internally with the `default_compare` any time a `[] u8` comparison is needed.
+Returns whether `needle` is equal to any of `characters`.
 
 * `string_from_char (char: *u8) -> string`<br>
 Returns a string view on the character specified.
