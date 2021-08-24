@@ -92,24 +92,6 @@ substring :: (str: string, from_index: int, count: int) -> string {
 
 
 
-
-
-is_any :: inline (needle: u8, characters: [] u8, $$compare : Character_Compare) -> bool {
-    for character: characters
-        if compare(needle, character)  return true;
-
-    return false;
-}
-
-
-string_from_char :: (char: *u8) -> string {
-    result : string = ---;
-    result.data = char;
-    result.count = 1;
-    return result;
-}
-
-
 equals :: (a: string, b: string, $$compare : Character_Compare) -> bool {
     if a.count != b.count  return false;
 
