@@ -17,9 +17,9 @@
 
 
 #if compare == .CASE_SENSITIVE
-    default_compare :: case_sensitive;
+    default_compare := case_sensitive;
 else #if compare == .IGNORE_CASE
-    default_compare :: ignore_case;
+    default_compare := ignore_case;
 
 #if index_algorithm == .NAIVE {
     default_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {

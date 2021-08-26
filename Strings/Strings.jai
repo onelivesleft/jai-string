@@ -15,9 +15,9 @@
 #import "Strings_Shared";
 
 
-current_compare := case_sensitive;
-current_first_index := naive_first_index;
-current_last_index := naive_last_index;
+current_compare := default_compare;
+current_first_index := default_first_index;
+current_last_index := default_last_index;
 
 
 set_default_compare :: (character_compare : Character_Compare) {
@@ -34,9 +34,9 @@ set_index_algorithm :: (first_index_proc : Index_Proc, last_index_proc : Index_P
 slice_index :: inline (str: string, index: int) -> normalized_index: int, valid_when_strict: bool {
     if index < 0  index += str.count;
 
-    if index < 0               return 0, false;
-    else if index > str.count  return str.count, false;
-    else                       return index, true;
+    if index > str.count  return str.count, false;
+    else if index < 0     return 0, false;
+    else                  return index, true;
 }
 
 
