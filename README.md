@@ -21,7 +21,7 @@ main :: () {
 }
 ```
 
-To use clone the repo then copy the `Strings` and `Strings_Alloc` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\Strings c:\repos\jai-string\Strings`
+To use clone the repo then copy the `Strings`, `Strings_Alloc` and `Strings_Shared` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\Strings c:\repos\jai-string\Strings`
 
 
 ## Mechanics
@@ -36,8 +36,21 @@ By default characters being compared between two strings are compared using the 
     assert( contains("Hello", "h", ignore_case) == true  );
 ```
 
+The comparator is a struct; you can make your own like this:
 
-### Tool types: u8 / []u8 / string / Index_Proc
+```jai
+    inverted :: type_of(case_sensitive) {
+        .CUSTOM,
+        (a: u8, b: u8) -> bool {
+            return a != b;
+        }
+    }
+```
+
+*(The other two options to `.CUSTOM` are `.CASE_SENSITIVE` and `.IGNORE_CASE`: you may roll your own versions of those comparators if you wish, and by choosing the relevant identifier the correct SIMD optimisations will be invoked)*
+
+
+### Tool types: u8 / [] u8 / string / Index_Proc
 
 In a string library it is often the case that you have a string which you are applying an operation to using a *tool* parameter.  In this library there will generally be four version of such procedures, a version each for when the tool is: `u8`, `[] u8`, `string`, and `Index_Proc`.  As tools these types behave consistently across the library.  The first three are simple, built-in types, and work like this:
 
@@ -53,10 +66,11 @@ The exact string will be used: i.e. the characters specified in the sequence spe
 
 For example:
 ```jai
-    assert( trim(" Hello  ", #char " ")            == "Hello"  );
-    assert( trim("prerep World", cast([]u8) "pre") == " World" );
-    assert( trim("prerep World", "pre")            == "rep World" );
+    assert( trim( " apple  ",    #char " "        )  == "apple"  );
+    assert( trim( "banana pear", cast([]u8) "ban" )  == " pear" );
+    assert( trim( "banana pear", "ban"            )  == "ana pear" );
 ```
+
 
 An `Index_Proc` is a procedure with the signature:
 
@@ -102,11 +116,19 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 ### `#module_parameters`
 
-* `default_first_index`<br>
-`first_index` procedure used to search through strings for substrings, and used internally (for `split`, `replace`, etc.).  By default this uses `boyer_moore_first_index`, which does allocate a small amount of data (increasing in size with the needle).  Swap to `naive_first_index` for a non-allocating albeit slower version (or roll your own).
+* `index_algorithm`<br>
+Determines the default string search algorithm to use.  One of:
+|   |   |   |   |   |
+|---|---|---|---|---|
+|   |   |   |   |   |
+|   |   |   |   |   |
+|   |   |   |   |   |
+    * `.NAIVE` Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`
+    * `.KNUTH_MORRIS_PRATT`
 
-* `default_last_index`<br>
-As `default_first_index`, but searching backwards from the end of the string.
+
+`first_index` procedure used to search through strings for substrings, and used internally (for `split`, `replace`, etc.).  By default this uses `boyer_moore_first_index`, which does allocate a small amount of data (increasing in size with the needle).  Swap to `naive_first_index` for a non-allocating albeit slower version (or roll your own).
 
 * `default_compare`<br>
 Default comparison procedure used to check if two string characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.  Note that this is only used when the `%Tool` is a `string`: if the `%Tool` is a `u8` or `[]u8` then bitwise comparison is used.
