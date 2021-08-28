@@ -119,7 +119,7 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 * `index_algorithm`<br>
 Determines the default string search algorithm to use.  One of:
 <table>
-<tr><td>`.NAIVE`</td><td>Simplest algorithm, no memory overhead.</td></tr>
+<tr><td><quote>.NAIVE</quote></td><td>Simplest algorithm, no memory overhead.</td></tr>
 <table>
     * `.BOYER_MOORE`
     * `.KNUTH_MORRIS_PRATT`
