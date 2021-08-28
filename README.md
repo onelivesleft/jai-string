@@ -116,13 +116,10 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 ### `#module_parameters`
 
-* `index_algorithm`<br>
-Determines the default string search algorithm to use.  One of:
-<table>
-<tr><td><quote>.NAIVE</quote></td><td>Simplest algorithm, no memory overhead.</td></tr>
-<table>
-    * `.BOYER_MOORE`
-    * `.KNUTH_MORRIS_PRATT`
+* `index_algorithm`<br>Determines the default string search algorithm to use.  One of:
+    * `.NAIVE`<br>Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`<br>foo
+    * `.KNUTH_MORRIS_PRATT`<br>bar
 
 
 `first_index` procedure used to search through strings for substrings, and used internally (for `split`, `replace`, etc.).  By default this uses `boyer_moore_first_index`, which does allocate a small amount of data (increasing in size with the needle).  Swap to `naive_first_index` for a non-allocating albeit slower version (or roll your own).
