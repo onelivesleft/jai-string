@@ -118,7 +118,7 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 * `index_algorithm`<br>Determines the default string search algorithm to use.  One of:
     * `.NAIVE`<br>Simplest algorithm, no memory overhead.<br>
-    * `.BOYER_MOORE`<br>foo<br>
+    * `.BOYER_MOORE`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested algorithm, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>bar
 
 
