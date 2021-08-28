@@ -117,8 +117,8 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 ### `#module_parameters`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use.  One of:
-    * `.NAIVE`<br>Simplest algorithm, no memory overhead.
-    * `.BOYER_MOORE`<br>foo
+    * `.NAIVE`<br>Simplest algorithm, no memory overhead.<br>
+    * `.BOYER_MOORE`<br>foo<br>
     * `.KNUTH_MORRIS_PRATT`<br>bar
 
 
