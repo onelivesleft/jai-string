@@ -2,6 +2,7 @@
 
 
 // TODO
+// [ ] `keep_separator` on all `split`
 // [ ] unicode support
 // [ ] trim_to (e.g name = "{hi} stuff"; name = trim_to(name, "}"))  Include seperator?
 // [x] first_index lambda needle
@@ -563,7 +564,6 @@ reverse :: (str: string) {
         high_index -= 1;
     }
 }
-
 
 
 split :: inline (text: string, separator: string, skip_empty := false, max_results := 0, compare: Character_Compare) -> Split_By_String {

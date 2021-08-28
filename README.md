@@ -76,7 +76,7 @@ An `Index_Proc` is a procedure with the signature:
 
 `(haystack: string, needle: string, boundary_index: int, reverse: bool) -> from_index: int, to_index: int, found: bool`
 
-This allows you to feed an arbitrarily complex pattern match into the procedure you are using.
+This allows you to feed an arbitrarily complex pattern match into the procedure you are using.  When using an `Index_Proc` tool, a character comparator is not used (as your own code is instead).
 
 For example:
 ```jai
@@ -116,31 +116,38 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 ### `#module_parameters`
 
-* `index_algorithm`<br>Determines the default string search algorithm to use.  One of:
-    * `.NAIVE`<br>Simplest algorithm, no memory overhead.<br>
+* `compare`<br>Default comparator used to check if two string characters are equal.  You may change it using `set_default_compare`.  One of:
+    * `.CASE_SENSITIVE`
+    * `.IGNORE_CASE`
+
+* `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
+    * `.NAIVE`<br>Simplest algorithm, no memory overhead.
     * `.BOYER_MOORE`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested algorithm, has a small memory footprint that increases with needle size.
-    * `.KNUTH_MORRIS_PRATT`<br>bar
+    * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
-
-`first_index` procedure used to search through strings for substrings, and used internally (for `split`, `replace`, etc.).  By default this uses `boyer_moore_first_index`, which does allocate a small amount of data (increasing in size with the needle).  Swap to `naive_first_index` for a non-allocating albeit slower version (or roll your own).
-
-* `default_compare`<br>
-Default comparison procedure used to check if two string characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.  Note that this is only used when the `%Tool` is a `string`: if the `%Tool` is a `u8` or `[]u8` then bitwise comparison is used.
-
-* `strict`<br>
-By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
+* `strict`<br>By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
 
 
 ### Procedures
 
+* `set_default_compare (character_compare := default_compare)`<br>
+Sets the compartor used to check if two characters match.
+
 * `set_index_algorithm (first_index_proc := default_first_index, last_index_proc := default_last_index)`<br>
 Sets the index procedures used internally when searching through strings with strings (for `replace`, `split`, etc.)
+
+* `set_simd_mode (mode)`<br>Sets whether to use SIMD optimisations.  One of:
+    * `.OFF`<br>Disables all SIMD optimisations, utilizing scalar code only.
+    * `.AUTO`<br>Uses the fastest SIMD instruction set available on the CPU.
+    * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
+    * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
+
 
 * `is_any (needle: u8, characters: [] u8, compare := default_compare) -> bool`<br>
 Returns whether `needle` is equal to any of `characters`.
 
-* `string_from_char (char: *u8) -> string`<br>
-Returns a string view on the character specified.
+* `equal (a: string, b: string, compare := default_compare) -> bool`<br>
+Returns whether the two strings are equal, using current or specified comparator.
 
 
 * `slice (str: string, from_index: int, to_index: int) -> string, normalized_from_index: int, normalized_to_index: int`<br>
@@ -155,35 +162,39 @@ Same thing as `slice`, but without any checking on the indices, and without bein
 * `substring (str: string, from_index: int, count: int) -> string`<br>
 Same as `slice`, except instead of a `to_index` you specify a character count.
 
-* `starts_with (haystack: string, needle: %Tool) -> bool`<br>
-Returns whether `haystack` begins with `needle`.
+* `trim (str: string) -> string`<br>
+Returns the string view of `str` with all characters from the start and end which are <= `#char " "` removed (in effect all whitespace and control codes).
 
-* `ends_with (haystack: string, needle: %Tool) -> bool`<br>
-Returns whether `haystack` ends with `needle`.
+* `trim (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters matching tool removed from the start and end.
 
-* `first_index (haystack: string, needle: %Tool, start_index := 0) -> index: int, found: bool, [to_index: int]`<br>
+* `trim_start (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters matching tool removed from the start.
+
+* `trim_end (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters matching tool removed from the end.
+
+
+* `first_index (haystack: string, needle: %Tool, start_index := 0, compare := default_compare) -> index: int, found: bool, [to_index: int]`<br>
 Returns the first index in `haystack` at which `needle` occurs, or `-1` if it does not occur.  `found` will be true if `needle` was found.  In the case when `%Tool` is an `Index_Proc`, `to_index` will be set to the index the pattern terminates at.
 
-* `last_index (haystack: string, needle: %Tool, start_index := 0) -> index: int, found: bool, [to_index: int]`<br>
+* `last_index (haystack: string, needle: %Tool, start_index := 0, compare := default_compare) -> index: int, found: bool, [to_index: int]`<br>
 As per `first_index`, but working backwards from the end of the `haystack`.
 
-* `contains (haystack: string, needle: %Tool) -> bool`<br>
+* `contains (haystack: string, needle: %Tool, compare := default_compare) -> bool`<br>
 Whether `needle` occurs within `haystack`.
 
-* `count (haystack: string, needle: %Tool) -> int`<br>
+* `count (haystack: string, needle: %Tool, compare := default_compare) -> int`<br>
 How many times `needle` occurs within `haystack` (non-overlapping).
 
 * `count (haystack: string, needle: [] Character_Translation) -> int`<br>
 How many times `needle` occurs within `haystack` (non-overlapping).
 
-* `trim (str: string) -> string`<br>
-Returns the string view of `str` with all characters from the start and end which are <= `#char " "` removed (in effect all whitespace and control codes).
+* `starts_with (haystack: string, needle: %Tool, compare := default_compare) -> bool`<br>
+Returns whether `haystack` begins with `needle`.
 
-* `trim (str: string, tool: %Tool) -> string`<br>
-Returns the string view of `str` with all characters from the start and end which match `tool` removed.
-
-* `trim_start`, `trim_end`<br>
-As per `trim`, except only remove characters from the start and end of the string, respectively.
+* `ends_with (haystack: string, needle: %Tool, compare := default_compare) -> bool`<br>
+Returns whether `haystack` ends with `needle`.
 
 * `is_lower (char: u8) -> bool`<br>
 Whether `char` falls in the range `#char "a" - #char "z"`.
@@ -196,6 +207,9 @@ Mutates `str` in-place, overwritting any upper-case characters with their lower-
 
 * `to_upper (str: string)`<br>
 Mutates `str` in-place, overwritting any lower-case characters with their upper-case equivalent.
+
+* `capitalize (str: string, preserve_caps := true)`<br>
+Sets the first letter of `str` to upper-case.  If `preserve_caps` is set to false, will set all following letters to lower-case.
 
 * `reverse (str: string)`<br>
 Reverses the characters in `str` in-place.
@@ -213,16 +227,13 @@ Character_Translation :: struct {
 }
 ```
 
-* `capitalize (str: string, preserve_caps := true)`<br>
-Sets the first letter of `str` to upper-case.  If `preserve_caps` is set to false, will set all following letters to lower-case.
 
-
-* `forward_split (text: string, separator: %Tool, skip_empty := false, max_results := 0)`<br>
+* `split (text: string, separator: %Tool, skip_empty := false, max_results := 0)`<br>
 Used to iterate over `text` in a `for` loop, splitting the string by the chosen tool.  If `skip_empty` is set then your code will not be called with the empty string (i.e. when there are two consecutive `seperator`s).  If `max_results` is non-zero then `text` will only be split into at most that many pieces.
 
 For example:
 ```jai
-    for word, index: forward_split(" aa bb cc ", #char " ", skip_empty = true) {
+    for word, index: split(" aa  bb  cc ", #char " ", skip_empty = true) {
         if index == {
             case  0; assert(word == "aa");
             case  1; assert(word == "bb");
@@ -231,17 +242,18 @@ For example:
     }
 ```
 
-* `reverse_split (text: string, separator: %Tool, skip_empty := false, max_results := 0)`<br>
-As per `forward_split`, but working backwards from the end of `text`.
+* `split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
+Works like the above `split`, except the string is split at the specified indices.
 
-* `forward_split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
-Works like the above `forward_split`, except the string is split at the specified indices.
+* `line_split (text: string, keep_end := false, skip_empty := false, max_results := 0)`<br>
+Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).  By default the values returned will have the end-of-line characters removed, but you may elect to keep them by setting `keep_end` to true.
 
-* `reverse_split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
-As per `forward_split`, but working backwards from the end of `text`.
 
-* `line_split (text: string, skip_empty := false, max_results := 0, keep_eol := false)`<br>
-Works like `forward_split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).  By default the values returned will have the end-of-line characters removed, but you may elect to keep them by setting `keep_eol` to true.
+* `string_from_char (char: *u8) -> string`<br>
+Returns a string view on the character specified.
+
+* `reverse_index_proc (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool`<br>
+Can be used to automatically make a reversed version of an `Index_Proc` (see `question_mark_index` example above).  Very inefficient!
 
 
 <hr>
@@ -254,34 +266,54 @@ Works like `forward_split` using `#char "\n"` as the tool, but will automaticall
 
 
 * `default_allocator : Allocator`<br>
-`Allocator` used to allocate all returned values.  If `null` then the `context.allocator` will be used.  This may be overridden in each individual call.
+`Allocator` used to allocate all returned values.  If `null` (the default) then the `context.allocator` will be used.  This may be overridden in each individual call.
 
 * `default_allocator_data : *void`<br>
-Allocator data used when allocating returned values.  If `null` then the `context.allocator_data` will be used.  This may be overridden in each individual call.
-
-* `default_compare`<br>
-Default comparison procedure used to check if two characters are equal.  Default is `case_sensitive`; you may change to `ignore_case`, or your own.
-
-* `strict`<br>
-By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
+Allocator data used when allocating returned values.  This may be overridden in each individual call.
 
 * `add_convenience_functions`<br>
-When enabled the module will provide these additional procedures:
+When enabled (it defaults to false) the module will provide these additional procedures:
   * `print` - identical to `sprint`, set to use this module's allocator.
   * `builder_to_string` - identical to `builder_to_string`, set to use this module's allocator.
 
 * `debug`<br>
 When set to true some debug info will be displayed for allocations.
 
+* `compare`<br>Default comparator used to check if two string characters are equal.  You may change it using `set_default_compare`.  One of:
+    * `.CASE_SENSITIVE`
+    * `.IGNORE_CASE`
+
+* `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
+    * `.NAIVE`<br>Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested algorithm, has a small memory footprint that increases with needle size.
+    * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
+
+* `strict`<br>By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
+
+
 ### Procedures
 
-Every procedure in this module can take these three parameters (in addition to their listed parameters):
+Every procedure unique to this module can take these three parameters (in addition to their listed parameters):
 
 * `allocator: Allocator` - sets the `allocator` to use, overriding the default specified in the `module_parameters`.
 * `allocator_data: *void` - sets the `allocator_data` to use, overriding the default specified in the `module_parameters`.
 * `null_terminate := false` - when enabled, the string returned will have a `#char "\0"` appended to it, if it does not already end with it.
 
 <hr>
+
+
+* `set_default_compare (character_compare := default_compare)`<br>
+Sets the compartor used to check if two characters match.
+
+* `set_index_algorithm (first_index_proc := default_first_index, last_index_proc := default_last_index)`<br>
+Sets the index procedures used internally when searching through strings with strings (for `replace`, `split`, etc.)
+
+* `set_simd_mode (mode)`<br>Sets whether to use SIMD optimisations.  One of:
+    * `.OFF`<br>Disables all SIMD optimisations, utilizing scalar code only.
+    * `.AUTO`<br>Uses the fastest SIMD instruction set available on the CPU.
+    * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
+    * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
+
 
 * `copy (str: string) -> string`<br>
 Returns of a copy of `str`.
@@ -292,7 +324,14 @@ Returns a copy of `str` with the characters in the reverse order.
 * `capitalize (str: string, preserve_caps := true) -> string`<br>
 Returns a copy of `str` with the first letter converted to upper-case.  If `preserve_caps` is disabled then all subsequent letters will be converted to lower-case.
 
-* `replace (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0) -> string`<br>
+* `lower (str: string) -> string`<br>
+Returns a copy of `str` with all upper-case characters converted to their lower-case equivalent.
+
+* `upper (str: string)`<br>
+Returns a copy of `str` with all lower-case characters converted to their upper-case equivalent.
+
+
+* `replace (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0, compare := default_compare) -> string`<br>
 Returns a copy of `str` with all (non-overlapping) instances of `needle` replaced with `replacement`.
 If `max_replacements` is non-zero then at most that many replacements will be made (starting at the beginning of the string).
 
@@ -308,30 +347,29 @@ Returns a single string, the result of joining all the strings in the `strings` 
 * `join (strings: [] string, separator: u8) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together with `separator` between them.
 
-* `split (text: string, separator: %Tool, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
+* `split (text: string, separator: %Tool, reversed := false, skip_empty := false, max_results := 0, compare := default_compare) -> [] string`<br>
 Creates an array of strings by splitting `text` at each instance of `separator`.  `reversed` will reverse the order of the array.  `skip_empty` will not include any empty strings in the array (i.e. when there are consecutive separators).  If `max_results` is non-zero then the array will contain at most that many entries.
-*NOTE* if you can accomplish your task by iterating with `forward_split` (or `reverse_split`) then that may be the better, more performant solution.
+*NOTE* if you can accomplish your task by iterating with `split` from the `Strings` module then that may be the better, more performant solution.
 
 * `split (text: string, indexes: .. int, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split`, but splitting the string at the specified indices.
 
-
 * `split (text: string, splitter: Split_By, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
-As per `split`, but using the specified `Split_By` struct.  i.e. a struct retuned by `forward_split`, `reverse_split`, or `line_split`.
+As per `split`, but using the specified `Split_By` struct.  i.e. a struct returned by the `split` function in the `Strings` module.
 
-* `pad_start (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `pad_start (str: string, desired_count: int, pad_with := " ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
 
 * `pad_start (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
 
-* `pad_end (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `pad_end (str: string, desired_count: int, pad_with := " ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the end such that the string length reaches the `desired_count`.
 
 * `pad_end (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the end such that the string length reaches the `desired_count`.
 
-* `pad_center (str: string, desired_count: int, pad_with := "        ") -> string`<br>
+* `pad_center (str: string, desired_count: int, pad_with := " ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the begining *and* from the end such that the string length reaches the `desired_count`.
 
 * `pad_center (str: string, desired_count: int, pad_with: u8) -> string`<br>
