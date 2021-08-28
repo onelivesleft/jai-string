@@ -1,23 +1,20 @@
-#import "Strings";
-
-
-knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int, found: bool {
+knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return from_index, true;
     if from_index >= haystack.count - needle.count  return -1, false;
 
-    if needle != last_used_needle || cmp != last_used_cmp || last_search_was_reversed {
+    if needle != last_used_needle || compare != last_used_compare || last_search_was_reversed {
         last_search_was_reversed = false;
-        last_used_cmp = cmp;
+        last_used_compare = compare;
         if last_used_needle  free(last_used_needle);
         last_used_needle = copy_string(needle);
-        make_needle_table(*needle_table, needle, cmp, false);
+        make_needle_table(*needle_table, needle, compare, false);
     }
 
     j := 0;
     needle_end := needle.count - 1;
     end := cast(u64)haystack.data + cast(u64)haystack.count;
     for i: cast(u64)haystack.data + cast(u64)from_index .. end {
-        while j >= 0 && !cmp(<<cast(*u8)i, needle[j])
+        while j >= 0 && !compare.compare(<<cast(*u8)i, needle[j])
             j = needle_table[j];
         if j == needle_end  return cast(s64)((i - cast(u64)j) - cast(u64)haystack.data), true;
         j += 1;
@@ -27,23 +24,23 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index:
 }
 
 
-knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: int, cmp: type_of(case_sensitive)) -> index: int, found: bool {
+knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return from_index - 1, true;
     if from_index < needle.count  return -1, false;
     from_index = haystack.count - from_index;
 
-    if needle != last_used_needle || !last_search_was_reversed || cmp != last_used_cmp {
+    if needle != last_used_needle || !last_search_was_reversed || compare != last_used_compare {
         last_search_was_reversed = true;
-        last_used_cmp = cmp;
+        last_used_compare = compare;
         if last_used_needle  free(last_used_needle);
         last_used_needle = copy_string(needle);
-        make_needle_table(*needle_table, needle, cmp, true);
+        make_needle_table(*needle_table, needle, compare, true);
     }
 
     j := 0;
     needle_end := needle.count - 1;
     for i: from_index .. haystack.count - 1 {
-        while j >= 0 && !cmp(get(haystack, i, true), get(needle, j, true))
+        while j >= 0 && !compare.compare(get(haystack, i, true), get(needle, j, true))
             j = needle_table[j];
         if j == needle_end  return haystack.count - needle.count - (i - j), true;
         j += 1;
@@ -57,7 +54,7 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: 
 
 
 last_used_needle : string;
-last_used_cmp : type_of(case_sensitive);
+last_used_compare : Character_Compare;
 last_search_was_reversed := false;
 needle_table : [..] int;
 
@@ -68,7 +65,7 @@ get :: inline (str: string, index: int, $$reversed: bool) -> u8 {
 }
 
 
-make_needle_table :: (needle_table: *[] int, needle: string, cmp: type_of(case_sensitive), $$reversed: bool) {
+make_needle_table :: (needle_table: *[] int, needle: string, compare: Character_Compare, $$reversed: bool) {
     if needle_table.count <= needle.count
         array_resize(needle_table, needle.count + 1, false);
 
@@ -77,7 +74,7 @@ make_needle_table :: (needle_table: *[] int, needle: string, cmp: type_of(case_s
     for i: 0 .. needle.count - 1 {
         j := i + 1;
         needle_table.data[j] = needle_table.data[i] + 1;
-        while needle_table.data[j] > 0 && !cmp(needle[i], needle[needle_table.data[j] - 1])
+        while needle_table.data[j] > 0 && !compare.compare(needle[i], needle[needle_table.data[j] - 1])
             needle_table.data[j] = needle_table.data[needle_table.data[j] - 1] + 1;
     }
 

@@ -17,9 +17,9 @@
 
 
 #if compare == .CASE_SENSITIVE
-    default_compare := case_sensitive;
+    default_compare :: case_sensitive;
 else #if compare == .IGNORE_CASE
-    default_compare := ignore_case;
+    default_compare :: ignore_case;
 
 #if index_algorithm == .NAIVE {
     default_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
@@ -60,12 +60,12 @@ else #if compare == .IGNORE_CASE
     }
 }
 else #if index_algorithm == .BOYER_MOORE {
-    #load "boyer_moore.jai";
+    #load "../Strings_Shared/boyer_moore.jai";
     default_first_index :: boyer_moore_first_index;
     default_last_index  :: boyer_moore_last_index;
 }
 else #if index_algorithm == .KNUTH_MORRIS_PRATT {
-    #load "knuth_morris_pratt.jai";
+    #load "../Strings_Shared/knuth_morris_pratt.jai";
     default_first_index :: knuth_morris_pratt_first_index;
     default_last_index  :: knuth_morris_pratt_last_index;
 }
