@@ -164,9 +164,27 @@ is_upper :: inline (char: u8) -> bool {
 }
 
 
-// @TODO simd string compare
+//bit_masks_16 := u8.[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+//                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+//
+//bit_mask_16_zero : *u8 = (cast(*u8)*bit_masks_16) + 16;
+
+// @TODO why does this crash when declared here?
+
+/*
+bit_masks_32 := u8.[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF];
+bit_mask_32_zero := *bit_masks_32 + 32;
+*/
+
+
 
 _equal :: (a: string, b: string, compare : Character_Compare) -> bool {
+    if compare.kind == .CASE_SENSITIVE
+        return a == b;
+
     if a.count != b.count  return false;
 
     for index: 0 .. a.count - 1
@@ -222,6 +240,108 @@ _ends_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> 
     return to_index == haystack.count;
 }
 
+
+_advance_to :: (haystack: *string, needle: u8, compare: Character_Compare) -> characters_skipped: int {
+    index, found := _first_index(<<haystack, needle, compare);
+
+    if !found  index = haystack.count;
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+_advance_to :: (haystack: *string, needle: [] u8, compare: Character_Compare) -> characters_skipped: int {
+    if needle.count == 0  return 0;
+
+    index, found := _first_index(<<haystack, needle, compare);
+
+    if !found  index = haystack.count;
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+_advance_to :: (haystack: *string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> characters_skipped: int {
+    if needle.count == 0  return 0;
+
+    index, found := _first_index(<<haystack, needle, compare, string_index_proc);
+
+    if !found  index = haystack.count;
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+_advance_to :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> characters_skipped: int {
+    index, found := _first_index(<<haystack, needle, index_proc);
+
+    if !found  index = haystack.count;
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+
+_advance_past :: (haystack: *string, needle: u8, compare: Character_Compare) -> characters_skipped: int {
+    index, found := _first_index(<<haystack, needle, compare);
+
+    if found  index += 1;
+    else      index = haystack.count;
+
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+_advance_past :: (haystack: *string, needle: [] u8, compare: Character_Compare) -> characters_skipped: int {
+    if needle.count == 0  return 0;
+
+    index, found := _first_index(<<haystack, needle, compare);
+
+    if found {
+        while index < haystack.count && _is_any((<<haystack)[index], needle, compare)
+            index += 1;
+        index += 1;
+    }
+    else
+        index = haystack.count;
+
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+_advance_past :: (haystack: *string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> characters_skipped: int {
+    if needle.count == 0  return 0;
+
+    index, found := _first_index(<<haystack, needle, compare, string_index_proc);
+
+    if found  index += needle.count;
+    else      index = haystack.count;
+
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
+
+_advance_past :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> characters_skipped: int {
+    index, found, to_index := _first_index(<<haystack, needle, index_proc);
+
+    if found  index = to_index;
+    else      index = haystack.count;
+
+    haystack.data += index;
+    haystack.count -= index;
+
+    return index;
+}
 
 
 _trim :: (str: string, char: u8, compare: Character_Compare) -> string {
@@ -340,6 +460,17 @@ _trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> s
     return s;
 }
 
+
+_trim_start_to :: (str: string, char: u8, compare: Character_Compare) -> string {
+    index := 0;
+
+    while index < str.count && compare.compare(str[index], char)
+        index += 1;
+
+    if index >= str.count  return "";
+
+    return _unsafe_slice(str, index);
+}
 
 
 _trim_end :: inline (str: string, char: u8, compare: Character_Compare) -> string {
@@ -653,7 +784,7 @@ _first_index :: inline (haystack: string, needle: u8, compare: Character_Compare
 }
 
 
-_first_index :: (haystack: string, needle: [] u8, from_index := 0, compare: Character_Compare) -> index: int, found: bool {
+_first_index :: (haystack: string, needle: [] u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     validate_from_index(haystack);
 
     for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
@@ -661,6 +792,11 @@ _first_index :: (haystack: string, needle: [] u8, from_index := 0, compare: Char
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
+}
+
+_first_index :: inline (haystack: string, needle: [] u8, compare: Character_Compare) -> index: int, found: bool {
+    index, found := _first_index(haystack, needle, 0, compare);
+    return index, found;
 }
 
 
@@ -686,11 +822,16 @@ _first_index :: inline (haystack: string, needle: string, compare: Character_Com
 }
 
 
-_first_index :: inline (haystack: string, needle: string, from_index := 0, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
+_first_index :: inline (haystack: string, needle: string, from_index: int, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
     from_index, to_index, found := index(haystack, needle, from_index, false);
     return from_index, found, to_index;
 }
 
+
+_first_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
+    from_index, to_index, found := index(haystack, needle, 0, false);
+    return from_index, found, to_index;
+}
 
 
 _last_index :: inline (haystack: string, needle: u8, compare: Character_Compare) -> index: int, found: bool {

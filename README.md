@@ -150,6 +150,13 @@ Returns whether `needle` is equal to any of `characters`.
 Returns whether the two strings are equal, using current or specified comparator.
 
 
+* `advance_to (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
+Modifies `haystack` in place, moving its start point forward until it hits `%Tool` (or empties).
+
+* `advance_past (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
+Modifies `haystack` in place, moving its start point forward until it hits and reaches the end of `%Tool` (or empties).
+
+
 * `slice (str: string, from_index: int, to_index: int) -> string, normalized_from_index: int, normalized_to_index: int`<br>
 Returns a string view inside `str`, between the specified indices.  You may use a negative index to specify backwards from the end.  If you do not specify a `to_index` then it will go to the end of the string.  The last two return parameters are the positive indexes the slice ends up using, after validation.
 

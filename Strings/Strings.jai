@@ -2,6 +2,7 @@
 
 
 // TODO
+// [ ] use 64bit char compares when simd_mode == .OFF
 // [ ] `keep_separator` on all `split`
 // [ ] unicode support
 // [ ] trim_to (e.g name = "{hi} stuff"; name = trim_to(name, "}"))  Include seperator?
@@ -249,6 +250,34 @@ ends_with :: inline (haystack: string, needle: [] u8) -> bool {
     return ends_with(haystack, needle, current_compare);
 }
 
+
+advance_to :: _advance_to;
+advance_past :: _advance_past;
+
+advance_to :: inline (haystack: *string, needle: u8) -> characters_skipped: int {
+    return advance_to(haystack, needle, current_compare);
+}
+
+advance_to :: inline (haystack: *string, needle: [] u8) -> characters_skipped: int {
+    return advance_to(haystack, needle, current_compare);
+}
+
+advance_to :: inline (haystack: *string, needle: string) -> characters_skipped: int {
+    return advance_to(haystack, needle, current_compare, current_first_index);
+}
+
+
+advance_past :: inline (haystack: *string, needle: u8) -> characters_skipped: int {
+    return advance_past(haystack, needle, current_compare);
+}
+
+advance_past :: inline (haystack: *string, needle: [] u8) -> characters_skipped: int {
+    return advance_past(haystack, needle, current_compare);
+}
+
+advance_past :: inline (haystack: *string, needle: string) -> characters_skipped: int {
+    return advance_past(haystack, needle, current_compare, current_first_index);
+}
 
 
 trim :: _trim;
