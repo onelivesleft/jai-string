@@ -19,7 +19,11 @@ operator== :: (a: Character_Compare, b: Character_Compare) -> bool {
 simd_mode : enum { OFF; AUTO; SSE; AVX2; } = .SSE;
 #scope_export
 
-_set_simd_mode :: (mode: type_of(simd_mode)) {
+get_simd_mode :: () -> type_of(simd_mode) {
+    return simd_mode;
+}
+
+set_simd_mode :: (mode: type_of(simd_mode)) {
     if mode == .AUTO {
         if get_cpu_info().AVX2
             simd_mode = .AVX2;
@@ -31,7 +35,7 @@ _set_simd_mode :: (mode: type_of(simd_mode)) {
 }
 
 
-_is_any :: inline (needle: u8, characters: [] u8, compare : Character_Compare) -> bool {
+is_any :: inline (needle: u8, characters: [] u8, compare : Character_Compare) -> bool {
     for character: characters
         if compare.compare(needle, character)  return true;
 
@@ -39,7 +43,7 @@ _is_any :: inline (needle: u8, characters: [] u8, compare : Character_Compare) -
 }
 
 
-_case_sensitive :: Character_Compare.{
+case_sensitive :: Character_Compare.{
     .CASE_SENSITIVE,
     (a: u8, b: u8) -> bool {
         return a == b;
@@ -47,7 +51,7 @@ _case_sensitive :: Character_Compare.{
 };
 
 
-_ignore_case :: Character_Compare.{
+ignore_case :: Character_Compare.{
     .IGNORE_CASE,
     (a: u8, b: u8) -> bool {
         return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
@@ -55,7 +59,7 @@ _ignore_case :: Character_Compare.{
     }
 };
 
-// _ignore_case in asm, but it's slower...
+// ignore_case in asm, but it's slower...
 /*
 ptr_a := *a;
 ptr_b := *b;
@@ -83,7 +87,7 @@ return result == 0;
 */
 
 
-_string_from_char :: inline (char: *u8) -> string {
+string_from_char :: inline (char: *u8) -> string {
     result : string = ---;
     result.data = char;
     result.count = 1;
@@ -91,7 +95,7 @@ _string_from_char :: inline (char: *u8) -> string {
 }
 
 
-_unsafe_slice :: inline (str: string, from_index: int, to_index: int) -> string {
+unsafe_slice :: inline (str: string, from_index: int, to_index: int) -> string {
     // @Note Handles positive indexes only!
     assert(from_index >= 0 && from_index <= str.count, "Cannot slice; from_index falls outwith range of string.");
     assert(to_index >= from_index, "Cannot slice; to_index is ahead of from_index.");
@@ -104,7 +108,7 @@ _unsafe_slice :: inline (str: string, from_index: int, to_index: int) -> string 
 }
 
 
-_unsafe_slice :: inline (str: string, from_index: int) -> string {
+unsafe_slice :: inline (str: string, from_index: int) -> string {
     // @Note Handles positive index only!
     assert(from_index >= 0 && from_index <= str.count, "Cannot slice; from_index falls outwith range of string.");
 
@@ -115,7 +119,7 @@ _unsafe_slice :: inline (str: string, from_index: int) -> string {
 }
 
 
-_slice_index :: inline (str: string, index: int) -> normalized_index: int, valid_when_strict: bool {
+slice_index :: inline (str: string, index: int) -> normalized_index: int, valid_when_strict: bool {
     if index < 0  index += str.count;
 
     if index > str.count  return str.count, false;
@@ -124,7 +128,7 @@ _slice_index :: inline (str: string, index: int) -> normalized_index: int, valid
 }
 
 
-_to_lower :: (str: string) {
+to_lower :: (str: string) {
     for 0 .. str.count - 1 {
         if str[it] >= #char "A" && str[it] <= #char "Z" {
             c : int = str[it] + #char "a" - #char "A";
@@ -134,7 +138,7 @@ _to_lower :: (str: string) {
 }
 
 
-_to_upper :: (str: string) {
+to_upper :: (str: string) {
     for 0 .. str.count - 1 {
         if str[it] >= #char "a" && str[it] <= #char "z" {
             c : int = str[it] + #char "A" - #char "a";
@@ -144,7 +148,7 @@ _to_upper :: (str: string) {
 }
 
 
-_capitalize :: (str: string, preserve_caps := true) {
+to_capitalized :: (str: string, preserve_caps := true) {
     if !str  return;
 
     str[0] = to_upper(str[0]);
@@ -181,7 +185,7 @@ bit_mask_32_zero := *bit_masks_32 + 32;
 
 
 
-_equal :: (a: string, b: string, compare : Character_Compare) -> bool {
+equal :: (a: string, b: string, compare : Character_Compare) -> bool {
     if compare.kind == .CASE_SENSITIVE
         return a == b;
 
@@ -196,53 +200,53 @@ _equal :: (a: string, b: string, compare : Character_Compare) -> bool {
 
 
 
-_starts_with :: inline (haystack: string, needle: string, compare : Character_Compare) -> bool {
+starts_with :: inline (haystack: string, needle: string, compare : Character_Compare) -> bool {
     if haystack.count < needle.count  return false;
 
-    return _equal(_unsafe_slice(haystack, 0, needle.count), needle, compare);
+    return equal(unsafe_slice(haystack, 0, needle.count), needle, compare);
 }
 
 
-_starts_with :: inline (haystack: string, needle: u8, compare : Character_Compare) -> bool {
+starts_with :: inline (haystack: string, needle: u8, compare : Character_Compare) -> bool {
     return haystack.count > 0 && compare.compare(haystack[0], needle);
 }
 
 
-_starts_with :: inline (haystack: string, needle: [] u8, compare : Character_Compare) -> bool {
-    return haystack.count > 0 && _is_any(haystack[0], needle, compare);
+starts_with :: inline (haystack: string, needle: [] u8, compare : Character_Compare) -> bool {
+    return haystack.count > 0 && is_any(haystack[0], needle, compare);
 }
 
 
-_starts_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> bool {
+starts_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> bool {
     return index(haystack, needle, 0, false) == 0;
 }
 
 
-_ends_with :: inline (haystack: string, needle: string, compare: Character_Compare) -> bool {
+ends_with :: inline (haystack: string, needle: string, compare: Character_Compare) -> bool {
     if haystack.count < needle.count  return false;
 
-    return _equal(_unsafe_slice(haystack, haystack.count - needle.count), needle, compare);
+    return equal(unsafe_slice(haystack, haystack.count - needle.count), needle, compare);
 }
 
 
-_ends_with :: inline (haystack: string, needle: u8, compare: Character_Compare) -> bool {
+ends_with :: inline (haystack: string, needle: u8, compare: Character_Compare) -> bool {
     return haystack.count > 0 && compare.compare(haystack[haystack.count - 1], needle);
 }
 
 
-_ends_with :: inline (haystack: string, needle: [] u8, compare: Character_Compare) -> bool {
-    return haystack.count > 0 && _is_any(haystack[haystack.count - 1], needle, compare);
+ends_with :: inline (haystack: string, needle: [] u8, compare: Character_Compare) -> bool {
+    return haystack.count > 0 && is_any(haystack[haystack.count - 1], needle, compare);
 }
 
 
-_ends_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> bool {
+ends_with :: inline (haystack: string, needle: string, $$index: Index_Proc) -> bool {
     from_index, to_index, found := index(haystack, needle, haystack.count, true);
     return to_index == haystack.count;
 }
 
 
-_advance_to :: (haystack: *string, needle: u8, compare: Character_Compare) -> characters_skipped: int {
-    index, found := _first_index(<<haystack, needle, compare);
+advance_to :: (haystack: *string, needle: u8, compare: Character_Compare) -> characters_skipped: int {
+    index, found := first_index(<<haystack, needle, compare);
 
     if !found  index = haystack.count;
     haystack.data += index;
@@ -251,10 +255,10 @@ _advance_to :: (haystack: *string, needle: u8, compare: Character_Compare) -> ch
     return index;
 }
 
-_advance_to :: (haystack: *string, needle: [] u8, compare: Character_Compare) -> characters_skipped: int {
+advance_to :: (haystack: *string, needle: [] u8, compare: Character_Compare) -> characters_skipped: int {
     if needle.count == 0  return 0;
 
-    index, found := _first_index(<<haystack, needle, compare);
+    index, found := first_index(<<haystack, needle, compare);
 
     if !found  index = haystack.count;
     haystack.data += index;
@@ -263,10 +267,10 @@ _advance_to :: (haystack: *string, needle: [] u8, compare: Character_Compare) ->
     return index;
 }
 
-_advance_to :: (haystack: *string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> characters_skipped: int {
+advance_to :: (haystack: *string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> characters_skipped: int {
     if needle.count == 0  return 0;
 
-    index, found := _first_index(<<haystack, needle, compare, string_index_proc);
+    index, found := first_index(<<haystack, needle, compare, string_index_proc);
 
     if !found  index = haystack.count;
     haystack.data += index;
@@ -275,8 +279,8 @@ _advance_to :: (haystack: *string, needle: string, compare: Character_Compare, s
     return index;
 }
 
-_advance_to :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> characters_skipped: int {
-    index, found := _first_index(<<haystack, needle, index_proc);
+advance_to :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> characters_skipped: int {
+    index, found := first_index(<<haystack, needle, index_proc);
 
     if !found  index = haystack.count;
     haystack.data += index;
@@ -286,8 +290,8 @@ _advance_to :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> 
 }
 
 
-_advance_past :: (haystack: *string, needle: u8, compare: Character_Compare) -> characters_skipped: int {
-    index, found := _first_index(<<haystack, needle, compare);
+advance_past :: (haystack: *string, needle: u8, compare: Character_Compare) -> characters_skipped: int {
+    index, found := first_index(<<haystack, needle, compare);
 
     if found  index += 1;
     else      index = haystack.count;
@@ -298,13 +302,13 @@ _advance_past :: (haystack: *string, needle: u8, compare: Character_Compare) -> 
     return index;
 }
 
-_advance_past :: (haystack: *string, needle: [] u8, compare: Character_Compare) -> characters_skipped: int {
+advance_past :: (haystack: *string, needle: [] u8, compare: Character_Compare) -> characters_skipped: int {
     if needle.count == 0  return 0;
 
-    index, found := _first_index(<<haystack, needle, compare);
+    index, found := first_index(<<haystack, needle, compare);
 
     if found {
-        while index < haystack.count && _is_any((<<haystack)[index], needle, compare)
+        while index < haystack.count && is_any((<<haystack)[index], needle, compare)
             index += 1;
         index += 1;
     }
@@ -317,10 +321,10 @@ _advance_past :: (haystack: *string, needle: [] u8, compare: Character_Compare) 
     return index;
 }
 
-_advance_past :: (haystack: *string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> characters_skipped: int {
+advance_past :: (haystack: *string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> characters_skipped: int {
     if needle.count == 0  return 0;
 
-    index, found := _first_index(<<haystack, needle, compare, string_index_proc);
+    index, found := first_index(<<haystack, needle, compare, string_index_proc);
 
     if found  index += needle.count;
     else      index = haystack.count;
@@ -331,8 +335,8 @@ _advance_past :: (haystack: *string, needle: string, compare: Character_Compare,
     return index;
 }
 
-_advance_past :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> characters_skipped: int {
-    index, found, to_index := _first_index(<<haystack, needle, index_proc);
+advance_past :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -> characters_skipped: int {
+    index, found, to_index := first_index(<<haystack, needle, index_proc);
 
     if found  index = to_index;
     else      index = haystack.count;
@@ -344,7 +348,7 @@ _advance_past :: (haystack: *string, needle: string, $$index_proc: Index_Proc) -
 }
 
 
-_trim :: (str: string, char: u8, compare: Character_Compare) -> string {
+trim :: (str: string, char: u8, compare: Character_Compare) -> string {
     low_index := 0;
     high_index := str.count - 1;
 
@@ -356,47 +360,47 @@ _trim :: (str: string, char: u8, compare: Character_Compare) -> string {
     while compare.compare(str[high_index], char)
         high_index -= 1;
 
-    return _unsafe_slice(str, low_index, high_index + 1);
+    return unsafe_slice(str, low_index, high_index + 1);
 }
 
 
-_trim :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
+trim :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
     if chars.count == 0  return str;
 
     low_index := 0;
     high_index := str.count - 1;
 
-    while low_index < str.count && _is_any(str[low_index], chars, compare)
+    while low_index < str.count && is_any(str[low_index], chars, compare)
         low_index += 1;
 
     if low_index >= str.count  return "";
 
-    while _is_any(str[high_index], chars, compare)
+    while is_any(str[high_index], chars, compare)
         high_index -= 1;
 
-    return _unsafe_slice(str, low_index, high_index + 1);
+    return unsafe_slice(str, low_index, high_index + 1);
 }
 
 
-_trim :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
+trim :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
     s := str;
-    while _starts_with(s, string_to_remove, compare)
-        s = _unsafe_slice(s, string_to_remove.count);
+    while starts_with(s, string_to_remove, compare)
+        s = unsafe_slice(s, string_to_remove.count);
 
     if !s  return "";
 
-    while _ends_with(s, string_to_remove, compare)
-        s = _unsafe_slice(s, 0, s.count - string_to_remove.count);
+    while ends_with(s, string_to_remove, compare)
+        s = unsafe_slice(s, 0, s.count - string_to_remove.count);
 
     return s;
 }
 
 
-_trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
+trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
     s := str;
     from_index, to_index, found := index(s, string_to_remove, 0, false);
     while s && from_index == 0 {
-        s = _unsafe_slice(s, to_index);
+        s = unsafe_slice(s, to_index);
         from_index, to_index, found = index(s, string_to_remove, 0, false);
     }
 
@@ -404,7 +408,7 @@ _trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string 
 
     from_index, to_index, found = index(s, string_to_remove, s.count, true);
     while s && to_index == s.count {
-        s = _unsafe_slice(s, 0, from_index);
+        s = unsafe_slice(s, 0, from_index);
         from_index, to_index, found = index(s, string_to_remove, s.count, true);
     }
 
@@ -412,7 +416,7 @@ _trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string 
 }
 
 
-_trim_start :: (str: string, char: u8, compare: Character_Compare) -> string {
+trim_start :: (str: string, char: u8, compare: Character_Compare) -> string {
     index := 0;
 
     while index < str.count && compare.compare(str[index], char)
@@ -420,40 +424,40 @@ _trim_start :: (str: string, char: u8, compare: Character_Compare) -> string {
 
     if index >= str.count  return "";
 
-    return _unsafe_slice(str, index);
+    return unsafe_slice(str, index);
 }
 
 
-_trim_start :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
+trim_start :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
     if chars.count == 0  return str;
 
     index := 0;
 
-    while index < str.count && _is_any(str[index], chars, compare)
+    while index < str.count && is_any(str[index], chars, compare)
         index += 1;
 
     if index >= str.count  return "";
 
-    return _unsafe_slice(str, index);
+    return unsafe_slice(str, index);
 }
 
 
-_trim_start :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
+trim_start :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
     if string_to_remove == ""  return str;
 
     s := str;
-    while _starts_with(s, string_to_remove, compare)
-        s = _unsafe_slice(s, string_to_remove.count);
+    while starts_with(s, string_to_remove, compare)
+        s = unsafe_slice(s, string_to_remove.count);
 
     return s;
 }
 
 
-_trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
+trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
     s := str;
     from_index, to_index, found := index(s, string_to_remove, 0, false);
     while s && from_index == 0 {
-        s = _unsafe_slice(s, to_index);
+        s = unsafe_slice(s, to_index);
         from_index, to_index, found = index(s, string_to_remove, 0, false);
     }
 
@@ -461,7 +465,7 @@ _trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> s
 }
 
 
-_trim_start_to :: (str: string, char: u8, compare: Character_Compare) -> string {
+trim_start_to :: (str: string, char: u8, compare: Character_Compare) -> string {
     index := 0;
 
     while index < str.count && compare.compare(str[index], char)
@@ -469,11 +473,11 @@ _trim_start_to :: (str: string, char: u8, compare: Character_Compare) -> string 
 
     if index >= str.count  return "";
 
-    return _unsafe_slice(str, index);
+    return unsafe_slice(str, index);
 }
 
 
-_trim_end :: inline (str: string, char: u8, compare: Character_Compare) -> string {
+trim_end :: inline (str: string, char: u8, compare: Character_Compare) -> string {
     index := str.count - 1;
 
     while index >= 0 && compare.compare(str[index], char)
@@ -481,40 +485,40 @@ _trim_end :: inline (str: string, char: u8, compare: Character_Compare) -> strin
 
     if index < 0  return "";
 
-    return _unsafe_slice(str, 0, index + 1);
+    return unsafe_slice(str, 0, index + 1);
 }
 
 
-_trim_end :: inline (str: string, chars : [] u8, compare: Character_Compare) -> string {
+trim_end :: inline (str: string, chars : [] u8, compare: Character_Compare) -> string {
     if chars.count == 0  return str;
 
     index := str.count - 1;
 
-    while index >= 0 && _is_any(str[index], chars, compare)
+    while index >= 0 && is_any(str[index], chars, compare)
         index -= 1;
 
     if index < 0  return "";
 
-    return _unsafe_slice(str, 0, index + 1);
+    return unsafe_slice(str, 0, index + 1);
 }
 
 
-_trim_end :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
+trim_end :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
     if string_to_remove == ""  return str;
 
     s := str;
-    while _ends_with(s, string_to_remove, compare)
-        s = _unsafe_slice(s, 0, s.count - string_to_remove.count);
+    while ends_with(s, string_to_remove, compare)
+        s = unsafe_slice(s, 0, s.count - string_to_remove.count);
 
     return s;
 }
 
 
-_trim_end :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
+trim_end :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
     s := str;
     from_index, to_index, found := index(s, string_to_remove, s.count, true);
     while s && to_index == s.count {
-        s = _unsafe_slice(s, 0, from_index);
+        s = unsafe_slice(s, 0, from_index);
         from_index, to_index, found = index(s, string_to_remove, s.count, true);
     }
 
@@ -545,7 +549,7 @@ validate_from_index :: (str: string) #expand {
 #scope_export
 
 
-_first_index :: (haystack: string, needle: u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
+first_index :: (haystack: string, needle: u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     validate_from_index(haystack);
 
     handled := false;
@@ -766,7 +770,7 @@ _first_index :: (haystack: string, needle: u8, from_index: int, compare: Charact
             }
     }
 
-    // @TODO make _case_sensitive and _ignore_case versions of below loop
+    // @TODO make case_sensitive and ignore_case versions of below loop
 
     if !handled {
         for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
@@ -778,35 +782,35 @@ _first_index :: (haystack: string, needle: u8, from_index: int, compare: Charact
 }
 
 
-_first_index :: inline (haystack: string, needle: u8, compare: Character_Compare) -> index: int, found: bool {
-    index, found := _first_index(haystack, needle, 0, compare);
+first_index :: inline (haystack: string, needle: u8, compare: Character_Compare) -> index: int, found: bool {
+    index, found := first_index(haystack, needle, 0, compare);
     return index, found;
 }
 
 
-_first_index :: (haystack: string, needle: [] u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
+first_index :: (haystack: string, needle: [] u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     validate_from_index(haystack);
 
     for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
-        if _is_any(<<cast(*u8)it, needle, compare)
+        if is_any(<<cast(*u8)it, needle, compare)
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
 
-_first_index :: inline (haystack: string, needle: [] u8, compare: Character_Compare) -> index: int, found: bool {
-    index, found := _first_index(haystack, needle, 0, compare);
+first_index :: inline (haystack: string, needle: [] u8, compare: Character_Compare) -> index: int, found: bool {
+    index, found := first_index(haystack, needle, 0, compare);
     return index, found;
 }
 
 
-_first_index :: (haystack: string, needle: string, from_index: int, compare : Character_Compare, string_index_proc: String_Index_Proc) -> index: int, found: bool {
+first_index :: (haystack: string, needle: string, from_index: int, compare : Character_Compare, string_index_proc: String_Index_Proc) -> index: int, found: bool {
     validate_from_index(haystack);
     if needle.count == 0 {
         return from_index, true;
     }
     else if needle.count == 1 {
-        index, found := _first_index(haystack, << needle.data, from_index, compare);
+        index, found := first_index(haystack, << needle.data, from_index, compare);
         return index, found;
     }
     else {
@@ -816,31 +820,31 @@ _first_index :: (haystack: string, needle: string, from_index: int, compare : Ch
 }
 
 
-_first_index :: inline (haystack: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> index: int, found: bool {
-    index, found := _first_index(haystack, needle, 0, compare, string_index_proc);
+first_index :: inline (haystack: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> index: int, found: bool {
+    index, found := first_index(haystack, needle, 0, compare, string_index_proc);
     return index, found;
 }
 
 
-_first_index :: inline (haystack: string, needle: string, from_index: int, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
+first_index :: inline (haystack: string, needle: string, from_index: int, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
     from_index, to_index, found := index(haystack, needle, from_index, false);
     return from_index, found, to_index;
 }
 
 
-_first_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
+first_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
     from_index, to_index, found := index(haystack, needle, 0, false);
     return from_index, found, to_index;
 }
 
 
-_last_index :: inline (haystack: string, needle: u8, compare: Character_Compare) -> index: int, found: bool {
-    index, found := _last_index(haystack, needle, haystack.count, compare);
+last_index :: inline (haystack: string, needle: u8, compare: Character_Compare) -> index: int, found: bool {
+    index, found := last_index(haystack, needle, haystack.count, compare);
     return index, found;
 }
 
 
-_last_index :: (haystack: string, needle: u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
+last_index :: (haystack: string, needle: u8, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     if from_index == 0  return -1, false;
 
     from_index -= 1;
@@ -1078,36 +1082,36 @@ _last_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
 }
 
 
-_last_index :: (haystack: string, needle: [] u8, compare: Character_Compare) -> index: int, found: bool {
+last_index :: (haystack: string, needle: [] u8, compare: Character_Compare) -> index: int, found: bool {
     for < cast(u64)haystack.data + cast(u64)haystack.count - 1 .. cast(u64)haystack.data
-        if _is_any(<<cast(*u8)it, needle, compare)
+        if is_any(<<cast(*u8)it, needle, compare)
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
 
 
-_last_index :: (haystack: string, needle: [] u8, from_index : int, compare: Character_Compare) -> index: int, found: bool {
+last_index :: (haystack: string, needle: [] u8, from_index : int, compare: Character_Compare) -> index: int, found: bool {
     if from_index == 0  return -1, false;
 
     from_index -= 1;
     validate_from_index(haystack);
 
     for < cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data
-        if _is_any(<<cast(*u8)it, needle, compare)
+        if is_any(<<cast(*u8)it, needle, compare)
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
 
 
-_last_index :: inline (haystack: string, needle: string, from_index: int, compare: Character_Compare, last_string_index : String_Index_Proc) -> index: int, found: bool {
+last_index :: inline (haystack: string, needle: string, from_index: int, compare: Character_Compare, last_string_index : String_Index_Proc) -> index: int, found: bool {
     validate_from_index(haystack);
     if needle.count == 0 {
         return from_index, true;
     }
     else if needle.count == 1 {
-        index, found := _last_index(haystack, << needle.data, from_index, compare);
+        index, found := last_index(haystack, << needle.data, from_index, compare);
         return index, found;
     }
     else {
@@ -1117,19 +1121,19 @@ _last_index :: inline (haystack: string, needle: string, from_index: int, compar
 }
 
 
-_last_index :: inline (haystack: string, needle: string, compare: Character_Compare, last_string_index : String_Index_Proc) -> index: int, found: bool {
-    index, found := _last_index(haystack, needle, haystack.count, compare, last_string_index);
+last_index :: inline (haystack: string, needle: string, compare: Character_Compare, last_string_index : String_Index_Proc) -> index: int, found: bool {
+    index, found := last_index(haystack, needle, haystack.count, compare, last_string_index);
     return index, found;
 }
 
 
-_last_index :: inline (haystack: string, needle: string, from_index: int, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
+last_index :: inline (haystack: string, needle: string, from_index: int, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
     from_index, to_index, found := index(haystack, needle, from_index, true);
     return from_index, found, to_index;
 }
 
 
-_last_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
+last_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> from_index: int, found: bool, to_index: int {
     from_index, to_index, found := index(haystack, needle, haystack.count, true);
     return from_index, found, to_index;
 }
@@ -1245,18 +1249,435 @@ make_split :: (text: string, separator: string, index_proc: Index_Proc, skip_emp
 make_line_split :: (text: string, keep_end := false, skip_empty := false, max_results := 0) -> Split_By_Line {
     split_struct : Split_By_Line = ---;
     fill_split_struct();
-    split_struct.compare = _case_sensitive;
+    split_struct.compare = case_sensitive;
     split_struct.keep_end = keep_end;
     return split_struct;
 }
 
-SPACE :: #char " ";
-TAB   :: #char "\t";
-CR    :: #char "\r";
-LF    :: #char "\n";
 
-NBSP  :: #char " "; // careful!
+for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
 
-WHITESPACE :: u8.[SPACE, TAB, CR, LF, NBSP];
+    `it : string = ---;
+    `it_index : int = -1;
 
-#load "for_expansions.jai";
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if reverse {
+            end_index := splitter.text.count;
+            index, found := last_index(splitter.text, splitter.separator, splitter.compare, splitter.last_index);
+            while found {
+                it = unsafe_slice(splitter.text, index + splitter.separator.count, end_index);
+                end_index = index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                index, found = last_index(splitter.text, splitter.separator, index, splitter.compare, splitter.last_index);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            index, found := first_index(splitter.text, splitter.separator, splitter.compare, splitter.first_index);
+            while found {
+                it = unsafe_slice(splitter.text, start_index, index);
+                start_index = index + splitter.separator.count;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.compare, splitter.first_index);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if reverse {
+            end_index := splitter.text.count;
+            from_index, to_index, found := splitter.index_proc(splitter.text, splitter.separator, splitter.text.count, true);
+            while found {
+                it = unsafe_slice(splitter.text, to_index, end_index);
+                end_index = from_index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, from_index, true);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            from_index, to_index, found := splitter.index_proc(splitter.text, splitter.separator, 0, false);
+            while found {
+                it = unsafe_slice(splitter.text, start_index, from_index);
+                start_index = to_index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+
+                from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, to_index, false);
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expand {
+    #assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if reverse {
+            end_index := splitter.text.count;
+            for < index: splitter.text.count - 1 .. 0 {
+                if is_any(splitter.text[index], splitter.separator, splitter.compare) {
+                    it = unsafe_slice(splitter.text, index + 1, end_index);
+                    end_index = index;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            for index: 0 .. splitter.text.count - 1 {
+                if is_any(splitter.text[index], splitter.separator, splitter.compare) {
+                    it = unsafe_slice(splitter.text, start_index, index);
+                    start_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+
+for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if reverse {
+            end_index := splitter.text.count;
+            for < index: splitter.text.count - 1 .. 0 {
+                if splitter.text[index] == splitter.separator {
+                    it = unsafe_slice(splitter.text, index + 1, end_index);
+                    end_index = index;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            for index: 0 .. splitter.text.count - 1 {
+                if splitter.text[index] == splitter.separator {
+                    it = unsafe_slice(splitter.text, start_index, index);
+                    start_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if reverse {
+            end_index := splitter.text.count;
+            for < index, splitter_index: splitter.indexes {
+                start_index := slice_index(splitter.text, ifx index < end_index then index else end_index);
+                it = unsafe_slice(splitter.text, start_index, end_index);
+                end_index = start_index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+        }
+        else {
+            start_index := 0;
+            for index, splitter_index: splitter.indexes {
+                start_index = slice_index(splitter.text, start_index);
+                end_index := slice_index(splitter.text, ifx index > start_index then index else start_index);
+                it = unsafe_slice(splitter.text, start_index, end_index);
+                start_index = end_index;
+
+                if splitter.skip_empty && it == ""  continue;
+
+                it_index += 1;
+
+                #insert body;
+
+                if splitter.max_results != 0 && it_index >= max_it_index
+                    break;
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    if splitter.max_results != 0 && splitter.max_results < 2 {
+        it = splitter.text;
+        it_index = 0;
+
+        #insert body;
+    }
+    else {
+        max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        process_remainder := true;
+
+        if reverse {
+            end_index := splitter.text.count;
+
+            for < index: splitter.text.count - 1 .. 0 {
+                if splitter.text[index] == LF {
+                    if splitter.keep_end {
+                        it = unsafe_slice(splitter.text, index + 1, end_index);
+                    }
+                    else {
+                        it = unsafe_slice(splitter.text, end_index, index);
+                        if ends_with(it, .[LF, CR], splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
+                    }
+                    end_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+        }
+        else {
+            start_index := 0;
+
+            for index: 0 .. splitter.text.count - 1 {
+                if splitter.text[index] == LF {
+                    if splitter.keep_end {
+                        it = unsafe_slice(splitter.text, start_index, index + 1);
+                    }
+                    else {
+                        it = unsafe_slice(splitter.text, start_index, index);
+                        if ends_with(it, CR, splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
+                    }
+                    start_index = index + 1;
+
+                    if splitter.skip_empty && it == ""  continue;
+
+                    it_index += 1;
+
+                    #insert body;
+
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
+            }
+
+            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+        }
+
+        if process_remainder && (!splitter.skip_empty || it != "") {
+            it_index += 1;
+
+            #insert body;
+        }
+    }
+}
+
+
+Chars :: struct {
+    SPACE :: #char " ";
+    TAB   :: #char "\t";
+    CR    :: #char "\r";
+    LF    :: #char "\n";
+    NBSP  :: #char " "; // careful!
+    WHITESPACE :: u8.[SPACE, TAB, CR, LF];
+}

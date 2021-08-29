@@ -2,7 +2,6 @@
 
 
 // TODO
-// [ ] use 64bit char compares when simd_mode == .OFF
 // [ ] `keep_separator` on all `split`
 // [ ] unicode support
 // [ ] trim_to (e.g name = "{hi} stuff"; name = trim_to(name, "}"))  Include seperator?
@@ -13,9 +12,7 @@
 
 
 #import "Basic";
-#import "Strings_Shared";
-
-#load "../Strings_Shared/for_expansions.jai";
+using shared :: #import "Strings_Shared";
 
 
 #scope_file
@@ -37,16 +34,6 @@ set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc
     current_last_index = last_index_proc;
 }
 
-
-set_simd_mode :: _set_simd_mode;
-case_sensitive :: _case_sensitive;
-ignore_case :: _ignore_case;
-slice_index :: _slice_index;
-unsafe_slice :: _unsafe_slice;
-string_from_char :: _string_from_char;
-
-
-equal :: _equal;
 
 equal :: inline (a: string, b: string) -> bool {
     return equal(a, b, current_compare);
@@ -122,9 +109,6 @@ reverse_index_proc :: (index_proc: Index_Proc, haystack: string, needle: string,
 }
 
 
-first_index :: _first_index;
-last_index :: _last_index;
-
 
 first_index :: inline (haystack: string, needle: u8, from_index := 0) -> index: int, found: bool {
     index, found := first_index(haystack, needle, from_index, current_compare);
@@ -189,7 +173,6 @@ last_index :: inline (haystack: string, needle: string, from_index: int, compare
 }
 
 
-is_any :: _is_any;
 
 is_any :: inline (needle: u8, haystack: [] u8) -> bool {
     return is_any(needle, haystack, current_compare);
@@ -222,9 +205,6 @@ contains :: inline (haystack: string, needle: string, $$index: Index_Proc) -> bo
 }
 
 
-starts_with :: _starts_with;
-ends_with :: _ends_with;
-
 starts_with :: inline (haystack: string, needle: string) -> bool {
     return starts_with(haystack, needle, current_compare);
 }
@@ -251,9 +231,6 @@ ends_with :: inline (haystack: string, needle: [] u8) -> bool {
 }
 
 
-advance_to :: _advance_to;
-advance_past :: _advance_past;
-
 advance_to :: inline (haystack: *string, needle: u8) -> characters_skipped: int {
     return advance_to(haystack, needle, current_compare);
 }
@@ -279,10 +256,6 @@ advance_past :: inline (haystack: *string, needle: string) -> characters_skipped
     return advance_past(haystack, needle, current_compare, current_first_index);
 }
 
-
-trim :: _trim;
-trim_start :: _trim_start;
-trim_end :: _trim_end;
 
 
 trim :: (str: string) -> string {
@@ -576,10 +549,6 @@ count :: (haystack: string, translation: [] Character_Translation) -> total: int
     return total;
 }
 
-
-to_upper :: _to_upper;
-to_lower :: _to_lower;
-capitalize :: _capitalize;
 
 
 reverse :: (str: string) {

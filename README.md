@@ -215,7 +215,7 @@ Mutates `str` in-place, overwritting any upper-case characters with their lower-
 * `to_upper (str: string)`<br>
 Mutates `str` in-place, overwritting any lower-case characters with their upper-case equivalent.
 
-* `capitalize (str: string, preserve_caps := true)`<br>
+* `to_capitalized (str: string, preserve_caps := true)`<br>
 Sets the first letter of `str` to upper-case.  If `preserve_caps` is set to false, will set all following letters to lower-case.
 
 * `reverse (str: string)`<br>
@@ -328,7 +328,7 @@ Returns of a copy of `str`.
 * `reverse (str: string) -> string`<br>
 Returns a copy of `str` with the characters in the reverse order.
 
-* `capitalize (str: string, preserve_caps := true) -> string`<br>
+* `capitalized (str: string, preserve_caps := true) -> string`<br>
 Returns a copy of `str` with the first letter converted to upper-case.  If `preserve_caps` is disabled then all subsequent letters will be converted to lower-case.
 
 * `lower (str: string) -> string`<br>

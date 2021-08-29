@@ -17,7 +17,7 @@
 
 
 #import "Basic";
-#import "Strings_Shared";
+using shared :: #import "Strings_Shared";
 
 #scope_file
 
@@ -36,10 +36,6 @@ set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc
     current_first_index = first_index_proc;
     current_last_index = last_index_proc;
 }
-
-
-case_sensitive :: _case_sensitive;
-ignore_case :: _ignore_case;
 
 
 copy :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
@@ -83,11 +79,11 @@ reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = nu
 }
 
 
-capitalize :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+capitalized :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if !str  return empty();
 
     result := copy(str, allocator, allocator_data, null_terminate);
-    _capitalize(result, preserve_caps);
+    to_capitalized(result, preserve_caps);
 
     return result;
 }
@@ -171,7 +167,7 @@ concatenate :: (strings: .. string, allocator: Allocator = null, allocator_data:
         return copy(strings[0], result.allocator, result.allocator_data, null_terminate);
     }
 
-    terminating := null_terminate && !_ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
+    terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
 
     count := 0;
     for strings  count += it.count;
@@ -203,7 +199,7 @@ join :: (strings: [] string, separator: string, allocator: Allocator = null, all
         return copy(strings[0], result.allocator, result.allocator_data, null_terminate);
     }
 
-    terminating := null_terminate && !_ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
+    terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
 
     count := separator.count * (strings.count - 1);
     for strings  count += it.count;
@@ -236,7 +232,7 @@ join :: inline (strings: [] string, allocator: Allocator = null, allocator_data:
 
 
 join :: (strings: [] string, separator: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return join(strings, _string_from_char(*separator), allocator, allocator_data);
+    return join(strings, string_from_char(*separator), allocator, allocator_data);
 }
 
 
@@ -352,7 +348,7 @@ split :: (separator: $T/Split_By, reversed := false, allocator: Allocator = null
     if reversed
         for < separator  array_add(*result, it);
     else
-        for  separator  array_add(*result, it);
+        for separator  array_add(*result, it);
 
     return result;
 }
@@ -376,7 +372,7 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, all
         return copy(str, result.allocator, result.allocator_data, null_terminate);
     }
 
-    terminating := null_terminate && !_ends_with(str, #char "\0", case_sensitive);
+    terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
 
     count := desired_count;
     if terminating  count += 1;
@@ -403,7 +399,7 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, all
 
 
 pad_start :: inline (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_start(str, desired_count, _string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+    return pad_start(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
@@ -420,7 +416,7 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, alloc
         return copy(str, result.allocator, result.allocator_data, null_terminate);
     }
 
-    terminating := null_terminate && !_ends_with(str, #char "\0", case_sensitive);
+    terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
 
     count := desired_count;
     if terminating  count += 1;
@@ -449,7 +445,7 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, alloc
 
 
 pad_end :: inline (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_end(str, desired_count, _string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+    return pad_end(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
@@ -466,7 +462,7 @@ pad_center :: (str: string, desired_count: int, pad_with := default_pad_with, al
         return copy(str, result.allocator, result.allocator_data, null_terminate);
     }
 
-    terminating := null_terminate && !_ends_with(str, #char "\0", case_sensitive);
+    terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
 
     count := desired_count;
     if terminating  count += 1;
@@ -509,7 +505,7 @@ pad_center :: (str: string, desired_count: int, pad_with := default_pad_with, al
 
 
 pad_center :: inline (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_center(str, desired_count, _string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+    return pad_center(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
@@ -529,7 +525,7 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
         return copy(str, result.allocator, result.allocator_data, null_terminate);
     }
 
-    terminating := null_terminate && !_ends_with(str, #char "\0", case_sensitive);
+    terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
 
     count := str.count * times;
     if terminating  count += 1;
@@ -549,14 +545,14 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
 
 lower :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     result := copy(str, allocator, allocator_data, null_terminate);
-    _to_lower(result);
+    to_lower(result);
     return result;
 }
 
 
 upper :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     result := copy(str, allocator, allocator_data, null_terminate);
-    _to_upper(result);
+    to_upper(result);
     return result;
 }
 
@@ -617,7 +613,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
             in_place : string = ---;
             in_place.data = buffer.data.data + buffer.occupied - word.count;
             in_place.count = word.count;
-            _capitalize(in_place, preserve_caps);
+            to_capitalized(in_place, preserve_caps);
         }
     }
 
