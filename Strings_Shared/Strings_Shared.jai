@@ -1615,13 +1615,13 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
             end_index := splitter.text.count;
 
             for < index: splitter.text.count - 1 .. 0 {
-                if splitter.text[index] == LF {
+                if splitter.text[index] == Chars.LF {
                     if splitter.keep_end {
                         it = unsafe_slice(splitter.text, index + 1, end_index);
                     }
                     else {
                         it = unsafe_slice(splitter.text, end_index, index);
-                        if ends_with(it, .[LF, CR], splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
+                        if ends_with(it, .[Chars.LF, Chars.CR], splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
                     }
                     end_index = index + 1;
 
@@ -1640,13 +1640,13 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
             start_index := 0;
 
             for index: 0 .. splitter.text.count - 1 {
-                if splitter.text[index] == LF {
+                if splitter.text[index] == Chars.LF {
                     if splitter.keep_end {
                         it = unsafe_slice(splitter.text, start_index, index + 1);
                     }
                     else {
                         it = unsafe_slice(splitter.text, start_index, index);
-                        if ends_with(it, CR, splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
+                        if ends_with(it, Chars.CR, splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
                     }
                     start_index = index + 1;
 

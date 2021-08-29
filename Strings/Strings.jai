@@ -262,12 +262,12 @@ trim :: (str: string) -> string {
     low_index := 0;
     high_index := str.count - 1;
 
-    while low_index < str.count && str[low_index] <= SPACE
+    while low_index < str.count && str[low_index] <= Chars.SPACE
         low_index += 1;
 
     if low_index >= str.count  return "";
 
-    while high_index > low_index && str[high_index] <= SPACE
+    while high_index > low_index && str[high_index] <= Chars.SPACE
         high_index -= 1;
 
     return unsafe_slice(str, low_index, high_index + 1);
@@ -298,7 +298,7 @@ trim :: inline (str: string, string_to_remove: string) -> string {
 trim_start :: inline (str: string) -> string {
     index := 0;
 
-    while index < str.count && str[index] <= SPACE
+    while index < str.count && str[index] <= Chars.SPACE
         index += 1;
 
     if index >= str.count  return "";
@@ -338,7 +338,7 @@ trim_start :: (str: string, string_to_remove: string) -> string {
 trim_end :: inline (str: string) -> string {
     index := str.count - 1;
 
-    while index >= 0 && str[index] <= SPACE
+    while index >= 0 && str[index] <= Chars.SPACE
         index -= 1;
 
     if index < 0  return "";

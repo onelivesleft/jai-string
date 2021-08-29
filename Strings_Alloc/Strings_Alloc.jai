@@ -3,8 +3,9 @@
 
 
 // TODO
-// [ ] allow user to set allocator used by string builder
-// [ ] for_expansion broken `it for no reason?
+// [ ] create a Scratch allocator
+// [ ] rename concatenate to join
+// [x] allow user to set allocator used by string builder
 // [x] return "\0" for empty string when null_terminate is true
 // [x] snake_from_camel / camel_from_snake
 // [x] capitalize (maybe not ^)
@@ -19,13 +20,23 @@
 #import "Basic";
 using shared :: #import "Strings_Shared";
 
+
 #scope_file
 
 current_compare := default_compare;
 current_first_index := default_first_index;
 current_last_index := default_last_index;
+#if string_builder_allocator == .TEMP {
+    current_string_builder_allocator := __temporary_allocator;
+    current_string_builder_allocator_data : *void = null;
+}
+else {
+    current_string_builder_allocator := default_allocator;
+    current_string_builder_allocator_data := default_allocator_data;
+}
 
 #scope_export
+
 
 set_default_compare :: (character_compare := default_compare) {
     current_compare = character_compare;
@@ -35,6 +46,12 @@ set_default_compare :: (character_compare := default_compare) {
 set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := default_last_index) {
     current_first_index = first_index_proc;
     current_last_index = last_index_proc;
+}
+
+
+set_string_builder_allocator :: (allocator: Allocator, allocator_data : *void = null) {
+    current_string_builder_allocator = allocator;
+    current_string_builder_allocator_data = allocator_data;
 }
 
 
@@ -109,7 +126,6 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
     if haystack == ""  return empty();
 
     result : String_Builder;
-    init_string_builder(*result);
     set_result_allocator();
 
     first_loop := true;
@@ -135,7 +151,6 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
     if haystack == ""  return empty();
 
     result : String_Builder;
-    init_string_builder(*result);
     set_result_allocator();
 
     first_loop := true;
@@ -561,9 +576,7 @@ snake_from_camel :: (str: string, preserve_caps := false, allocator: Allocator =
     if str == ""  return empty();
 
     result : String_Builder;
-    init_string_builder(*result);
     set_result_allocator();
-    defer reset(*result);
 
     inside_caps := false;
 
@@ -602,9 +615,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
     if str == ""  return empty();
 
     result : String_Builder;
-    init_string_builder(*result);
     set_result_allocator();
-    defer reset(*result);
 
     for word: make_split(str, #char "_", current_compare) {
         if word {
@@ -639,9 +650,8 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
     } @PrintLike
 
 
-    // @TODO this should use string builder allocator once we have
     init_string_builder :: (using builder: *String_Builder, allocator: Allocator = null, allocator_data: *void = null) {
-        allocator, allocator_data = get_allocator(allocator, allocator_data);
+        allocator, allocator_data = get_allocator(allocator, allocator_data, String_Builder);
     }
 
 
@@ -671,6 +681,15 @@ Allocator_Wrapper :: struct {
 
 
 set_result_allocator :: () #expand {
+    #if type_of(`result) == String_Builder {
+        `defer reset(*`result);
+        if current_string_builder_allocator {
+            `result.allocator = current_string_builder_allocator;
+            `result.allocator_data = current_string_builder_allocator_data;
+            return;
+        }
+    }
+
     if `allocator {
         `result.allocator = `allocator;
         `result.allocator_data = `allocator_data;
@@ -683,19 +702,20 @@ set_result_allocator :: () #expand {
         `result.allocator = context.allocator;
         `result.allocator_data = context.allocator_data;
     }
-
-    #if debug {
-        print("Parameter allocator: %\n", `allocator);
-        print("Default allocator:   %\n", `default_allocator);
-        print("Context allocator:   %\n", context.allocator);
-        print("Used allocator:      %\n", `result.allocator);
-    }
 }
 
 
-get_allocator :: (parameter_allocator: Allocator = null, parameter_allocator_data: *void = null) -> Allocator, *void {
+get_allocator :: (parameter_allocator: Allocator = null, parameter_allocator_data: *void = null, $type: Type = void) -> Allocator, *void {
     allocator : Allocator;
     allocator_data : *void;
+
+    #if type == String_Builder {
+        if current_string_builder_allocator {
+            allocator = current_string_builder_allocator;
+            allocator_data = current_string_builder_allocator_data;
+            return allocator, allocator_data;
+        }
+    }
 
     if parameter_allocator {
         allocator = parameter_allocator;
@@ -708,13 +728,6 @@ get_allocator :: (parameter_allocator: Allocator = null, parameter_allocator_dat
     else if context.allocator {
         allocator = context.allocator;
         allocator_data = context.allocator_data;
-    }
-
-    #if debug {
-        print("Parameter allocator: %\n", parameter_allocator);
-        print("Default allocator:   %\n", default_allocator);
-        print("Context allocator:   %\n", context.allocator);
-        print("Used allocator:      %\n", allocator);
     }
 
     return allocator, allocator_data;

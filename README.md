@@ -283,9 +283,6 @@ When enabled (it defaults to false) the module will provide these additional pro
   * `print` - identical to `sprint`, set to use this module's allocator.
   * `builder_to_string` - identical to `builder_to_string`, set to use this module's allocator.
 
-* `debug`<br>
-When set to true some debug info will be displayed for allocations.
-
 * `compare`<br>Default comparator used to check if two string characters are equal.  You may change it using `set_default_compare`.  One of:
     * `.CASE_SENSITIVE`
     * `.IGNORE_CASE`
@@ -320,6 +317,9 @@ Sets the index procedures used internally when searching through strings with st
     * `.AUTO`<br>Uses the fastest SIMD instruction set available on the CPU.
     * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
+
+* `set_string_builder_allocator (allocator: Allocator, allocator_data : void = null)`<br>
+Sets the allocator used by String_Builder as it operates. Can also be set with the `string_builder_allocator` module parameter.  It defaults to using temporary storage.
 
 
 * `copy (str: string) -> string`<br>

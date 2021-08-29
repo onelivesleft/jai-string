@@ -3,9 +3,14 @@
 
 
 #module_parameters (
-    // default allocator: null will use context.allocator
+    // Default allocator: null will use `context.allocator`
     default_allocator : Allocator = null,
     default_allocator_data : *void = null,
+
+    // Allocator used for String_Builder operation.  By default temporary storage is
+    // used; setting to .AS_DEFAULT will use the allocator specified above.
+    // Allocator can be set directly by calling `set_string_builder_allocator`
+    string_builder_allocator : enum { TEMP; AS_DEFAULT; } = .TEMP,
 
     // Adds `print`, `init_string_builder`, & `builder_to_string`set to behave the
     // same as every other allocated proc (i.e. if null use module allocator, which
@@ -22,13 +27,8 @@
 
     // When strict mode is enabled asserts will fail when indices fall outside
     // the range of the string.
-    strict := false,
-
-    // Provides some debug output
-    debug := false
+    strict := false
 );
-
-
 
 
 #if compare == .CASE_SENSITIVE
