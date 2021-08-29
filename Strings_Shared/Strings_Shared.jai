@@ -1270,7 +1270,6 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        process_remainder := true;
 
         if reverse {
             end_index := splitter.text.count;
@@ -1291,7 +1290,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 index, found = last_index(splitter.text, splitter.separator, index, splitter.compare, splitter.last_index);
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+            it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
@@ -1312,10 +1311,10 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 index, found = first_index(splitter.text, splitter.separator, start_index, splitter.compare, splitter.first_index);
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+            it = unsafe_slice(splitter.text, start_index);
         }
 
-        if process_remainder && (!splitter.skip_empty || it != "") {
+        if !splitter.skip_empty || it != "" {
             it_index += 1;
 
             #insert body;
@@ -1339,7 +1338,6 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        process_remainder := true;
 
         if reverse {
             end_index := splitter.text.count;
@@ -1360,7 +1358,7 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
                 from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, from_index, true);
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+            it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
@@ -1381,10 +1379,10 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
                 from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, to_index, false);
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+            it = unsafe_slice(splitter.text, start_index);
         }
 
-        if process_remainder && (!splitter.skip_empty || it != "") {
+        if !splitter.skip_empty || it != "" {
             it_index += 1;
 
             #insert body;
@@ -1408,7 +1406,6 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        process_remainder := true;
 
         if reverse {
             end_index := splitter.text.count;
@@ -1428,7 +1425,7 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
                 }
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+            it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
@@ -1448,10 +1445,10 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
                 }
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+            it = unsafe_slice(splitter.text, start_index);
         }
 
-        if process_remainder && (!splitter.skip_empty || it != "") {
+        if !splitter.skip_empty || it != "" {
             it_index += 1;
 
             #insert body;
@@ -1476,7 +1473,6 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        process_remainder := true;
 
         if reverse {
             end_index := splitter.text.count;
@@ -1496,7 +1492,7 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
                 }
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+            it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
@@ -1516,10 +1512,10 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
                 }
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+            it = unsafe_slice(splitter.text, start_index);
         }
 
-        if process_remainder && (!splitter.skip_empty || it != "") {
+        if !splitter.skip_empty || it != "" {
             it_index += 1;
 
             #insert body;
@@ -1543,7 +1539,6 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        process_remainder := true;
 
         if reverse {
             end_index := splitter.text.count;
@@ -1562,7 +1557,7 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
                     break;
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, 0, end_index);
+            it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
@@ -1582,10 +1577,10 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
                     break;
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, start_index);
+            it = unsafe_slice(splitter.text, start_index);
         }
 
-        if process_remainder && (!splitter.skip_empty || it != "") {
+        if !splitter.skip_empty || it != "" {
             it_index += 1;
 
             #insert body;
@@ -1601,7 +1596,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
     `it : string = ---;
     `it_index : int = -1;
 
-    if splitter.max_results != 0 && splitter.max_results < 2 {
+    if splitter.text == "" || (splitter.max_results != 0 && splitter.max_results < 2) {
         it = splitter.text;
         it_index = 0;
 
@@ -1609,31 +1604,48 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        process_remainder := true;
+        complete := false;
 
         if reverse {
             end_index := splitter.text.count;
+            start_index := splitter.text.count - 1;
+            if splitter.text[start_index] == Chars.LF
+                start_index -= 1;
 
-            for < index: splitter.text.count - 1 .. 0 {
+            for < index: start_index .. 0 {
                 if splitter.text[index] == Chars.LF {
                     if splitter.keep_end {
                         it = unsafe_slice(splitter.text, index + 1, end_index);
                     }
                     else {
-                        it = unsafe_slice(splitter.text, end_index, index);
-                        if ends_with(it, .[Chars.LF, Chars.CR], splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
+                        it = unsafe_slice(splitter.text, index + 1, end_index - 1);
+                        if it && it[it.count - 1] == Chars.CR
+                            it.count -= 1;
                     }
                     end_index = index + 1;
 
-                    if splitter.skip_empty && it == ""  continue;
+                    if splitter.skip_empty && it_is_empty()  continue;
 
                     it_index += 1;
-
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
                 }
+            }
+
+            if splitter.keep_end {
+                it = unsafe_slice(splitter.text, 0, end_index);
+            }
+            else {
+                it = unsafe_slice(splitter.text, 0, end_index - 1);
+                if it && it[it.count - 1] == Chars.CR
+                    it.count -= 1;
+            }
+
+            if !splitter.skip_empty || !it_is_empty() {
+                it_index += 1;
+                #insert body;
             }
         }
         else {
@@ -1646,14 +1658,14 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
                     }
                     else {
                         it = unsafe_slice(splitter.text, start_index, index);
-                        if ends_with(it, Chars.CR, splitter.compare)  it = unsafe_slice(it, 0, it.count - 1);
+                        if it && it[it.count - 1] == Chars.CR
+                            it.count -= 1;
                     }
                     start_index = index + 1;
 
-                    if splitter.skip_empty && it == ""  continue;
+                    if splitter.skip_empty && it_is_empty()  continue;
 
                     it_index += 1;
-
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
@@ -1661,14 +1673,23 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
                 }
             }
 
-            if process_remainder  it = unsafe_slice(splitter.text, start_index);
-        }
+            if start_index < splitter.text.count {
+                it = unsafe_slice(splitter.text, start_index);
+                if it && it[it.count - 1] == Chars.CR  it.count -= 1;
 
-        if process_remainder && (!splitter.skip_empty || it != "") {
-            it_index += 1;
-
-            #insert body;
+                if !splitter.skip_empty || !it_is_empty() {
+                    it_index += 1;
+                    #insert body;
+                }
+            }
         }
+    }
+
+    it_is_empty :: () -> bool #expand {
+        if `splitter.keep_end
+            return `it.count == 1 || `it.count == 2 && `it[0] == Chars.CR;
+        else
+            return `it == "";
     }
 }
 
