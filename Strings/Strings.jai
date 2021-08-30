@@ -2,7 +2,7 @@
 
 
 // TODO
-// [ ] `keep_separator` on all `split`
+// [.] `keep_separator` on all `split` (string and line_split done, needs: u8, []u8, index_proc)
 // [ ] unicode support
 // [ ] trim_to (e.g name = "{hi} stuff"; name = trim_to(name, "}"))  Include seperator?
 // [x] first_index lambda needle
@@ -564,40 +564,40 @@ reverse :: (str: string) {
 }
 
 
-split :: inline (text: string, separator: string, skip_empty := false, max_results := 0, compare: Character_Compare) -> Split_By_String {
-    return make_split(text, separator, compare, current_first_index, current_last_index, skip_empty, max_results);
+split :: inline (text: string, separator: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_String {
+    return make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator);
 }
 
-split :: inline (text: string, separator: string, skip_empty := false, max_results := 0) -> Split_By_String {
-    return make_split(text, separator, current_compare, current_first_index, current_last_index, skip_empty, max_results);
+split :: inline (text: string, separator: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_String {
+    return make_split(text, separator, current_compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator);
 }
 
 
-split :: inline (text: string, separator: [] u8, skip_empty := false, max_results := 0, compare: Character_Compare) -> Split_By_Chars {
+split :: inline (text: string, separator: [] u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_Chars {
     #if strict {
         assert(indexes.count > 0, "Cannot split with empty array!");
     }
-    return make_split(text, separator, compare, skip_empty, max_results);
+    return make_split(text, separator, compare, max_results, skip_empty, keep_separator);
 }
 
-split :: inline (text: string, separator: [] u8, skip_empty := false, max_results := 0) -> Split_By_Chars {
+split :: inline (text: string, separator: [] u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Chars {
     #if strict {
         assert(indexes.count > 0, "Cannot split with empty array!");
     }
-    return make_split(text, separator, current_compare, skip_empty, max_results);
+    return make_split(text, separator, current_compare, max_results, skip_empty, keep_separator);
 }
 
 
-split :: inline (text: string, separator: u8, skip_empty := false, max_results := 0, compare: Character_Compare) -> Split_By_Char {
-    return make_split(text, separator, compare, skip_empty, max_results);
+split :: inline (text: string, separator: u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_Char {
+    return make_split(text, separator, compare, max_results, skip_empty, keep_separator);
 }
 
-split :: inline (text: string, separator: u8, skip_empty := false, max_results := 0) -> Split_By_Char {
-    return make_split(text, separator, current_compare, skip_empty, max_results);
+split :: inline (text: string, separator: u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Char {
+    return make_split(text, separator, current_compare, max_results, skip_empty, keep_separator);
 }
 
 
-split :: inline (text: string, indexes: .. int, skip_empty := false, max_results := 0) -> Split_By_Index {
+split :: inline (text: string, indexes: .. int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
     #if strict {
         assert(indexes.count > 0, "Cannot split with no indexes!");
         prev := indexes[0];
@@ -606,15 +606,15 @@ split :: inline (text: string, indexes: .. int, skip_empty := false, max_results
             prev = it;
         }
     }
-    return make_split(text, indexes, skip_empty, max_results);
+    return make_split(text, indexes, max_results, skip_empty);
 }
 
 
-split :: inline (text: string, separator: string, $$index: Index_Proc, skip_empty := false, max_results := 0) -> Split_By_Proc {
-    return make_split(text, separator, index, skip_empty, max_results);
+split :: inline (text: string, separator: string, $$index: Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Proc {
+    return make_split(text, separator, index, max_results, skip_empty, keep_separator);
 }
 
 
-line_split :: inline (text: string, keep_end := false, skip_empty := false, max_results := 0) -> Split_By_Line {
-    return make_line_split(text, keep_end, skip_empty, max_results);
+line_split :: inline (text: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Line {
+    return make_line_split(text,max_results, skip_empty, keep_separator);
 }

@@ -130,7 +130,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     first_loop := true;
     last_string := "";
-    for make_split(haystack, needle, compare, current_first_index, current_last_index, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
+    for make_split(haystack, needle, compare, current_first_index, current_last_index, ifx max_replacements <= 0 then 0 else max_replacements + 1) {
         if first_loop  first_loop = false;
         else           append(*result, replacement);
         append(*result, it);
@@ -155,7 +155,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 
     first_loop := true;
     last_string := "";
-    for make_split(haystack, needle, index, max_results = ifx max_replacements <= 0 then 0 else max_replacements + 1) {
+    for make_split(haystack, needle, index, ifx max_replacements <= 0 then 0 else max_replacements + 1) {
         if first_loop  first_loop = false;
         else           append(*result, replacement);
         append(*result, it);
@@ -252,72 +252,72 @@ join :: (strings: [] string, separator: u8, allocator: Allocator = null, allocat
 
 
 
-split :: (text: string, separator: string, compare: Character_Compare, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: (text: string, separator: string, compare: Character_Compare, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, compare, current_first_index, current_last_index, skip_empty, max_results)
+        for < make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, compare, current_first_index, current_last_index, skip_empty, max_results)
+        for make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
 }
 
 
-split :: inline (text: string, separator: string, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
-    return split(text, separator, current_compare, reversed, skip_empty, max_results, allocator, allocator_data);
+split :: inline (text: string, separator: string, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+    return split(text, separator, current_compare, reversed, max_results, skip_empty, keep_separator, allocator, allocator_data);
 }
 
 
-split :: (text: string, separator: string, index: Index_Proc, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: (text: string, separator: string, index: Index_Proc, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, index, skip_empty, max_results)
+        for < make_split(text, separator, index, max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, index, skip_empty, max_results)
+        for make_split(text, separator, index, max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
 }
 
 
-split :: (text: string, separator: [] u8, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: (text: string, separator: [] u8, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, current_compare, skip_empty, max_results)
+        for < make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, current_compare, skip_empty, max_results)
+        for make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
 }
 
 
-split :: (text: string, separator: u8, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: (text: string, separator: u8, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, current_compare, skip_empty, max_results)
+        for < make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, current_compare, skip_empty, max_results)
+        for make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
 }
 
 
-split :: (text: string, indexes: .. int, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+split :: (text: string, indexes: .. int, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     #if strict {
         prev_index := 0;
         for index: indexes {
@@ -331,25 +331,25 @@ split :: (text: string, indexes: .. int, reversed := false, skip_empty := false,
     set_result_allocator();
 
     if reversed
-        for < make_split(text, indexes, skip_empty, max_results)
+        for < make_split(text, indexes, max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, indexes, skip_empty, max_results)
+        for make_split(text, indexes, max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
 }
 
 
-line_split :: (text: string, keep_end := false, reversed := false, skip_empty := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+line_split :: (text: string, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     result : [..] string;
     set_result_allocator();
 
     if reversed
-        for < make_line_split(text, keep_end, skip_empty, max_results)
+        for < make_line_split(text, max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_line_split(text, keep_end, skip_empty, max_results)
+        for make_line_split(text, max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;

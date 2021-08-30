@@ -22,42 +22,8 @@ else #if compare == .IGNORE_CASE
     default_compare :: ignore_case;
 
 #if index_algorithm == .NAIVE {
-    default_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-        if start_index > haystack.count - needle.count  return -1, false;
-
-        end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
-        needle_end := cast(u64)needle.count - 1;
-        for start_of_word: cast(u64)haystack.data + cast(u64)start_index .. end {
-            needle_index := needle.data;
-            for character: start_of_word .. start_of_word + needle_end {
-                if !compare(<<cast(*u8)character, <<needle_index)
-                    continue start_of_word;
-                needle_index += 1;
-            }
-            return cast(int)(start_of_word - cast(u64)haystack.data), true;
-        }
-
-        return -1, false;
-    }
-
-
-    default_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-        if start_index < needle.count  return -1, false;
-
-        start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
-        needle_end := cast(u64)needle.count - 1;
-        for < start_of_word: start .. cast(u64)haystack.data {
-            needle_index := needle.data;
-            for character: start_of_word .. start_of_word + needle_end {
-                if !compare(<<cast(*u8)character, <<needle_index)
-                    continue start_of_word;
-                needle_index += 1;
-            }
-            return cast(int)(start_of_word - cast(u64)haystack.data), true;
-        }
-
-        return -1, false;
-    }
+    default_first_index :: naive_with_simd_first_index;
+    default_last_index  :: naive_with_simd_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE {
     #load "../Strings_Shared/boyer_moore.jai";

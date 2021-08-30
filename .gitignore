@@ -2,4 +2,4 @@
 */.build/
 *.exe
 *.pdb
-tests/
+tests/data

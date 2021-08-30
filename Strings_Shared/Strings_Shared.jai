@@ -15,17 +15,20 @@ operator== :: (a: Character_Compare, b: Character_Compare) -> bool {
 }
 
 
+Keep_Separator :: enum {
+    NO; AS_PREFIX; AS_POSTFIX;
+}
+
+
 #scope_file
 simd_mode : enum { OFF; AUTO; SSE; AVX2; } = .SSE;
 #scope_export
 
-get_simd_mode :: () -> type_of(simd_mode) {
-    return simd_mode;
-}
 
 set_simd_mode :: (mode: type_of(simd_mode)) {
     if mode == .AUTO {
-        if get_cpu_info().AVX2
+        info := get_cpu_info();
+        if info.AVX2
             simd_mode = .AVX2;
         else
             simd_mode = .SSE;
@@ -184,6 +187,8 @@ bit_mask_32_zero := *bit_masks_32 + 32;
 */
 
 
+
+// @TODO look at simding this again when we have data blocks in #asm
 
 equal :: (a: string, b: string, compare : Character_Compare) -> bool {
     if compare.kind == .CASE_SENSITIVE
@@ -1142,10 +1147,11 @@ last_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> 
 
 
 Split_By :: struct {
-    text        : string;
-    max_results : int;
-    skip_empty  : bool;
-    compare     : Character_Compare;
+    text           : string;
+    max_results    : int;
+    skip_empty     : bool;
+    keep_separator : Keep_Separator;
+    compare        : Character_Compare;
 }
 
 
@@ -1177,7 +1183,6 @@ Split_By_Index :: struct {
 
 Split_By_Line :: struct {
     using base: Split_By;
-    keep_end := false;
 }
 
 
@@ -1191,16 +1196,17 @@ Split_By_Proc :: struct {
 #scope_file
 
 fill_split_struct :: () #expand {
-    `split_struct.text        = `text;
-    `split_struct.max_results = `max_results;
-    `split_struct.skip_empty  = `skip_empty;
+    `split_struct.text           = `text;
+    `split_struct.max_results    = `max_results;
+    `split_struct.skip_empty     = `skip_empty;
+    `split_struct.keep_separator = `keep_separator;
 }
 
 #scope_export
 
 
 
-make_split :: (text: string, separator: string, compare: Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc, skip_empty := false, max_results := 0) -> Split_By_String {
+make_split :: (text: string, separator: string, compare: Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_String {
     split_struct : Split_By_String = ---;
     fill_split_struct();
     split_struct.separator = separator;
@@ -1211,7 +1217,7 @@ make_split :: (text: string, separator: string, compare: Character_Compare, firs
 }
 
 
-make_split :: (text: string, separator: [] u8, compare: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_Chars {
+make_split :: (text: string, separator: [] u8, compare: Character_Compare, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Chars {
     split_struct : Split_By_Chars = ---;
     fill_split_struct();
     split_struct.compare = compare;
@@ -1220,7 +1226,7 @@ make_split :: (text: string, separator: [] u8, compare: Character_Compare, skip_
 }
 
 
-make_split :: (text: string, separator: u8, compare: Character_Compare, skip_empty := false, max_results := 0) -> Split_By_Char {
+make_split :: (text: string, separator: u8, compare: Character_Compare, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Char {
     split_struct : Split_By_Char = ---;
     fill_split_struct();
     split_struct.compare = compare;
@@ -1229,7 +1235,7 @@ make_split :: (text: string, separator: u8, compare: Character_Compare, skip_emp
 }
 
 
-make_split :: (text: string, indexes: [] int, skip_empty := false, max_results := 0) -> Split_By_Index {
+make_split :: (text: string, indexes: [] int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
     split_struct : Split_By_Index = ---;
     fill_split_struct();
     split_struct.indexes = indexes;
@@ -1237,7 +1243,7 @@ make_split :: (text: string, indexes: [] int, skip_empty := false, max_results :
 }
 
 
-make_split :: (text: string, separator: string, index_proc: Index_Proc, skip_empty := false, max_results := 0) -> Split_By_Proc {
+make_split :: (text: string, separator: string, index_proc: Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Proc {
     split_struct : Split_By_Proc = ---;
     fill_split_struct();
     split_struct.separator = separator;
@@ -1246,11 +1252,10 @@ make_split :: (text: string, separator: string, index_proc: Index_Proc, skip_emp
 }
 
 
-make_line_split :: (text: string, keep_end := false, skip_empty := false, max_results := 0) -> Split_By_Line {
+make_line_split :: (text: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Line {
     split_struct : Split_By_Line = ---;
     fill_split_struct();
     split_struct.compare = case_sensitive;
-    split_struct.keep_end = keep_end;
     return split_struct;
 }
 
@@ -1270,18 +1275,35 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
 
         if reverse {
             end_index := splitter.text.count;
             index, found := last_index(splitter.text, splitter.separator, splitter.compare, splitter.last_index);
-            while found {
-                it = unsafe_slice(splitter.text, index + splitter.separator.count, end_index);
-                end_index = index;
+            if splitter.keep_separator == {
+                case .NO;
+                empty_count = 0;
+                separator_offset_to_start = splitter.separator.count;
+                separator_offset_to_end = 0;
 
-                if splitter.skip_empty && it == ""  continue;
+                case .AS_PREFIX;
+                empty_count = splitter.separator.count;
+                separator_offset_to_start = 0;
+                separator_offset_to_end = 0;
+
+                case .AS_POSTFIX;
+                empty_count = splitter.separator.count;
+                separator_offset_to_start = splitter.separator.count;
+                separator_offset_to_end = splitter.separator.count;
+            }
+
+            while found {
+                it = unsafe_slice(splitter.text, index + separator_offset_to_start, end_index);
+                end_index = index + separator_offset_to_end;
+
+                if splitter.skip_empty && it.count == empty_count  continue;
 
                 it_index += 1;
-
                 #insert body;
 
                 if splitter.max_results != 0 && it_index >= max_it_index
@@ -1295,28 +1317,43 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
         else {
             start_index := 0;
             index, found := first_index(splitter.text, splitter.separator, splitter.compare, splitter.first_index);
-            while found {
-                it = unsafe_slice(splitter.text, start_index, index);
-                start_index = index + splitter.separator.count;
+            if splitter.keep_separator == {
+                case .NO;
+                empty_count = 0;
+                separator_offset_to_start = splitter.separator.count;
+                separator_offset_to_end = 0;
 
-                if splitter.skip_empty && it == ""  continue;
+                case .AS_PREFIX;
+                empty_count = splitter.separator.count;
+                separator_offset_to_start = 0;
+                separator_offset_to_end = 0;
+
+                case .AS_POSTFIX;
+                empty_count = splitter.separator.count;
+                separator_offset_to_start = splitter.separator.count;
+                separator_offset_to_end = splitter.separator.count;
+            }
+
+            while found {
+                it = unsafe_slice(splitter.text, start_index, index + separator_offset_to_end);
+                start_index = index + separator_offset_to_start;
+
+                if splitter.skip_empty && it.count == empty_count  continue;
 
                 it_index += 1;
-
                 #insert body;
 
                 if splitter.max_results != 0 && it_index >= max_it_index
                     break;
 
-                index, found = first_index(splitter.text, splitter.separator, start_index, splitter.compare, splitter.first_index);
+                index, found = first_index(splitter.text, splitter.separator, index + splitter.separator.count, splitter.compare, splitter.first_index);
             }
 
             it = unsafe_slice(splitter.text, start_index);
         }
 
-        if !splitter.skip_empty || it != "" {
+        if !splitter.skip_empty || it.count != empty_count {
             it_index += 1;
-
             #insert body;
         }
     }
@@ -1592,6 +1629,7 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
 for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
     reverse := flags & .REVERSE;
+    assert(splitter.keep_separator != .AS_PREFIX, "line_split does not allow keeping the line endings .AS_PREFIX");
 
     `it : string = ---;
     `it_index : int = -1;
@@ -1614,7 +1652,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
 
             for < index: start_index .. 0 {
                 if splitter.text[index] == Chars.LF {
-                    if splitter.keep_end {
+                    if splitter.keep_separator == .AS_POSTFIX {
                         it = unsafe_slice(splitter.text, index + 1, end_index);
                     }
                     else {
@@ -1634,7 +1672,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
                 }
             }
 
-            if splitter.keep_end {
+            if splitter.keep_separator == .AS_POSTFIX {
                 it = unsafe_slice(splitter.text, 0, end_index);
             }
             else {
@@ -1653,7 +1691,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
 
             for index: 0 .. splitter.text.count - 1 {
                 if splitter.text[index] == Chars.LF {
-                    if splitter.keep_end {
+                    if splitter.keep_separator == .AS_POSTFIX {
                         it = unsafe_slice(splitter.text, start_index, index + 1);
                     }
                     else {
@@ -1686,7 +1724,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
     }
 
     it_is_empty :: () -> bool #expand {
-        if `splitter.keep_end
+        if `splitter.keep_separator == .AS_POSTFIX
             return `it.count == 1 || `it.count == 2 && `it[0] == Chars.CR;
         else
             return `it == "";
@@ -1701,4 +1739,261 @@ Chars :: struct {
     LF    :: #char "\n";
     NBSP  :: #char " "; // careful!
     WHITESPACE :: u8.[SPACE, TAB, CR, LF];
+}
+
+
+naive_with_char_compare_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if start_index > haystack.count - needle.count  return -1, false;
+
+    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+    needle_end := cast(u64)needle.count - 1;
+
+    for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
+        needle_index := needle.data;
+        for character: test_index .. test_index + needle_end {
+            if !compare.compare(<<cast(*u8)character, <<needle_index)
+                continue test_index;
+            needle_index += 1;
+        }
+        return cast(int)(test_index - cast(u64)haystack.data), true;
+    }
+
+    return -1, false;
+}
+
+
+naive_with_string_compare_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if start_index > haystack.count - needle.count  return -1, false;
+
+    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+    test : string = ---;
+    test.data = haystack.data + cast(u64)start_index;
+    test.count = needle.count;
+
+    while true {
+        if test == needle
+            return cast(int)(test.data - cast(u64)haystack.data), true;
+        if cast(u64)test.data >= end  break;
+        test.data += 1;
+    }
+
+    return -1, false;
+}
+
+
+naive_with_simd_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if start_index > haystack.count - needle.count  return -1, false;
+
+    handled := false;
+
+    if compare.kind == {
+        case .CASE_SENSITIVE;
+            handled = true;
+
+            if simd_mode == {
+                case .OFF;
+                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+                    needle_end := cast(u64)needle.count - 1;
+                    for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
+                        needle_index := needle.data;
+                        for character: test_index .. test_index + needle_end {
+                            if <<cast(*u8)character != <<needle_index
+                                continue test_index;
+                            needle_index += 1;
+                        }
+                        return cast(int)(test_index - cast(u64)haystack.data), true;
+                    }
+                case .SSE;
+                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+                    needle_end := cast(u64)needle.count - 1;
+                    test_index := cast(u64)haystack.data + cast(u64)start_index;
+
+                    end_simd := end - 15;
+                    if test_index < end_simd {
+                        needle_buffer : [16] u8;
+                        needle_ptr := *needle_buffer;
+                        memset(needle_ptr, <<needle.data, 16);
+
+#if true {
+                        // 13.051240    13.722530
+                        results : struct { index, found : u16; };
+                        results_data := *results;
+
+                        while test_index < end_simd {
+                            #asm {
+                                movdqu.x   needle_vec:, [needle_ptr];
+                                movdqu.x   haystack_vec:, [test_index];
+                                pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                                pmovmskb.x found_gpr:, results_vec;
+                                tzcnt.w    index_gpr:, found_gpr;
+                                shl.d      found_gpr, 16;
+                                or.d       found_gpr, index_gpr;
+                                mov.d      [results_data], found_gpr;
+                            }
+
+                            if results.found {
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        test_index = second_index;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if test_index < second_index {
+                                    return cast(int)(word_index - cast(u64)haystack.data), true;
+                                }
+                            }
+                            else
+                                test_index += 16;
+                        }
+}
+else {
+                        // 14.304011    15.433144
+                        results : struct { found : u16; index : u16; } #align 16;
+                        results_data := *results;
+
+                        while test_index < end_simd {
+                            #asm {
+                                movdqu.x   needle_vec:, [needle_ptr];
+                                movdqu.x   haystack_vec:, [test_index];
+                                pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                                pmovmskb.x found_gpr:, results_vec;
+                                tzcnt.w    index_gpr:, found_gpr;
+                                shl.d      index_gpr, 16;
+                                or.d       index_gpr, found_gpr;
+                                mov.d      [results_data], index_gpr;
+                            }
+
+                            if results.found {
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        test_index = second_index;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if test_index < second_index {
+                                    return cast(int)(word_index - cast(u64)haystack.data), true;
+                                }
+                            }
+                            else
+                                test_index += 16;
+                        }
+}
+                    }
+
+                    for index: test_index .. end {
+                        needle_index := needle.data;
+                        for character: test_index .. test_index + needle_end {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index)
+                                continue index;
+                            needle_index += 1;
+                        }
+                        return cast(int)(test_index - cast(u64)haystack.data), true;
+                    }
+                case .AVX2;
+                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+                    needle_end := cast(u64)needle.count - 1;
+                    test_index := cast(u64)haystack.data + cast(u64)start_index;
+
+                    end_simd := end - 31;
+                    if test_index < end_simd {
+                        needle_buffer : [32] u8;
+                        needle_ptr := *needle_buffer;
+                        memset(needle_ptr, <<needle.data, 32);
+
+                        results : struct { index, found : u32; };
+                        results_data := *results;
+
+                        while test_index < end_simd {
+                            #asm {
+                                movdqu.y   needle_vec:, [needle_ptr];
+                                movdqu.y   haystack_vec:, [test_index];
+                                pcmpeqb.y  results_vec:, haystack_vec, needle_vec;
+                                pmovmskb.y found_gpr:, results_vec;
+                                xor.q      index_gpr:, index_gpr;
+                                tzcnt.d    index_gpr, found_gpr;
+                                shl.q      found_gpr, 32;
+                                or.q       found_gpr, index_gpr;
+                                mov.q      [results_data], found_gpr;
+                            }
+
+                            if results.found {
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        test_index = second_index;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if test_index < second_index {
+                                    return cast(int)(word_index - cast(u64)haystack.data), true;
+                                }
+                            }
+                            else
+                                test_index += 32;
+                        }
+                    }
+
+                    for index: test_index .. end {
+                        needle_index := needle.data;
+                        for character: test_index .. test_index + needle_end {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index)
+                                continue index;
+                            needle_index += 1;
+                        }
+                        return cast(int)(test_index - cast(u64)haystack.data), true;
+                    }
+            }
+
+        case .IGNORE_CASE;
+            if simd_mode == {
+                case .SSE;
+                case .AVX2;
+            }
+    }
+
+    if !handled {
+        end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+        needle_end := cast(u64)needle.count - 1;
+        for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
+            needle_index := needle.data;
+            for character: test_index .. test_index + needle_end {
+                if !compare.compare(<<cast(*u8)character, <<needle_index)
+                    continue test_index;
+                needle_index += 1;
+            }
+            return cast(int)(test_index - cast(u64)haystack.data), true;
+        }
+    }
+
+    return -1, false;
+}
+
+
+naive_with_simd_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if start_index < needle.count  return -1, false;
+
+    start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
+    needle_end := cast(u64)needle.count - 1;
+    for < test_index: start .. cast(u64)haystack.data {
+        needle_index := needle.data;
+        for character: test_index .. test_index + needle_end {
+            if !compare.compare(<<cast(*u8)character, <<needle_index)
+                continue test_index;
+            needle_index += 1;
+        }
+        return cast(int)(test_index - cast(u64)haystack.data), true;
+    }
+
+    return -1, false;
 }
