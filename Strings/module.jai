@@ -22,8 +22,9 @@ else #if compare == .IGNORE_CASE
     default_compare :: ignore_case;
 
 #if index_algorithm == .NAIVE {
-    default_first_index :: naive_with_simd_first_index;
-    default_last_index  :: naive_with_simd_last_index;
+    #load "../Strings_Shared/indexing.jai";
+    default_first_index :: naive_first_index;
+    default_last_index  :: naive_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE {
     #load "../Strings_Shared/boyer_moore.jai";

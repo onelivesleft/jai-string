@@ -125,6 +125,8 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     if haystack == ""  return empty();
 
+    print("Temporary Storage\nPre:  %\n", <<context.temporary_storage);
+
     result : String_Builder;
     set_result_allocator();
 
@@ -143,6 +145,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
     }
 
     a, ad := get_allocator(allocator, allocator_data);
+    print("Post: %\n", <<context.temporary_storage);
     return builder_to_string(*result, allocator = a, allocator_data = ad);
 }
 
@@ -170,6 +173,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
     a, ad := get_allocator(allocator, allocator_data);
     return builder_to_string(*result, allocator = a, allocator_data = ad);
 }
+
 
 
 // @TODO rename to join
