@@ -3,7 +3,7 @@
 
 
 // TODO
-// [ ] create a Scratch allocator
+// [x] create a Scratch allocator
 // [ ] rename concatenate to join
 // [x] allow user to set allocator used by string builder
 // [x] return "\0" for empty string when null_terminate is true
@@ -133,7 +133,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     a, ad := get_allocator(allocator, allocator_data);
     output := builder_to_string(*result, allocator = a, allocator_data = ad);
-    if allocator != __temporary_allocator
+    if a != __temporary_allocator
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
 }
@@ -161,7 +161,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 
     a, ad := get_allocator(allocator, allocator_data);
     output := builder_to_string(*result, allocator = a, allocator_data = ad);
-    if allocator != __temporary_allocator
+    if a != __temporary_allocator
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
 }
@@ -169,7 +169,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 
 
 // @TODO rename to join
-concatenate :: (strings: .. string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+join :: (strings: .. string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if strings.count == 0  return empty();
 
     if strings.count == 1 {
@@ -604,7 +604,7 @@ snake_from_camel :: (str: string, preserve_caps := false, allocator: Allocator =
 
     a, ad := get_allocator(allocator, allocator_data);
     output := builder_to_string(*result, allocator = a, allocator_data = ad);
-    if allocator != __temporary_allocator
+    if a != __temporary_allocator
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
 }
@@ -635,7 +635,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 
     a, ad := get_allocator(allocator, allocator_data);
     output := builder_to_string(*result, allocator = a, allocator_data = ad);
-    if allocator != __temporary_allocator
+    if a != __temporary_allocator
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
 }

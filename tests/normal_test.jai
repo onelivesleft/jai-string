@@ -321,7 +321,7 @@ main :: () {
     parts = temp.split(line_split(" aa\nbb\r\ncc "));
     test(157, parts, string.[" aa", "bb", "cc "]);
 
-    test(158, heap.concatenate("Hello ", "to ", "the ", "world."), "Hello to the world.");
+    test(158, heap.join("Hello ", "to ", "the ", "world."), "Hello to the world.");
 
     test(159, heap.pad_start("Hello", 8), "   Hello");
     test(160, heap.pad_start("Hello", 8, "Hello"), "HelHello");
