@@ -3,8 +3,7 @@
 
 // TODO
 // [.] `keep_separator` on all `split` (string and line_split done, needs: u8, []u8, index_proc)
-// [ ] unicode support
-// [ ] trim_to (e.g name = "{hi} stuff"; name = trim_to(name, "}"))  Include seperator?
+// [ ] trim_start_to, trim_start_after, trim_end_from, trim_end_after
 // [x] first_index lambda needle
 // [x] split at
 // [x] trim string characters?
