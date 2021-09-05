@@ -346,7 +346,7 @@ Returns a copy of `str` with all lower-case characters converted to their upper-
 Returns a copy of `str` with all (non-overlapping) instances of `needle` replaced with `replacement`.
 If `max_replacements` is non-zero then at most that many replacements will be made (starting at the beginning of the string).
 
-* `join  (strings: .. string) -> string #`<br>
+* `join  (strings: .. string) -> string`<br>
 Returns a single string created by concatenating all the provided strings together.
 
 * `join (strings: [] string) -> string`<br>
