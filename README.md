@@ -322,9 +322,6 @@ Sets the index procedures used internally when searching through strings with st
     * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
 
-* `set_string_builder_allocator (allocator: Allocator, allocator_data : void = null)`<br>
-Sets the allocator used by String_Builder as it operates. Can also be set with the `string_builder_allocator` module parameter.  It defaults to using temporary storage.
-
 
 * `copy (str: string) -> string`<br>
 Returns of a copy of `str`.
