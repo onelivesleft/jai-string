@@ -4,13 +4,16 @@ String modules for Jai
 
 * `Strings` provides procs which mutate strings in place or return information or string-views.
 * `Strings_Alloc` provides procs which return allocated data.
+* `Scratch` provides a simple allocator for doing multiple operations in a row without grabbing more memory on each one.
 
 For example, you could import and use them like this:
 
 ```jai
 #import "Strings";
 heap :: #import "Strings_Alloc";
+scratch :: #import "Strings_Alloc"(scratch_allocator);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
+#import "Scratch";
 
 main :: () {
     trimmed := trim("  Some test string  ");  // in Strings, does not allocate
@@ -22,6 +25,7 @@ main :: () {
 ```
 
 To use clone the repo then copy the `Strings`, `Strings_Alloc` and `Strings_Shared` folders into your `jai/modules` folder, or symlink them: `mklink /d c:\jai\modules\Strings c:\repos\jai-string\Strings`
+Optionally do the same for the `Scratch` folder if you want to have access to the scratch allocator.
 
 
 ## Mechanics

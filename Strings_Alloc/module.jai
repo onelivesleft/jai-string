@@ -1,18 +1,17 @@
 // All functions return allocated data, and take `allocator` + `allocator_data` optional parameters,
 // (defaulting to using the allocator specified in the module parameters).
 
+// Recommended use is to import this module into a namespace, named after the allocator used. i.e.
+// heap :: #import "Strings_Alloc";
+// temp :: #import "Strings_Alloc"(__temporary_allocator);
+
 
 #module_parameters (
     // Default allocator: null will use `context.allocator`
     default_allocator : Allocator = null,
     default_allocator_data : *void = null,
 
-    // Allocator used for String_Builder operation.  By default temporary storage is
-    // used; setting to .AS_DEFAULT will use the allocator specified above.
-    // Allocator can be set directly by calling `set_string_builder_allocator`
-    string_builder_allocator : enum { TEMP; AS_DEFAULT; } = .TEMP,
-
-    // Adds `print`, `init_string_builder`, & `builder_to_string`set to behave the
+    // Adds `print` and `builder_to_string`set to behave the
     // same as every other allocated proc (i.e. if null use module allocator, which
     // if null uses the context allocator)
     add_convenience_functions := false,

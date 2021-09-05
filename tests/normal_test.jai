@@ -211,12 +211,18 @@ main :: () {
     test(100, temp.replace(some_text, "e",  "a", 1), "soma text\there");
     test(101, temp.replace(some_text, "e",  "a", 0), "soma taxt\thara");
 
-    test(102, temp.replace(some_text, "E",  "ae",   compare=ignore_case), "somae taext\thaerae");
-    test(103, temp.replace(some_text, "AE", "e",    compare=ignore_case), "some text\there");
-    test(104, temp.replace(some_text, "S",  "e",    compare=ignore_case), "eome text\there");
-    test(105, temp.replace(some_text, "E",  "a", 2, ignore_case), "soma taxt\there");
-    test(106, temp.replace(some_text, "E",  "a", 1, ignore_case), "soma text\there");
-    test(107, temp.replace(some_text, "E",  "a", 0, ignore_case), "soma taxt\thara");
+    temp0 := temp.replace(some_text, "E",  "ae",   compare=ignore_case);
+    temp1 := temp.replace(some_text, "AE", "e",    compare=ignore_case);
+    temp2 := temp.replace(some_text, "S",  "e",    compare=ignore_case);
+    temp3 := temp.replace(some_text, "E",  "a", 2, ignore_case);
+    temp4 := temp.replace(some_text, "E",  "a", 1, ignore_case);
+    temp5 := temp.replace(some_text, "E",  "a", 0, ignore_case);
+    test(102, temp0, "somae taext\thaerae");
+    test(103, temp1, "some text\there");
+    test(104, temp2, "eome text\there");
+    test(105, temp3, "soma taxt\there");
+    test(106, temp4, "soma text\there");
+    test(107, temp5, "soma taxt\thara");
 
     index = 0;
     for split("  aa    bb \t cc ", cast([]u8) " \t", skip_empty = true) {

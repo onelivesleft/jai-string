@@ -4,7 +4,7 @@ scratch_allocator :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, 
         return null;
 
         case .RESIZE;
-        assert(false, "Cannot resize scratch buffer: just allocate instead");
+        assert(false, "Cannot resize scratch buffer: just allocate instead.");
         return null;
 
 
@@ -14,7 +14,7 @@ scratch_allocator :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, 
 
         if sizes[current_buffer_index] < requested_size {
             if buffers[current_buffer_index]  free(buffers[current_buffer_index]);
-            sizes[current_buffer_index] = cast(s64)(requested_size * buffer_increase_factor + 1);
+            sizes[current_buffer_index] = cast(s64)(requested_size * buffer_size_factor + 1);
             buffers[current_buffer_index] = alloc(sizes[current_buffer_index]);
         }
 
@@ -23,12 +23,23 @@ scratch_allocator :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, 
 }
 
 
+free_scratch_allocator_buffers :: () {
+    // If you are done using the scratch allocator and want to release the buffer
+    // memory.
+    for i: 0 .. buffer_count - 1 {
+        if buffers[i]  free(buffers[i]);
+        sizes[i] = 0;
+    }
+}
+
+
+
 #scope_file
 
 
-buffer_count :: 2;
-buffer_increase_factor :: 1.5;
 
 current_buffer_index := 0;
 buffers : [buffer_count] *void;
 sizes   : [buffer_count] int;
+
+#import "Basic";

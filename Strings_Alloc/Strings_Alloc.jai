@@ -26,14 +26,9 @@ using shared :: #import "Strings_Shared";
 current_compare := default_compare;
 current_first_index := default_first_index;
 current_last_index := default_last_index;
-#if string_builder_allocator == .TEMP {
-    current_string_builder_allocator := __temporary_allocator;
-    current_string_builder_allocator_data : *void = null;
-}
-else {
-    current_string_builder_allocator := default_allocator;
-    current_string_builder_allocator_data := default_allocator_data;
-}
+
+string_builder_allocator :: __temporary_allocator;
+string_builder_allocator_data : *void : null;
 
 #scope_export
 
@@ -46,12 +41,6 @@ set_default_compare :: (character_compare := default_compare) {
 set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := default_last_index) {
     current_first_index = first_index_proc;
     current_last_index = last_index_proc;
-}
-
-
-set_string_builder_allocator :: (allocator: Allocator, allocator_data : *void = null) {
-    current_string_builder_allocator = allocator;
-    current_string_builder_allocator_data = allocator_data;
 }
 
 
@@ -125,8 +114,6 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     if haystack == ""  return empty();
 
-    print("Temporary Storage\nPre:  %\n", <<context.temporary_storage);
-
     result : String_Builder;
     set_result_allocator();
 
@@ -145,8 +132,10 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
     }
 
     a, ad := get_allocator(allocator, allocator_data);
-    print("Post: %\n", <<context.temporary_storage);
-    return builder_to_string(*result, allocator = a, allocator_data = ad);
+    output := builder_to_string(*result, allocator = a, allocator_data = ad);
+    if allocator != __temporary_allocator
+        set_temporary_storage_mark(result_temporary_storage_mark);
+    return output;
 }
 
 
@@ -171,7 +160,10 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
     }
 
     a, ad := get_allocator(allocator, allocator_data);
-    return builder_to_string(*result, allocator = a, allocator_data = ad);
+    output := builder_to_string(*result, allocator = a, allocator_data = ad);
+    if allocator != __temporary_allocator
+        set_temporary_storage_mark(result_temporary_storage_mark);
+    return output;
 }
 
 
@@ -611,7 +603,10 @@ snake_from_camel :: (str: string, preserve_caps := false, allocator: Allocator =
     }
 
     a, ad := get_allocator(allocator, allocator_data);
-    return builder_to_string(*result, allocator = a, allocator_data = ad);
+    output := builder_to_string(*result, allocator = a, allocator_data = ad);
+    if allocator != __temporary_allocator
+        set_temporary_storage_mark(result_temporary_storage_mark);
+    return output;
 }
 
 
@@ -639,7 +634,10 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
     }
 
     a, ad := get_allocator(allocator, allocator_data);
-    return builder_to_string(*result, allocator = a, allocator_data = ad);
+    output := builder_to_string(*result, allocator = a, allocator_data = ad);
+    if allocator != __temporary_allocator
+        set_temporary_storage_mark(result_temporary_storage_mark);
+    return output;
 }
 
 
@@ -652,11 +650,6 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 
         return builder_to_string(*builder, allocator = allocator, allocator_data = allocator_data, null_terminate = null_terminate);
     } @PrintLike
-
-
-    init_string_builder :: (using builder: *String_Builder, allocator: Allocator = null, allocator_data: *void = null) {
-        allocator, allocator_data = get_allocator(allocator, allocator_data, String_Builder);
-    }
 
 
     builder_to_string :: (builder: String_Builder, extra_bytes_to_prepend := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
@@ -686,12 +679,13 @@ Allocator_Wrapper :: struct {
 
 set_result_allocator :: () #expand {
     #if type_of(`result) == String_Builder {
-        `defer reset(*`result);
-        if current_string_builder_allocator {
-            `result.allocator = current_string_builder_allocator;
-            `result.allocator_data = current_string_builder_allocator_data;
-            return;
-        }
+        `result.allocator = __temporary_allocator;
+        `result.allocator_data = null;
+        `result_temporary_storage_mark := get_temporary_storage_mark();
+        // @Note we can't `defer set_temporary_storage_mark(result_temporary_storage_mark)`
+        // here because we might be using the temp allocator to store the result, so we
+        // need to check before we reset the mark (or we'd be clearing our work!).
+        return;
     }
 
     if `allocator {
@@ -713,13 +707,8 @@ get_allocator :: (parameter_allocator: Allocator = null, parameter_allocator_dat
     allocator : Allocator;
     allocator_data : *void;
 
-    #if type == String_Builder {
-        if current_string_builder_allocator {
-            allocator = current_string_builder_allocator;
-            allocator_data = current_string_builder_allocator_data;
-            return allocator, allocator_data;
-        }
-    }
+    #if type == String_Builder
+        return __temporary_allocator, null;
 
     if parameter_allocator {
         allocator = parameter_allocator;

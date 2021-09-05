@@ -1,4 +1,5 @@
-// All functions return a string view and/or mutate a string view in-place
+// No functions in this module allocate - strings returned are views on already
+// existing data.
 
 
 #module_parameters (
@@ -20,6 +21,7 @@
     default_compare :: case_sensitive;
 else #if compare == .IGNORE_CASE
     default_compare :: ignore_case;
+
 
 #if index_algorithm == .NAIVE {
     #load "../Strings_Shared/indexing.jai";
