@@ -352,7 +352,6 @@ advance_past :: (haystack: *string, needle: string, $$index_proc: Index_Proc) ->
     return index;
 }
 
-
 trim :: (str: string, char: u8, compare: Character_Compare) -> string {
     low_index := 0;
     high_index := str.count - 1;
@@ -367,7 +366,6 @@ trim :: (str: string, char: u8, compare: Character_Compare) -> string {
 
     return unsafe_slice(str, low_index, high_index + 1);
 }
-
 
 trim :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
     if chars.count == 0  return str;
@@ -386,7 +384,6 @@ trim :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
     return unsafe_slice(str, low_index, high_index + 1);
 }
 
-
 trim :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
     s := str;
     while starts_with(s, string_to_remove, compare)
@@ -399,7 +396,6 @@ trim :: (str: string, string_to_remove: string, compare : Character_Compare) -> 
 
     return s;
 }
-
 
 trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
     s := str;
@@ -432,8 +428,7 @@ trim_start :: (str: string, char: u8, compare: Character_Compare) -> string {
     return unsafe_slice(str, index);
 }
 
-
-trim_start :: (str: string, chars : [] u8, compare: Character_Compare) -> string {
+trim_start :: (str: string, chars: [] u8, compare: Character_Compare) -> string {
     if chars.count == 0  return str;
 
     index := 0;
@@ -446,7 +441,6 @@ trim_start :: (str: string, chars : [] u8, compare: Character_Compare) -> string
     return unsafe_slice(str, index);
 }
 
-
 trim_start :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
     if string_to_remove == ""  return str;
 
@@ -456,7 +450,6 @@ trim_start :: (str: string, string_to_remove: string, compare : Character_Compar
 
     return s;
 }
-
 
 trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
     s := str;
@@ -470,15 +463,55 @@ trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> st
 }
 
 
-trim_start_to :: (str: string, char: u8, compare: Character_Compare) -> string {
-    index := 0;
-
-    while index < str.count && compare.compare(str[index], char)
-        index += 1;
-
-    if index >= str.count  return "";
-
+trim_start_to :: (str: string, needle: u8, compare: Character_Compare) -> string {
+    index, found := first_index(str, needle, 0, compare);
+    if !found  return str;
     return unsafe_slice(str, index);
+}
+
+trim_start_to :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+    index, found := first_index(str, needle, 0, compare);
+    if !found  return str;
+    return unsafe_slice(str, index);
+}
+
+trim_start_to :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
+    if needle == ""  return str;
+    index, found := first_index(str, needle, 0, compare, string_index_proc);
+    if !found  return str;
+    return unsafe_slice(str, index);
+}
+
+trim_start_to :: (str: string, needle: string, $$index: Index_Proc) -> string {
+    index, found := first_index(str, needle, 0, index);
+    if !found  return str;
+    return unsafe_slice(str, index);
+}
+
+
+trim_start_past :: (str: string, needle: u8, compare: Character_Compare) -> string {
+    index, found := first_index(str, needle, 0, compare);
+    if !found  return str;
+    return unsafe_slice(str, index + 1);
+}
+
+trim_start_past :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+    index, found := first_index(str, needle, 0, compare);
+    if !found  return str;
+    return unsafe_slice(str, index + 1);
+}
+
+trim_start_past :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
+    if needle == ""  return str;
+    index, found := first_index(str, needle, 0, compare, string_index_proc);
+    if !found  return str;
+    return unsafe_slice(str, index + needle.count);
+}
+
+trim_start_past :: (str: string, needle: string, $$index: Index_Proc) -> string {
+    from_index, found, to_index := first_index(str, needle, 0, index);
+    if !found  return str;
+    return unsafe_slice(str, to_index);
 }
 
 
@@ -493,7 +526,6 @@ trim_end :: inline (str: string, char: u8, compare: Character_Compare) -> string
     return unsafe_slice(str, 0, index + 1);
 }
 
-
 trim_end :: inline (str: string, chars : [] u8, compare: Character_Compare) -> string {
     if chars.count == 0  return str;
 
@@ -507,7 +539,6 @@ trim_end :: inline (str: string, chars : [] u8, compare: Character_Compare) -> s
     return unsafe_slice(str, 0, index + 1);
 }
 
-
 trim_end :: (str: string, string_to_remove: string, compare : Character_Compare) -> string {
     if string_to_remove == ""  return str;
 
@@ -518,7 +549,6 @@ trim_end :: (str: string, string_to_remove: string, compare : Character_Compare)
     return s;
 }
 
-
 trim_end :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
     s := str;
     from_index, to_index, found := index(s, string_to_remove, s.count, true);
@@ -528,6 +558,59 @@ trim_end :: (str: string, string_to_remove: string, $$index: Index_Proc) -> stri
     }
 
     return s;
+}
+
+
+trim_end_after :: (str: string, needle: u8, compare: Character_Compare) -> string {
+    index, found := last_index(str, needle, str.count, compare);
+    if !found  return str;
+    return unsafe_slice(str, 0, index + 1);
+}
+
+trim_end_after :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+    index, found := last_index(str, needle, str.count, compare);
+    if !found  return str;
+    return unsafe_slice(str, 0, index + 1);
+}
+
+trim_end_after :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
+    if needle == ""  return str;
+    index, found := last_index(str, needle, str.count, compare, string_index_proc);
+    if !found  return str;
+    return unsafe_slice(str, 0, index + needle.count);
+}
+
+trim_end_after :: (str: string, needle: string, $$index: Index_Proc) -> string {
+    from_index, found, to_index := last_index(str, needle, str.count, index);
+    if !found  return str;
+    return unsafe_slice(str, 0, to_index);
+}
+
+
+
+trim_end_from :: (str: string, needle: u8, compare: Character_Compare) -> string {
+    index, found := last_index(str, needle, str.count, compare);
+    if !found  return str;
+    return unsafe_slice(str, 0, index);
+}
+
+trim_end_from :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+    index, found := last_index(str, needle, str.count, compare);
+    if !found  return str;
+    return unsafe_slice(str, 0, index);
+}
+
+trim_end_from :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
+    if needle == ""  return str;
+    index, found := last_index(str, needle, str.count, compare, string_index_proc);
+    if !found  return str;
+    return unsafe_slice(str, 0, index);
+}
+
+trim_end_from :: (str: string, needle: string, $$index: Index_Proc) -> string {
+    from_index, found, to_index := last_index(str, needle, str.count, index);
+    if !found  return str;
+    return unsafe_slice(str, 0, from_index);
 }
 
 

@@ -3,7 +3,7 @@
 
 // TODO
 // [.] `keep_separator` on all `split` (string and line_split done, needs: u8, []u8, index_proc)
-// [ ] trim_start_to, trim_start_after, trim_end_from, trim_end_after
+// [x] trim_start_to, trim_start_past, trim_end_from, trim_end_after
 // [x] first_index lambda needle
 // [x] split at
 // [x] trim string characters?
@@ -294,7 +294,7 @@ trim :: inline (str: string, string_to_remove: string) -> string {
 
 
 
-trim_start :: inline (str: string) -> string {
+trim_start :: (str: string) -> string {
     index := 0;
 
     while index < str.count && str[index] <= Chars.SPACE
@@ -320,7 +320,7 @@ trim_start :: inline (str: string, chars : [] u8) -> string {
 }
 
 
-trim_start :: (str: string, string_to_remove: string) -> string {
+trim_start :: inline (str: string, string_to_remove: string) -> string {
     #if strict {
         assert(string_to_remove != "", "You cannot trim nothing!");
     }
@@ -330,11 +330,33 @@ trim_start :: (str: string, string_to_remove: string) -> string {
 
 
 
-//trim_start_to :: (str: string, seperator: $T, )
+trim_start_to :: inline (str: string, needle: u8) -> string {
+    return trim_start_to(str, needle, current_compare);
+}
+
+trim_start_to :: inline (str: string, needle: [] u8) -> string {
+    return trim_start_to(str, needle, current_compare);
+}
+
+trim_start_to :: inline (str: string, needle: string) -> string {
+    return trim_start_to(str, needle, current_compare, current_first_index);
+}
 
 
+trim_start_past :: inline (str: string, needle: u8) -> string {
+    return trim_start_past(str, needle, current_compare);
+}
 
-trim_end :: inline (str: string) -> string {
+trim_start_past :: inline (str: string, needle: [] u8) -> string {
+    return trim_start_past(str, needle, current_compare);
+}
+
+trim_start_past :: inline (str: string, needle: string) -> string {
+    return trim_start_past(str, needle, current_compare, current_first_index);
+}
+
+
+trim_end :: (str: string) -> string {
     index := str.count - 1;
 
     while index >= 0 && str[index] <= Chars.SPACE
@@ -360,7 +382,7 @@ trim_end :: inline (str: string, chars : [] u8) -> string {
 }
 
 
-trim_end :: (str: string, string_to_remove: string) -> string {
+trim_end :: inline (str: string, string_to_remove: string) -> string {
     #if strict {
         assert(string_to_remove != "", "You cannot trim nothing!");
     }
@@ -368,6 +390,32 @@ trim_end :: (str: string, string_to_remove: string) -> string {
     return trim_end(str, string_to_remove, current_compare);
 }
 
+
+
+trim_end_from :: inline (str: string, needle: u8) -> string {
+    return trim_end_from(str, needle, current_compare);
+}
+
+trim_end_from :: inline (str: string, needle: [] u8) -> string {
+    return trim_end_from(str, needle, current_compare);
+}
+
+trim_end_from :: inline (str: string, needle: string) -> string {
+    return trim_end_from(str, needle, current_compare, current_last_index);
+}
+
+
+trim_end_after :: inline (str: string, needle: u8) -> string {
+    return trim_end_after(str, needle, current_compare);
+}
+
+trim_end_after :: inline (str: string, needle: [] u8) -> string {
+    return trim_end_after(str, needle, current_compare);
+}
+
+trim_end_after :: inline (str: string, needle: string) -> string {
+    return trim_end_after(str, needle, current_compare, current_last_index);
+}
 
 
 replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {

@@ -189,8 +189,20 @@ Returns the string view of `str` with all characters matching tool removed from 
 * `trim_start (str: string, tool: %Tool, compare := default_compare) -> string`<br>
 Returns the string view of `str` with all characters matching tool removed from the start.
 
+* `trim_start_to (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters before the first instance of tool removed from the start.  If tool is not found then the entire string is returned.
+
+* `trim_start_past (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters before the first instance of tool, and the tool, removed from the start.  If tool is not found then the entire string is returned.
+
 * `trim_end (str: string, tool: %Tool, compare := default_compare) -> string`<br>
 Returns the string view of `str` with all characters matching tool removed from the end.
+
+* `trim_end_after (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters after the last instance of tool removed from the end.  If tool is not found then the entire string is returned.
+
+* `trim_end_from (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+Returns the string view of `str` with all characters after the last instance of tool, and the tool, removed from the end.  If tool is not found then the entire string is returned.
 
 
 * `first_index (haystack: string, needle: %Tool, start_index := 0, compare := default_compare) -> index: int, found: bool, [to_index: int]`<br>

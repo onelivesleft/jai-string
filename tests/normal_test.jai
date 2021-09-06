@@ -730,6 +730,17 @@ __;
     test(344, cast([]u8)temp.escape("\e\\\n\r\t\"\0\x08"), cast([]u8)slice(unescaped, 0, -1));
 
 
+    banana_sandwiches := "banana sandwiches are nice but banana & pear sandwiches are nicer";
+    test(345, trim_start_to(banana_sandwiches, #char "a"), "anana sandwiches are nice but banana & pear sandwiches are nicer");
+    test(346, trim_start_past(banana_sandwiches, #char "a"), "nana sandwiches are nice but banana & pear sandwiches are nicer");
+    test(347, trim_start_to(banana_sandwiches, "nan"), "nana sandwiches are nice but banana & pear sandwiches are nicer");
+    test(348, trim_start_past(banana_sandwiches, "nan"), "a sandwiches are nice but banana & pear sandwiches are nicer");
+
+    test(349, trim_end_after(banana_sandwiches, #char "p"), "banana sandwiches are nice but banana & p");
+    test(350, trim_end_from(banana_sandwiches, #char "p"), "banana sandwiches are nice but banana & ");
+    test(351, trim_end_after(banana_sandwiches, "sandwiches"), "banana sandwiches are nice but banana & pear sandwiches");
+    test(352, trim_end_from(banana_sandwiches, " banana"), "banana sandwiches are nice but");
+
     { // end of main
         if !errors_only
             for word: split("How about a nice game of chess?", #char " ")
@@ -741,6 +752,7 @@ __;
             print("\nAll OK!\n");
     }
 }
+
 
 
 errors : [..] int;
