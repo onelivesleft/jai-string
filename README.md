@@ -125,11 +125,18 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
     * `.IGNORE_CASE`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
-    * `.NAIVE`<br>Simplest algorithm, no memory overhead.
-    * `.BOYER_MOORE`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested algorithm, has a small memory footprint that increases with needle size.
+    * `.SIMPLE`, `.SIMPLE_SSE`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`, `.BOYER_MOORE_SSE`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
 * `strict`<br>By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
+
+
+#### A note on indexing algorithms
+
+Whereas other functions in the library will utilize SIMD features (SSE & AVX2) when told to with the `set_simd_mode` mode command, you must explicitly set an index algorithm to use them if that is what you wish:  the defailt indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
+
+To help with this there is the `index_profile.exe` tool (in the `tools/` folder): provide it with a file and a typical search string from your data and it will show you how each available algorithm performs with the data you are manipulating.
 
 
 ### Procedures
@@ -292,8 +299,8 @@ When enabled (it defaults to false) the module will provide these additional pro
     * `.IGNORE_CASE`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
-    * `.NAIVE`<br>Simplest algorithm, no memory overhead.
-    * `.BOYER_MOORE`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested algorithm, has a small memory footprint that increases with needle size.
+    * `.SIMPLE`, `.SIMPLE_SSE`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`, `.BOYER_MOORE_SSE`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
 * `strict`<br>By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
@@ -316,12 +323,13 @@ Sets the compartor used to check if two characters match.
 * `set_index_algorithm (first_index_proc := default_first_index, last_index_proc := default_last_index)`<br>
 Sets the index procedures used internally when searching through strings with strings (for `replace`, `split`, etc.)
 
-* `set_simd_mode (mode)`<br>Sets whether to use SIMD optimisations.  One of:
+* `set_simd_mode (mode)`<br>
+Sets whether to use SIMD optimisations.  One of:
     * `.OFF`<br>Disables all SIMD optimisations, utilizing scalar code only.
     * `.AUTO`<br>Uses the fastest SIMD instruction set available on the CPU.
     * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
-
+Note that this will *not* alter the string index algorithm you are using: if you wish to enable or disable SIMD functionalty with string indexing you must do so by choosing the appropriate algorithms using `set_index_algorithm`, or the `index_algorithm` module parameter.
 
 * `copy (str: string) -> string`<br>
 Returns of a copy of `str`.
@@ -403,3 +411,11 @@ For example:
     assert( snake_from_camel("PlayRTS")       == "play_rts" );
     assert( snake_from_camel("PlayRTS", true) == "play_RTS" );
 ```
+
+* `apply_backslash (str: string) -> string, well_formed: bool`<br>
+Converts legal jai backslash escape sequences (i.e. `\n`, `\t`, etc) into their specified character. i.e. a two character string `"\n"` will yield a single character string with byte value `10`;
+`well_formed` will be true if all backslash characters in `str` are followed by an appropriate escape
+sequence.
+
+* `escape (str: string) -> string`<br>
+Replaces the special characters which jai uses backslash escapes to represent with said backslash escape sequence. i.e. the single character string with byte value `10` will yield the two character string `"\n"`

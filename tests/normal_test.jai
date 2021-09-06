@@ -1,6 +1,6 @@
 #import "Basic";
 
-#import "Strings"(index_algorithm=.NAIVE);
+#import "Strings"(index_algorithm=.SIMPLE);
 heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
@@ -709,7 +709,26 @@ main :: () {
         }
         index += 1;
     }
+
     test(342, index, 5);
+
+/*
+    escaped := #string __
+\e\\\n\r\t\"\0\xAB\d123\uABCD\UABCDEF12
+__;
+    test(343, temp.apply_backslash(escaped), "\e\\\n\r\t\"\0\xAB\d123\uABCD\UABCDEF12\n");
+*/
+
+    escaped := #string __
+\\\n\r\t\"\0\x08\d123\eX
+__;
+    test(343, cast([]u8)temp.apply_backslash(slice(escaped, 0, -1)), cast([]u8)"\\\n\r\t\"\0\x08\d123\eX");
+
+    unescaped := #string __
+\e\\\n\r\t\"\0\x08
+__;
+    test(344, cast([]u8)temp.escape("\e\\\n\r\t\"\0\x08"), cast([]u8)slice(unescaped, 0, -1));
+
 
     { // end of main
         if !errors_only
@@ -726,9 +745,9 @@ main :: () {
 
 errors : [..] int;
 
-test :: (test_id: int, value: $T, expected: T) {
+test :: (test_id: int, value: string, expected: string) {
     if value != expected {
-        print("(%)\nWanted: [%]\nGot: [%]\n\n", test_id, expected, value);
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
         array_add(*errors, test_id);
     }
     else if !errors_only {
@@ -736,9 +755,40 @@ test :: (test_id: int, value: $T, expected: T) {
     }
 }
 
-test :: (test_id: int, value: [] string, expected: [] string) {
+test :: (test_id: int, value: u8, expected: u8) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+test :: (test_id: int, value: int, expected: int) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+test :: (test_id: int, value: bool, expected: bool) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+
+test :: (test_id: int, value: [] $T, expected: [] T) {
     if !array_equal(value, expected) {
-        print("(%)\nWanted: [%]\nGot: [%]\n\n", test_id, expected, value);
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
         array_add(*errors, test_id);
     }
     else if !errors_only {
@@ -748,7 +798,7 @@ test :: (test_id: int, value: [] string, expected: [] string) {
 
 array_equal :: (a: [] $T, b: [] T) -> bool {
     if a.count != b.count  return false;
-    for i: 0..a.count-1  if a[i] != b[i]  return false;
+    for i: 0 .. a.count - 1  if a[i] != b[i]  return false;
     return true;
 }
 

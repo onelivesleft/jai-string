@@ -18,6 +18,7 @@
 
 
 #import "Basic";
+#import "Unicode";
 using shared :: #import "Strings_Shared";
 
 
@@ -641,6 +642,176 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
 }
 
 
+apply_backslash :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must, well_formed: bool {
+    if str == ""  return empty(), true;
+
+    result : String_Builder;
+    set_result_allocator();
+
+    i := 0;
+    well_formed := true;
+
+    while i < str.count {
+        if str[i] == #char "\\" {
+            i += 1;
+            if i >= str.count { well_formed = false; break; }
+            if str[i] == {
+                case #char "\\";
+                append(*result, #char "\\");
+
+                case #char "e";
+                append(*result, #char "\e");
+
+                case #char "n";
+                append(*result, #char "\n");
+
+                case #char "r";
+                append(*result, #char "\r");
+
+                case #char "t";
+                append(*result, #char "\t");
+
+                case #char "\"";
+                append(*result, #char "\"");
+
+                case #char "0";
+                append(*result, #char "\0");
+
+                case #char "x";
+                i += 2;
+                if i >= str.count { well_formed = false; break; }
+                value : u8 = hex_char_value(str[i - 1]) * 16 + hex_char_value(str[i]);
+                append(*result, value);
+
+                case #char "d";
+                i += 3;
+                if i >= str.count { well_formed = false; break; }
+                value : u8 = hex_char_value(str[i - 2]) * 100 + hex_char_value(str[i - 1]) * 10 + hex_char_value(str[i]);
+                append(*result, value);
+
+                /* @TODO
+                case #char "u";
+                    i += 4;
+                    if i >= str.count { well_formed = false; break; }
+                    value : u16 = hex_char_value(str[i - 3]) * 16 * 16 * 16;
+                    value += hex_char_value(str[i - 2]) * 16 * 16;
+                    value += hex_char_value(str[i - 1]) * 16;
+                    value += hex_char_value(str[i]);
+                    append(*result, character_utf32_to_utf8(xx value));
+
+                case #char "U";
+                    i += 8;
+                    if i >= str.count { well_formed = false; break; }
+                    value : u32 = hex_char_value(str[i - 7]) * 16 * 16 * 16 * 16 * 16 * 16 * 16;
+                    value += hex_char_value(str[i - 6])      * 16 * 16 * 16 * 16 * 16 * 16;
+                    value += hex_char_value(str[i - 5])      * 16 * 16 * 16 * 16 * 16;
+                    value += hex_char_value(str[i - 4])      * 16 * 16 * 16 * 16;
+                    value += hex_char_value(str[i - 3])      * 16 * 16 * 16;
+                    value += hex_char_value(str[i - 2])      * 16 * 16;
+                    value += hex_char_value(str[i - 1])      * 16;
+                    value += hex_char_value(str[i]);
+                    append(*result, character_utf32_to_utf8(value));
+                */
+
+                case;
+                i -= 1;
+                well_formed = false;
+            }
+        }
+        else {
+            append(*result, str[i]);
+        }
+        i += 1;
+    }
+
+    if null_terminate {
+        buffer := get_current_buffer(*result);
+        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+            append(*result, #char "\0");
+    }
+
+    a, ad := get_allocator(allocator, allocator_data);
+    output := builder_to_string(*result, allocator = a, allocator_data = ad);
+    if a != __temporary_allocator
+        set_temporary_storage_mark(result_temporary_storage_mark);
+    return output, well_formed;
+}
+
+
+escape :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    if str == ""  return empty();
+
+    result : String_Builder;
+    set_result_allocator();
+
+    for i: 0 .. str.count - 1 {
+        if str[i] == {
+            case #char "\\";
+            append(*result, "\\\\");
+
+            case #char "\e";
+            append(*result, "\\e");
+
+            case #char "\n";
+            append(*result, "\\n");
+
+            case #char "\r";
+            append(*result, "\\r");
+
+            case #char "\t";
+            append(*result, "\\t");
+
+            case #char "\"";
+            append(*result, "\\\"");
+
+            case #char "\0";
+            append(*result, "\\0");
+
+            /* @TODO
+            case #char "u";
+            i += 4;
+            if i >= str.count { well_formed = false; break; }
+            value : u16 = hex_char_value(str[i - 3]) * 16 * 16 * 16;
+            value += hex_char_value(str[i - 2]) * 16 * 16;
+            value += hex_char_value(str[i - 1]) * 16;
+            value += hex_char_value(str[i]);
+            append(*result, character_utf32_to_utf8(xx value));
+
+            case #char "U";
+            i += 8;
+            if i >= str.count { well_formed = false; break; }
+            value : u32 = hex_char_value(str[i - 7]) * 16 * 16 * 16 * 16 * 16 * 16 * 16;
+            value += hex_char_value(str[i - 6])      * 16 * 16 * 16 * 16 * 16 * 16;
+            value += hex_char_value(str[i - 5])      * 16 * 16 * 16 * 16 * 16;
+            value += hex_char_value(str[i - 4])      * 16 * 16 * 16 * 16;
+            value += hex_char_value(str[i - 3])      * 16 * 16 * 16;
+            value += hex_char_value(str[i - 2])      * 16 * 16;
+            value += hex_char_value(str[i - 1])      * 16;
+            value += hex_char_value(str[i]);
+            append(*result, character_utf32_to_utf8(value));
+            */
+            case;
+            if str[i] < 32
+                print_to_builder(*result, "\\x%", formatInt(str[i], 16, 2));
+            else
+                append(*result, str[i]);
+        }
+    }
+
+    if null_terminate {
+        buffer := get_current_buffer(*result);
+        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+            append(*result, #char "\0");
+    }
+
+    a, ad := get_allocator(allocator, allocator_data);
+    output := builder_to_string(*result, allocator = a, allocator_data = ad);
+    if a != __temporary_allocator
+        set_temporary_storage_mark(result_temporary_storage_mark);
+    return output;
+}
+
+
 #if add_convenience_functions {
     print :: (format_string: string, args: .. Any, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
         builder: String_Builder;
@@ -738,4 +909,21 @@ empty :: () -> string #expand {
     }
     else
         return "";
+}
+
+
+#scope_file
+
+
+hex_char_value :: inline (c: u8) -> u8 {
+    if c >= hex_char_values.count  return 0;
+    return hex_char_values[c];
+
+    hex_char_values :: u8.[0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                           0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                           0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                           0,  1,  2,  3,  4,  5,  6, 7, 8, 9, 0, 0, 0, 0, 0, 0,
+                           0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                           0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                           0, 10, 11, 12, 13, 14, 15];
 }
