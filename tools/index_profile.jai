@@ -72,11 +72,11 @@ main :: () {
 
     simple           :: true;
     jai              :: true;
-    simple_sse       :: true;
+    simple_sse2       :: true;
     simple_avx2      :: true;
     kmp              :: true;
     boyer_moore      :: true;
-    boyer_moore_sse  :: true;
+    boyer_moore_sse2  :: true;
     boyer_moore_avx2 :: true;
 
     format_float := *context.print_style.default_format_float;
@@ -151,11 +151,11 @@ main :: () {
 
     #if jai               jai_entry              := entry("?", "Jai", "jai");
     #if boyer_moore       boyer_moore_entry      := entry("BOYER_MOORE", "Boyer-Moore", "boyer_moore");
-    #if boyer_moore_sse   boyer_moore_sse_entry  := entry("BOYER_MOORE_SSE", "Boyer-Moore SSE", "boyer_moore_sse");
+    #if boyer_moore_sse2   boyer_moore_sse2_entry  := entry("BOYER_MOORE_SSE2", "Boyer-Moore SSE2", "boyer_moore_sse2");
     #if boyer_moore_avx2  boyer_moore_avx2_entry := entry("BOYER_MOORE_AVX2", "Boyer-Moore AVX2", "boyer_moore_avx2");
     #if kmp               kmp_entry              := entry("KNUTH_MORRIS_PRATT", "Knuth-Morris-Pratt", "knuth_morris_pratt");
     #if simple            simple_entry           := entry("SIMPLE", "Simple", "simple");
-    #if simple_sse        simple_sse_entry       := entry("SIMPLE_SSE", "Simple SSE", "simple_sse");
+    #if simple_sse2        simple_sse2_entry       := entry("SIMPLE_SSE2", "Simple SSE2", "simple_sse2");
     #if simple_avx2       simple_avx2_entry      := entry("SIMPLE_AVX2", "Simple AVX2", "simple_avx2");
 
     prev_marker := -1;
@@ -237,11 +237,11 @@ main :: () {
         }
 
         #if boyer_moore       test(boyer_moore_first_index, boyer_moore_last_index, *boyer_moore_entry);
-        #if boyer_moore_sse   test(boyer_moore_sse_first_index, boyer_moore_sse_last_index, *boyer_moore_sse_entry);
+        #if boyer_moore_sse2   test(boyer_moore_sse2_first_index, boyer_moore_sse2_last_index, *boyer_moore_sse2_entry);
         #if boyer_moore_avx2  test(boyer_moore_avx2_first_index, boyer_moore_avx2_last_index, *boyer_moore_avx2_entry);
         #if kmp               test(knuth_morris_pratt_first_index, knuth_morris_pratt_last_index, *kmp_entry);
         #if simple            test(simple_first_index, simple_last_index, *simple_entry);
-        #if simple_sse        test(simple_sse_first_index, simple_sse_last_index, *simple_sse_entry);
+        #if simple_sse2        test(simple_sse2_first_index, simple_sse2_last_index, *simple_sse2_entry);
         #if simple_avx2       test(simple_avx2_first_index, simple_avx2_last_index, *simple_avx2_entry);
     }
 
@@ -250,10 +250,10 @@ main :: () {
     #if jai               array_add(*entries, jai_entry);
     #if kmp               array_add(*entries, kmp_entry);
     #if boyer_moore       array_add(*entries, boyer_moore_entry);
-    #if boyer_moore_sse   array_add(*entries, boyer_moore_sse_entry);
+    #if boyer_moore_sse2   array_add(*entries, boyer_moore_sse2_entry);
     #if boyer_moore_avx2  array_add(*entries, boyer_moore_avx2_entry);
     #if simple            array_add(*entries, simple_entry);
-    #if simple_sse        array_add(*entries, simple_sse_entry);
+    #if simple_sse2        array_add(*entries, simple_sse2_entry);
     #if simple_avx2       array_add(*entries, simple_avx2_entry);
 
     quick_sort(entries, (a: Entry) -> float64 { return a.first_time; });

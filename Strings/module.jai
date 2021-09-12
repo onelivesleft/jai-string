@@ -10,8 +10,8 @@
     // Index algorithm used to find instance of string in other string.
     // Can be overriden with `set_index_algorithm`
     index_algorithm : enum {
-        SIMPLE; SIMPLE_SSE; SIMPLE_AVX2;
-        BOYER_MOORE; BOYER_MOORE_SSE; BOYER_MOORE_AVX2;
+        SIMPLE; SIMPLE_SSE2; SIMPLE_AVX2;
+        BOYER_MOORE; BOYER_MOORE_SSE2; BOYER_MOORE_AVX2;
         KNUTH_MORRIS_PRATT; } = .BOYER_MOORE,
 
     // When strict mode is enabled asserts will fail when indices fall outside
@@ -30,9 +30,9 @@ else #if compare == .IGNORE_CASE
     default_first_index :: simple_first_index;
     default_last_index  :: simple_last_index;
 }
-else #if index_algorithm == .SIMPLE_SSE {
-    default_first_index :: simple_sse_first_index;
-    default_last_index  :: simple_sse_last_index;
+else #if index_algorithm == .SIMPLE_SSE2 {
+    default_first_index :: simple_sse2_first_index;
+    default_last_index  :: simple_sse2_last_index;
 }
 else #if index_algorithm == .SIMPLE_AVX2 {
     default_first_index :: simple_avx2_first_index;
@@ -42,9 +42,9 @@ else #if index_algorithm == .BOYER_MOORE {
     default_first_index :: boyer_moore_first_index;
     default_last_index  :: boyer_moore_last_index;
 }
-else #if index_algorithm == .BOYER_MOORE_SSE {
-    default_first_index :: boyer_moore_sse_first_index;
-    default_last_index  :: boyer_moore_sse_last_index;
+else #if index_algorithm == .BOYER_MOORE_SSE2 {
+    default_first_index :: boyer_moore_sse2_first_index;
+    default_last_index  :: boyer_moore_sse2_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE_AVX2 {
     default_first_index :: boyer_moore_avx2_first_index;

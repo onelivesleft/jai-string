@@ -39,7 +39,7 @@ simple_last_index :: (haystack: string, needle: string, start_index: int, compar
 
 
 
-simple_sse_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return start_index, true;
     if start_index > haystack.count - needle.count  return -1, false;
 
@@ -64,7 +64,8 @@ simple_sse_first_index :: (haystack: string, needle: string, start_index: int, c
                         movdqu.x   haystack_vec:, [haystack_ptr];
 
                         /* check for equality */
-                        pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                        movdqu.x   results_vec:, haystack_vec;
+                        pcmpeqb.x  results_vec, needle_vec;
                         pmovmskb.x found_gpr:, results_vec;
 
                         /* calculate index of first equal character */
@@ -229,7 +230,7 @@ simple_sse_first_index :: (haystack: string, needle: string, start_index: int, c
 }
 
 
-simple_sse_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return start_index - 1, true;
     if start_index < needle.count  return -1, false;
 
@@ -255,7 +256,8 @@ simple_sse_last_index :: (haystack: string, needle: string, start_index: int, co
                         movdqu.x   haystack_vec:, [next_haystack_ptr];
 
                         /* check for equality */
-                        pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                        movdqu.x   results_vec:, haystack_vec;
+                        pcmpeqb.x  results_vec, needle_vec;
                         pmovmskb.x found_gpr:, results_vec;
 
                         /* calculate index of last equal character */
@@ -819,3 +821,272 @@ no_case_compare :: inline (a: u8, b: u8) -> bool {
     return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
         == (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b);
 }
+
+
+
+/*
+naive_with_simd_test_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if start_index > haystack.count - needle.count  return -1, false;
+
+    handled := false;
+
+    if compare.kind == {
+        case .CASE_SENSITIVE;
+            handled = true;
+
+            if simd_mode == {
+                case .OFF;
+                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+                    needle_end := cast(u64)needle.count - 1;
+                    for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
+                        needle_index := needle.data;
+                        for character: test_index .. test_index + needle_end {
+                            if <<cast(*u8)character != <<needle_index
+                                continue test_index;
+                            needle_index += 1;
+                        }
+                        return cast(int)(test_index - cast(u64)haystack.data), true;
+                    }
+                case .SSE2;
+                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+                    needle_end := cast(u64)needle.count - 1;
+                    test_index := cast(u64)haystack.data + cast(u64)start_index;
+
+                    end_simd := end - 15;
+                    if test_index < end_simd {
+                        needle_buffer : [16] u8;
+                        needle_ptr := *needle_buffer;
+                        memset(needle_ptr, <<needle.data, 16);
+
+#if true {
+                        // 13.051240    13.722530
+                        results : struct { index, found : u16; };
+                        results_data := *results;
+
+                        while test_index < end_simd {
+                            #asm {
+                                movdqu.x   needle_vec:, [needle_ptr];
+                                movdqu.x   haystack_vec:, [test_index];
+
+                                /* check for equality */
+                                pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                                pmovmskb.x found_gpr:, results_vec;
+
+                                /* calculate index of first equal character */
+                                tzcnt.w    index_gpr:, found_gpr;
+
+                                /* pack found:index and export */
+                                shl.d      found_gpr, 16;
+                                or.d       found_gpr, index_gpr;
+                                mov.d      [results_data], found_gpr;
+                            }
+
+                            if results.found {
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        test_index = second_index;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if test_index < second_index {
+                                    return cast(int)(word_index - cast(u64)haystack.data), true;
+                                }
+                            }
+                            else
+                                test_index += 16;
+                        }
+}
+else {
+                        // 14.304011    15.433144
+                        results : struct { found : u16; index : u16; } #align 16;
+                        results_data := *results;
+
+                        while test_index < end_simd {
+                            #asm {
+                                movdqu.x   needle_vec:, [needle_ptr];
+                                movdqu.x   haystack_vec:, [test_index];
+
+                                /* check for equality */
+                                pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                                pmovmskb.x found_gpr:, results_vec;
+
+                                /* calculate index of first equal character */
+                                tzcnt.w    index_gpr:, found_gpr;
+
+                                /* pack index:found and export */
+                                shl.d      index_gpr, 16;
+                                or.d       index_gpr, found_gpr;
+                                mov.d      [results_data], index_gpr;
+                            }
+
+                            if results.found {
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        test_index = second_index;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if test_index < second_index {
+                                    return cast(int)(word_index - cast(u64)haystack.data), true;
+                                }
+                            }
+                            else
+                                test_index += 16;
+                        }
+}
+                    }
+
+                    for index: test_index .. end {
+                        needle_index := needle.data;
+                        for character: test_index .. test_index + needle_end {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index)
+                                continue index;
+                            needle_index += 1;
+                        }
+                        return cast(int)(test_index - cast(u64)haystack.data), true;
+                    }
+                case .AVX2;
+                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+                    needle_end := cast(u64)needle.count - 1;
+                    test_index := cast(u64)haystack.data + cast(u64)start_index;
+
+                    end_simd := end - 31;
+                    if test_index < end_simd {
+                        needle_buffer : [32] u8;
+                        needle_ptr := *needle_buffer;
+                        memset(needle_ptr, <<needle.data, 32);
+
+                        results : struct { index, found : u32; };
+                        results_data := *results;
+
+                        while test_index < end_simd {
+                            #asm {
+                                movdqu.y   needle_vec:, [needle_ptr];
+                                movdqu.y   haystack_vec:, [test_index];
+
+                                /* check for equality */
+                                pcmpeqb.y  results_vec:, haystack_vec, needle_vec;
+                                pmovmskb.y found_gpr:, results_vec;
+
+                                /* calculate index of first equal character */
+                                xor.q      index_gpr:, index_gpr;
+                                tzcnt.d    index_gpr, found_gpr;
+
+                                /* pack found:index and export */
+                                shl.q      found_gpr, 32;
+                                or.q       found_gpr, index_gpr;
+                                mov.q      [results_data], found_gpr;
+                            }
+
+#if true {
+                            if results.found {
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        test_index = second_index;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if test_index < second_index {
+                                    return cast(int)(word_index - cast(u64)haystack.data), true;
+                                }
+                            }
+                            else
+                                test_index += 32;
+}
+else {
+                            while results.found {
+                                //print("% %\n", results.found, results.index);
+                                word_index := test_index + results.index;
+                                second_index := word_index + 1;
+                                needle_index := needle.data + 1;
+                                found := true;
+                                for character: second_index .. word_index + needle_end {
+                                    if <<cast(*u8)character != <<needle_index {
+                                        found = false;
+                                        break;
+                                    }
+                                    needle_index += 1;
+                                }
+                                if found  return cast(int)(word_index - cast(u64)haystack.data), true;
+
+                                //results.index = ~(cast(u32)1 << results.index);
+                                //print("%\n", results.index);
+
+                                debug : u16;
+
+                                #asm {
+                                    /* load result back in*/
+                                    mov.q found_gpr:, [results_data];
+                                    mov.d index_gpr:, found_gpr;
+                                    shr.q found_gpr, 32;
+
+                                    /* get index bit */
+                                    cl : gpr === c;
+                                    mov.b cl, index_gpr;
+                                    mov.d index_gpr, 1;
+                                    shl.d index_gpr, cl;
+
+                                    /* remove index bit from found flags */
+                                    not.d index_gpr;
+                                    and.d found_gpr, index_gpr;
+
+                                    /* calculate index */
+                                    tzcnt.d index_gpr, found_gpr;
+                                    shl.q found_gpr, 32;
+                                    or.q found_gpr, index_gpr;
+                                    mov.q [results_data], found_gpr;
+                                }
+                            }
+
+                            test_index += 32;
+}
+                        }
+                    }
+
+                    for index: test_index .. end {
+                        needle_index := needle.data;
+                        for character: test_index .. test_index + needle_end {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index)
+                                continue index;
+                            needle_index += 1;
+                        }
+                        return cast(int)(test_index - cast(u64)haystack.data), true;
+                    }
+            }
+
+        case .IGNORE_CASE;
+            if simd_mode == {
+                case .SSE2;
+                case .AVX2;
+            }
+    }
+
+    if !handled {
+        end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+        needle_end := cast(u64)needle.count - 1;
+        for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
+            needle_index := needle.data;
+            for character: test_index .. test_index + needle_end {
+                if !compare.compare(<<cast(*u8)character, <<needle_index)
+                    continue test_index;
+                needle_index += 1;
+            }
+            return cast(int)(test_index - cast(u64)haystack.data), true;
+        }
+    }
+
+    return -1, false;
+}
+*/

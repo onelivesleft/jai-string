@@ -10,7 +10,7 @@
 #load "data/degenerate.jai";
 
 //#load "../Strings/boyer_moore.jai";
-#load "../Strings/knuth_morris_pratt.jai";
+//#load "../Strings/knuth_morris_pratt.jai";
 
 
 times :: 23;
@@ -40,7 +40,6 @@ main :: () {
             for i: 0 .. length - 1 {
                 random_word[i] = cast,no_check(u8)(random_get() % 26 + #char "a");
             }
-            //random_word_string := cast(string) random_word; //@TODO huh?
             random_word_string : string = ---;
             random_word_string.count = 3;
             random_word_string.data = *random_word[0];

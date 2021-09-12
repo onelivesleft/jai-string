@@ -2,12 +2,23 @@
 
 
 // TODO
-// [.] `keep_separator` on all `split` (string and line_split done, needs: u8, []u8, index_proc)
+// v1.0 checklist:
+// [ ] Wait for compiler to allow .AVX2
+// [x] `keep_separator` on all `split`
+// [x] `trim_to`, `trim_past`
 // [x] trim_start_to, trim_start_past, trim_end_from, trim_end_after
 // [x] first_index lambda needle
 // [x] split at
 // [x] trim string characters?
 // [x] default_compare
+
+// Extras
+// [ ] SIMD to_lower / to_upper
+// [ ] SIMD first_index/last_index chars
+// [ ] SIMD replace char
+// [ ] SIMD replace chars
+// [ ] SIMD count chars
+// [x] SIMD count char
 
 
 #import "Basic";
@@ -293,6 +304,49 @@ trim :: inline (str: string, string_to_remove: string) -> string {
 }
 
 
+trim_to :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_to(str, needle, current_compare);
+    return result, found;
+}
+
+trim_to :: inline (str: string, needle: [] u8) -> string, found: bool {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_to(str, needle, current_compare);
+    return result, found;
+}
+
+trim_to :: inline (str: string, needle: string) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_to(str, needle, current_compare, current_first_index, current_last_index);
+    return result, found;
+}
+
+
+trim_past :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_past(str, needle, current_compare);
+    return result, found;
+}
+
+trim_past :: inline (str: string, needle: [] u8) -> string, found: bool {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_past(str, needle, current_compare);
+    return result, found;
+}
+
+trim_past :: inline (str: string, needle: string) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_past(str, needle, current_compare, current_first_index, current_last_index);
+    return result, found;
+}
+
 
 trim_start :: (str: string) -> string {
     index := 0;
@@ -322,7 +376,7 @@ trim_start :: inline (str: string, chars : [] u8) -> string {
 
 trim_start :: inline (str: string, string_to_remove: string) -> string {
     #if strict {
-        assert(string_to_remove != "", "You cannot trim nothing!");
+        assert(string_to_remove.count, "You cannot trim nothing!");
     }
 
     return trim_start(str, string_to_remove, current_compare);
@@ -330,29 +384,47 @@ trim_start :: inline (str: string, string_to_remove: string) -> string {
 
 
 
-trim_start_to :: inline (str: string, needle: u8) -> string {
-    return trim_start_to(str, needle, current_compare);
+trim_start_to :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_start_to(str, needle, current_compare);
+    return result, found;
 }
 
-trim_start_to :: inline (str: string, needle: [] u8) -> string {
-    return trim_start_to(str, needle, current_compare);
+trim_start_to :: inline (str: string, needle: [] u8) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_start_to(str, needle, current_compare);
+    return result, found;
 }
 
-trim_start_to :: inline (str: string, needle: string) -> string {
-    return trim_start_to(str, needle, current_compare, current_first_index);
+trim_start_to :: inline (str: string, needle: string) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_start_to(str, needle, current_compare, current_first_index);
+    return result, found;
 }
 
 
-trim_start_past :: inline (str: string, needle: u8) -> string {
-    return trim_start_past(str, needle, current_compare);
+trim_start_past :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_start_past(str, needle, current_compare);
+    return result, found;
 }
 
-trim_start_past :: inline (str: string, needle: [] u8) -> string {
-    return trim_start_past(str, needle, current_compare);
+trim_start_past :: inline (str: string, needle: [] u8) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_start_past(str, needle, current_compare);
+    return result, found;
 }
 
-trim_start_past :: inline (str: string, needle: string) -> string {
-    return trim_start_past(str, needle, current_compare, current_first_index);
+trim_start_past :: inline (str: string, needle: string) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_start_past(str, needle, current_compare, current_first_index);
+    return result, found;
 }
 
 
@@ -384,7 +456,7 @@ trim_end :: inline (str: string, chars : [] u8) -> string {
 
 trim_end :: inline (str: string, string_to_remove: string) -> string {
     #if strict {
-        assert(string_to_remove != "", "You cannot trim nothing!");
+        assert(string_to_remove.count, "You cannot trim nothing!");
     }
 
     return trim_end(str, string_to_remove, current_compare);
@@ -392,30 +464,51 @@ trim_end :: inline (str: string, string_to_remove: string) -> string {
 
 
 
-trim_end_from :: inline (str: string, needle: u8) -> string {
-    return trim_end_from(str, needle, current_compare);
+
+trim_end_after :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_end_after(str, needle, current_compare);
+    return result, found;
 }
 
-trim_end_from :: inline (str: string, needle: [] u8) -> string {
-    return trim_end_from(str, needle, current_compare);
+trim_end_after :: inline (str: string, needle: [] u8) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_end_after(str, needle, current_compare);
+    return result, found;
 }
 
-trim_end_from :: inline (str: string, needle: string) -> string {
-    return trim_end_from(str, needle, current_compare, current_last_index);
+trim_end_after :: inline (str: string, needle: string) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_end_after(str, needle, current_compare, current_last_index);
+    return result, found;
 }
 
 
-trim_end_after :: inline (str: string, needle: u8) -> string {
-    return trim_end_after(str, needle, current_compare);
+trim_end_from :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_end_from(str, needle, current_compare);
+    return result, found;
 }
 
-trim_end_after :: inline (str: string, needle: [] u8) -> string {
-    return trim_end_after(str, needle, current_compare);
+trim_end_from :: inline (str: string, needle: [] u8) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_end_from(str, needle, current_compare);
+    return result, found;
 }
 
-trim_end_after :: inline (str: string, needle: string) -> string {
-    return trim_end_after(str, needle, current_compare, current_last_index);
+trim_end_from :: inline (str: string, needle: string) -> string, found: bool  {
+    #if strict {
+        assert(needle.count, "You cannot trim nothing!");
+    }
+    result, found := trim_end_from(str, needle, current_compare, current_last_index);
+    return result, found;
 }
+
+
 
 
 replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {
@@ -517,17 +610,6 @@ replace :: (haystack: string, translation: [] Character_Translation, max_replace
 
 count :: inline (haystack: string, needle: u8) -> total: int {
     return count(haystack, needle, current_compare);
-}
-
-count :: (haystack: string, needle: u8, compare: Character_Compare) -> total: int {
-    total := 0;
-    for 0 .. haystack.count - 1 {
-        if compare.compare(haystack[it], needle) {
-            total += 1;
-        }
-    }
-
-    return total;
 }
 
 

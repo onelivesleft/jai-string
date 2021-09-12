@@ -4,7 +4,7 @@
 
 // TODO
 // [x] create a Scratch allocator
-// [ ] rename concatenate to join
+// [x] rename concatenate to join
 // [x] allow user to set allocator used by string builder
 // [x] return "\0" for empty string when null_terminate is true
 // [x] snake_from_camel / camel_from_snake
@@ -169,7 +169,6 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 
 
 
-// @TODO rename to join
 join :: (strings: .. string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if strings.count == 0  return empty();
 

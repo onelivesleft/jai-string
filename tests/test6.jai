@@ -36,7 +36,7 @@ main :: () {
 
     compare :: case_sensitive;
 
-    set_simd_mode(.SSE);
+    set_simd_mode(.SSE2);
     sse_delta : float64;
     sse_total : u64;
     {
@@ -81,12 +81,12 @@ main :: () {
     print("sse:    (%) %\n", sse_total, sse_delta);
     print("avx2:   (%) %\n", avx2_total, avx2_delta);
     print("\n");
-    print("SSE  > Scalar: %x\n", scalar_delta / sse_delta);
-    print("SSE  > Jai:    %x\n", jai_delta / sse_delta);
+    print("SSE2  > Scalar: %x\n", scalar_delta / sse_delta);
+    print("SSE2  > Jai:    %x\n", jai_delta / sse_delta);
     print("\n");
     print("AVX2 > Scalar: %x\n", scalar_delta / avx2_delta);
     print("AVX2 > Jai:    %x\n",  jai_delta / avx2_delta);
-    print("AVX2 > SSE:    %x\n", sse_delta / avx2_delta);
+    print("AVX2 > SSE2:    %x\n", sse_delta / avx2_delta);
 }
 
 

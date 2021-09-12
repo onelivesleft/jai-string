@@ -80,7 +80,7 @@ boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, c
 }
 
 
-boyer_moore_sse_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return start_index, true;
     if start_index > haystack.count - needle.count  return -1, false;
 
@@ -111,10 +111,10 @@ boyer_moore_sse_first_index :: (haystack: string, needle: string, start_index: i
                 while haystack_ptr < end_simd {
                     #asm {
                         movdqu.x   needle_vec:, [needle_ptr];
-                        movdqu.x   haystack_vec:, [haystack_ptr];
+                        movdqu.x   results_vec:, [haystack_ptr];
 
                         /* check for equality */
-                        pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                        pcmpeqb.x  results_vec, needle_vec;
                         pmovmskb.x found_gpr:, results_vec;
 
                         /* calculate index of first equal character */
@@ -189,12 +189,14 @@ boyer_moore_sse_first_index :: (haystack: string, needle: string, start_index: i
                         movdqu.x haystack_vec:, [haystack_ptr];
 
                         /* check for case-sensitive equality */
-                        pcmpeqb.x result_cased_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_cased_vec:, haystack_vec;
+                        pcmpeqb.x result_cased_vec, needle_vec;
 
                         /* check for ignore-case equality */
                         por.x haystack_vec, case_vec;
                         por.x needle_vec, case_vec;
-                        pcmpeqb.x result_nocase_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_nocase_vec:, haystack_vec;
+                        pcmpeqb.x result_nocase_vec, needle_vec;
 
                         /* generate mask for which bits should be case-sensitive */
                         movdqa.x mask_vec:, haystack_vec;
@@ -208,7 +210,7 @@ boyer_moore_sse_first_index :: (haystack: string, needle: string, start_index: i
                         pand.x result_cased_vec, mask_vec;
 
                         /* invert mask then apply it to keep ignore-case bits */
-                        pcmpeqb.x bounds_vec, bounds_vec, bounds_vec;
+                        pcmpeqb.x bounds_vec, bounds_vec;
                         pxor.x mask_vec, bounds_vec;
                         pand.x result_nocase_vec, mask_vec;
 
@@ -274,7 +276,7 @@ boyer_moore_sse_first_index :: (haystack: string, needle: string, start_index: i
 }
 
 
-boyer_moore_sse_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return start_index - 1, true;
     if start_index < needle.count  return -1, false;
 
@@ -306,10 +308,10 @@ boyer_moore_sse_last_index :: (haystack: string, needle: string, start_index: in
                     next_haystack_ptr := haystack_ptr - 16;
                     #asm {
                         movdqu.x   needle_vec:, [needle_ptr];
-                        movdqu.x   haystack_vec:, [next_haystack_ptr];
+                        movdqu.x   results_vec:, [next_haystack_ptr];
 
                         /* check for equality */
-                        pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                        pcmpeqb.x  results_vec, needle_vec;
                         pmovmskb.x found_gpr:, results_vec;
 
                         /* calculate index of last equal character */
@@ -387,12 +389,14 @@ boyer_moore_sse_last_index :: (haystack: string, needle: string, start_index: in
                         movdqu.x haystack_vec:, [next_haystack_ptr];
 
                         /* check for case-sensitive equality */
-                        pcmpeqb.x result_cased_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_cased_vec:, haystack_vec;
+                        pcmpeqb.x result_cased_vec, needle_vec;
 
                         /* check for ignore-case equality */
                         por.x haystack_vec, case_vec;
                         por.x needle_vec, case_vec;
-                        pcmpeqb.x result_nocase_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_nocase_vec:, haystack_vec;
+                        pcmpeqb.x result_nocase_vec, needle_vec;
 
                         /* generate mask for which bits should be case-sensitive */
                         movdqa.x mask_vec:, haystack_vec;
@@ -406,7 +410,7 @@ boyer_moore_sse_last_index :: (haystack: string, needle: string, start_index: in
                         pand.x result_cased_vec, mask_vec;
 
                         /* invert mask then apply it to keep ignore-case bits */
-                        pcmpeqb.x bounds_vec, bounds_vec, bounds_vec;
+                        pcmpeqb.x bounds_vec, bounds_vec;
                         pxor.x mask_vec, bounds_vec;
                         pand.x result_nocase_vec, mask_vec;
 

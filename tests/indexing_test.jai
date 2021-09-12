@@ -26,11 +26,11 @@ main :: () {
 
     simple           :: x;
     jai              :: x;
-    simple_sse       :: x;
+    simple_sse2       :: x;
     simple_avx2      :: x;
     kmp              :: x;
     boyer_moore      :: x;
-    boyer_moore_sse  :: x;
+    boyer_moore_sse2  :: x;
     boyer_moore_avx2 :: x;
 
     x :: true;  _ :: false;
@@ -102,11 +102,11 @@ main :: () {
 
     #if jai               jai_entry              := entry("Jai");
     #if boyer_moore       boyer_moore_entry      := entry("Boyer-Moore");
-    #if boyer_moore_sse   boyer_moore_sse_entry  := entry("Boyer-Moore SSE");
+    #if boyer_moore_sse2   boyer_moore_sse2_entry  := entry("Boyer-Moore SSE2");
     #if boyer_moore_avx2  boyer_moore_avx2_entry := entry("Boyer-Moore AVX2");
     #if kmp               kmp_entry              := entry("Knuth-Morris-Pratt");
     #if simple            simple_entry           := entry("Simple");
-    #if simple_sse        simple_sse_entry       := entry("Simple SSE");
+    #if simple_sse2        simple_sse2_entry       := entry("Simple SSE2");
     #if simple_avx2       simple_avx2_entry      := entry("Simple AVX2");
 
     prev_marker := -1;
@@ -175,8 +175,8 @@ main :: () {
             boyer_moore_entry.last_time += get_time() - t;
         }}
 
-        #if boyer_moore_sse {{
-            set_index_algorithm(boyer_moore_sse_first_index,boyer_moore_sse_last_index);
+        #if boyer_moore_sse2 {{
+            set_index_algorithm(boyer_moore_sse2_first_index,boyer_moore_sse2_last_index);
 
             t = get_time();
             index, found := first_index(haystack, needle);
@@ -189,8 +189,8 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             //print("BM: %\n", total);
-            boyer_moore_sse_entry.first_checksum += checksum;
-            boyer_moore_sse_entry.first_time += get_time() - t;
+            boyer_moore_sse2_entry.first_checksum += checksum;
+            boyer_moore_sse2_entry.first_time += get_time() - t;
 
             t = get_time();
             index, found = last_index(haystack, needle);
@@ -199,8 +199,8 @@ main :: () {
                 checksum = xor(checksum, xx index);
                 index, found = last_index(haystack, needle, index);
             }
-            boyer_moore_sse_entry.last_checksum += checksum;
-            boyer_moore_sse_entry.last_time += get_time() - t;
+            boyer_moore_sse2_entry.last_checksum += checksum;
+            boyer_moore_sse2_entry.last_time += get_time() - t;
         }}
 
         #if boyer_moore_avx2 {{
@@ -279,8 +279,8 @@ main :: () {
             simple_entry.last_time += get_time() - t;
         }}
 
-        #if simple_sse {{
-            set_index_algorithm(simple_sse_first_index, simple_sse_last_index);
+        #if simple_sse2 {{
+            set_index_algorithm(simple_sse2_first_index, simple_sse2_last_index);
 
             t = get_time();
             index, found := first_index(haystack, needle);
@@ -289,8 +289,8 @@ main :: () {
                 checksum = xor(checksum, xx index);
                 index, found = first_index(haystack, needle, index + 1);
             }
-            simple_sse_entry.first_checksum += checksum;
-            simple_sse_entry.first_time += get_time() - t;
+            simple_sse2_entry.first_checksum += checksum;
+            simple_sse2_entry.first_time += get_time() - t;
 
             t = get_time();
             index, found = last_index(haystack, needle);
@@ -299,8 +299,8 @@ main :: () {
                 checksum = xor(checksum, xx index);
                 index, found = last_index(haystack, needle, index);
             }
-            simple_sse_entry.last_checksum += checksum;
-            simple_sse_entry.last_time += get_time() - t;
+            simple_sse2_entry.last_checksum += checksum;
+            simple_sse2_entry.last_time += get_time() - t;
         }}
 
         #if simple_avx2 {{
@@ -335,10 +335,10 @@ main :: () {
     #if jai               array_add(*entries, jai_entry);
     #if kmp               array_add(*entries, kmp_entry);
     #if boyer_moore       array_add(*entries, boyer_moore_entry);
-    #if boyer_moore_sse   array_add(*entries, boyer_moore_sse_entry);
+    #if boyer_moore_sse2   array_add(*entries, boyer_moore_sse2_entry);
     #if boyer_moore_avx2  array_add(*entries, boyer_moore_avx2_entry);
     #if simple            array_add(*entries, simple_entry);
-    #if simple_sse        array_add(*entries, simple_sse_entry);
+    #if simple_sse2        array_add(*entries, simple_sse2_entry);
     #if simple_avx2       array_add(*entries, simple_avx2_entry);
 
     quick_sort(entries, (a: Entry) -> float64 { return a.first_time; });

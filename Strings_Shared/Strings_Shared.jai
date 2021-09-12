@@ -20,21 +20,33 @@ Keep_Separator :: enum {
 }
 
 
+
 #scope_file
-simd_mode : enum { OFF; AUTO; SSE; AVX2; } = .SSE;
+
+simd_mode : enum { OFF; AUTO; SSE2; AVX2; } = .SSE2;
+
 #scope_export
 
 
+
 set_simd_mode :: (mode: type_of(simd_mode)) {
-    if mode == .AUTO {
-        info := get_cpu_info();
-        if info.AVX2
+    if mode == {
+        case .AUTO;
+        cpu_info := get_cpu_info();
+        if check_feature(cpu_info.feature_leaves, .AVX2)
             simd_mode = .AVX2;
         else
-            simd_mode = .SSE;
+            simd_mode = .SSE2;
+
+        case .AVX2;
+        simd_mode = .AVX2;
+
+        case .SSE2;
+        simd_mode = .SSE2;
+
+        case .OFF;
+        simd_mode = .OFF;
     }
-    else
-        simd_mode = mode;
 }
 
 
@@ -101,7 +113,7 @@ string_from_char :: inline (char: *u8) -> string {
 unsafe_slice :: inline (str: string, from_index: int, to_index: int) -> string {
     // @Note Handles positive indexes only!
     assert(from_index >= 0 && from_index <= str.count, "Cannot slice; from_index falls outwith range of string.");
-    assert(to_index >= from_index, "Cannot slice; to_index is ahead of from_index.");
+    assert(to_index >= from_index, "Cannot slice; to_index is lower than from_index.");
     assert(to_index <= str.count, "Cannot slice; to_index falls outwith range of string.");
 
     result : string = ---;
@@ -352,6 +364,7 @@ advance_past :: (haystack: *string, needle: string, $$index_proc: Index_Proc) ->
     return index;
 }
 
+
 trim :: (str: string, char: u8, compare: Character_Compare) -> string {
     low_index := 0;
     high_index := str.count - 1;
@@ -417,6 +430,106 @@ trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
 }
 
 
+trim_to :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
+    low_index, high_index : int = ---;
+    found : bool = ---;
+
+    low_index, found = first_index(str, needle, compare);
+    if !found  return str, false;
+
+    high_index = last_index(str, needle, compare);
+
+    return unsafe_slice(str, low_index, high_index + 1), true;
+}
+
+trim_to :: (str: string, needle : [] u8, compare: Character_Compare) -> string, found: bool {
+    low_index, high_index : int = ---;
+    found : bool = ---;
+
+    low_index, found = first_index(str, needle, compare);
+    if !found  return str, false;
+
+    high_index = last_index(str, needle, compare);
+
+    return unsafe_slice(str, low_index, high_index + 1), true;
+}
+
+trim_to :: (str: string, needle: string, compare : Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc) -> string, found: bool {
+    low_index, high_index : int = ---;
+    found : bool = ---;
+
+    low_index, found = first_index(str, needle, compare, first_index_proc);
+    if !found  return str, false;
+
+    high_index = last_index(str, needle, compare, last_index_proc);
+
+    return unsafe_slice(str, low_index, high_index + needle.count), true;
+}
+
+trim_to :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
+    low_index, high_index, _ : int = ---;
+    found : bool = ---;
+
+    low_index, _, found = index(str, needle, 0, false);
+    if !found  return str, false;
+
+    _, high_index, found = index(str, needle, str.count, true);
+    if !found  return str, false;
+
+    return unsafe_slice(str, low_index, high_index), true;
+}
+
+
+trim_past :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
+    low_index, high_index : int = ---;
+    found : bool = ---;
+
+    low_index, found = first_index(str, needle, compare);
+    if !found  return str, false;
+
+    high_index = last_index(str, needle, compare);
+
+    return unsafe_slice(str, low_index + 1, high_index), true;
+}
+
+trim_past :: (str: string, needle : [] u8, compare: Character_Compare) -> string, found: bool {
+    low_index, high_index : int = ---;
+    found : bool = ---;
+
+    low_index, found = first_index(str, needle, compare);
+    if !found  return str, false;
+
+    high_index = last_index(str, needle, compare);
+
+    return unsafe_slice(str, low_index + 1, high_index), true;
+}
+
+trim_past :: (str: string, needle: string, compare : Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc) -> string, found: bool {
+    low_index, high_index : int = ---;
+    found : bool = ---;
+
+    low_index, found = first_index(str, needle, compare, first_index_proc);
+    if !found  return str, false;
+
+    high_index = last_index(str, needle, compare, last_index_proc);
+
+    return unsafe_slice(str, low_index + needle.count, high_index), true;
+}
+
+trim_past :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
+    low_index, high_index, _ : int = ---;
+    found : bool = ---;
+
+    _, low_index, found = index(str, needle, 0, false);
+    if !found  return str, false;
+
+    high_index, _, found = index(str, needle, str.count, true);
+    if !found  return str, false;
+
+    return unsafe_slice(str, low_index, high_index), true;
+}
+
+
 trim_start :: (str: string, char: u8, compare: Character_Compare) -> string {
     index := 0;
 
@@ -463,55 +576,55 @@ trim_start :: (str: string, string_to_remove: string, $$index: Index_Proc) -> st
 }
 
 
-trim_start_to :: (str: string, needle: u8, compare: Character_Compare) -> string {
+trim_start_to :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
     index, found := first_index(str, needle, 0, compare);
-    if !found  return str;
-    return unsafe_slice(str, index);
+    if !found  return str, false;
+    return unsafe_slice(str, index), true;
 }
 
-trim_start_to :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+trim_start_to :: (str: string, needle: [] u8, compare: Character_Compare) -> string, found: bool {
     index, found := first_index(str, needle, 0, compare);
-    if !found  return str;
-    return unsafe_slice(str, index);
+    if !found  return str, false;
+    return unsafe_slice(str, index), true;
 }
 
-trim_start_to :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
-    if needle == ""  return str;
+trim_start_to :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string, found: bool {
+    if needle == ""  return str, true;
     index, found := first_index(str, needle, 0, compare, string_index_proc);
-    if !found  return str;
-    return unsafe_slice(str, index);
+    if !found  return str, false;
+    return unsafe_slice(str, index), true;
 }
 
-trim_start_to :: (str: string, needle: string, $$index: Index_Proc) -> string {
+trim_start_to :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
     index, found := first_index(str, needle, 0, index);
-    if !found  return str;
-    return unsafe_slice(str, index);
+    if !found  return str, false;
+    return unsafe_slice(str, index), true;
 }
 
 
-trim_start_past :: (str: string, needle: u8, compare: Character_Compare) -> string {
+trim_start_past :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
     index, found := first_index(str, needle, 0, compare);
-    if !found  return str;
-    return unsafe_slice(str, index + 1);
+    if !found  return str, false;
+    return unsafe_slice(str, index + 1), true;
 }
 
-trim_start_past :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+trim_start_past :: (str: string, needle: [] u8, compare: Character_Compare) -> string, found: bool {
     index, found := first_index(str, needle, 0, compare);
-    if !found  return str;
-    return unsafe_slice(str, index + 1);
+    if !found  return str, false;
+    return unsafe_slice(str, index + 1), true;
 }
 
-trim_start_past :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
-    if needle == ""  return str;
+trim_start_past :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string, found: bool {
+    if needle == ""  return str, true;
     index, found := first_index(str, needle, 0, compare, string_index_proc);
-    if !found  return str;
-    return unsafe_slice(str, index + needle.count);
+    if !found  return str, false;
+    return unsafe_slice(str, index + needle.count), true;
 }
 
-trim_start_past :: (str: string, needle: string, $$index: Index_Proc) -> string {
+trim_start_past :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
     from_index, found, to_index := first_index(str, needle, 0, index);
-    if !found  return str;
-    return unsafe_slice(str, to_index);
+    if !found  return str, false;
+    return unsafe_slice(str, to_index), true;
 }
 
 
@@ -561,56 +674,279 @@ trim_end :: (str: string, string_to_remove: string, $$index: Index_Proc) -> stri
 }
 
 
-trim_end_after :: (str: string, needle: u8, compare: Character_Compare) -> string {
+trim_end_after :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
     index, found := last_index(str, needle, str.count, compare);
-    if !found  return str;
-    return unsafe_slice(str, 0, index + 1);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, index + 1), true;
 }
 
-trim_end_after :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+trim_end_after :: (str: string, needle: [] u8, compare: Character_Compare) -> string, found: bool {
     index, found := last_index(str, needle, str.count, compare);
-    if !found  return str;
-    return unsafe_slice(str, 0, index + 1);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, index + 1), true;
 }
 
-trim_end_after :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
-    if needle == ""  return str;
+trim_end_after :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string, found: bool {
+    if needle == ""  return str, true;
     index, found := last_index(str, needle, str.count, compare, string_index_proc);
-    if !found  return str;
-    return unsafe_slice(str, 0, index + needle.count);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, index + needle.count), true;
 }
 
-trim_end_after :: (str: string, needle: string, $$index: Index_Proc) -> string {
+trim_end_after :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
     from_index, found, to_index := last_index(str, needle, str.count, index);
-    if !found  return str;
-    return unsafe_slice(str, 0, to_index);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, to_index), true;
 }
 
 
 
-trim_end_from :: (str: string, needle: u8, compare: Character_Compare) -> string {
+trim_end_from :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
     index, found := last_index(str, needle, str.count, compare);
-    if !found  return str;
-    return unsafe_slice(str, 0, index);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, index), true;
 }
 
-trim_end_from :: (str: string, needle: [] u8, compare: Character_Compare) -> string {
+trim_end_from :: (str: string, needle: [] u8, compare: Character_Compare) -> string, found: bool {
     index, found := last_index(str, needle, str.count, compare);
-    if !found  return str;
-    return unsafe_slice(str, 0, index);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, index), true;
 }
 
-trim_end_from :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string {
-    if needle == ""  return str;
+trim_end_from :: (str: string, needle: string, compare: Character_Compare, string_index_proc: String_Index_Proc) -> string, found: bool {
+    if needle == ""  return str, true;
     index, found := last_index(str, needle, str.count, compare, string_index_proc);
-    if !found  return str;
-    return unsafe_slice(str, 0, index);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, index), true;
 }
 
-trim_end_from :: (str: string, needle: string, $$index: Index_Proc) -> string {
+trim_end_from :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
     from_index, found, to_index := last_index(str, needle, str.count, index);
-    if !found  return str;
-    return unsafe_slice(str, 0, from_index);
+    if !found  return str, false;
+    return unsafe_slice(str, 0, from_index), true;
+}
+
+
+count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> total: int {
+    if haystack == ""  return 0;
+
+    compare : Character_Compare = ---;
+    if user_compare.kind == .IGNORE_CASE {
+        if is_upper(needle) {
+            compare = user_compare;
+        }
+        else if is_lower(needle) {
+            needle = to_upper(needle);
+            compare = user_compare;
+        }
+        else {
+            compare = case_sensitive;
+        }
+    }
+    else {
+        compare = user_compare;
+    }
+
+    total := 0;
+
+    if compare.kind == {
+        case .CASE_SENSITIVE;
+            if simd_mode == {
+                case .SSE2;
+                    data := cast(u64)haystack.data;
+                    end := cast(u64)haystack.data + cast(u64)haystack.count;
+
+                    needles : [16] u8 = ---;
+                    memset(needles.data, needle, 16);
+                    needle_data := needles.data;
+
+                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
+
+                    result : u16 = ---;
+                    result_data := *result;
+
+                    loop_until := end - 15;
+
+                    while data < loop_until {
+                        #asm {
+                            /* check for equality */
+                            movdqu.x   needle_vec:, [needle_data];
+                            movdqu.x   results_vec:, [data];
+                            pcmpeqb.x  results_vec, needle_vec;
+
+                            /* coalesce and count bits */
+                            pmovmskb.x found_gpr:, results_vec;
+                            popcnt.w   total_gpr:, found_gpr;
+
+                            /* export */
+                            mov.w      [result_data], total_gpr;
+                        }
+
+                        total += result;
+                        data += 16;
+                    }
+
+                    for data .. min(data + 15, end - 1)
+                        if <<cast(*u8)it == needle
+                            total += 1;
+
+                    return total;
+
+
+                case .AVX2;
+                    data := cast(u64)haystack.data;
+                    end := cast(u64)haystack.data + cast(u64)haystack.count;
+
+                    needles : [32] u8 = ---;
+                    memset(needles.data, needle, 32);
+                    needle_data := needles.data;
+
+                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
+
+                    result : u32 = ---;
+                    result_data := *result;
+
+                    loop_until := end - 31;
+
+                    while data < loop_until {
+                        #asm {
+                            /* check for equality */
+                            movdqu.y   needle_vec:, [needle_data];
+                            movdqu.y   results_vec:, [data];
+                            pcmpeqb.y  results_vec, results_vec, needle_vec;
+
+                            /* coalesce and count bits */
+                            pmovmskb.y found_gpr:, results_vec;
+                            popcnt.d   total_gpr:, found_gpr;
+
+                            /* export */
+                            mov.d      [result_data], total_gpr;
+                        }
+
+                        total += result;
+                        data += 32;
+                    }
+
+                    for data .. min(data + 31, end - 1)
+                        if <<cast(*u8)it == needle
+                            total += 1;
+
+                    return total;
+
+            }
+
+        case .IGNORE_CASE;
+            if simd_mode == {
+                case .SSE2;
+                    data := cast(u64)haystack.data;
+                    end := cast(u64)haystack.data + cast(u64)haystack.count;
+
+                    needles_upper : [16] u8 = ---;
+                    memset(needles_upper.data, needle, 16);
+                    needles_upper_data := needles_upper.data;
+
+                    needles_lower : [16] u8 = ---;
+                    memset(needles_lower.data, to_lower(needle), 16);
+                    needles_lower_data := needles_lower.data;
+
+                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
+
+                    result : u16 = ---;
+                    result_data := *result;
+
+                    loop_until := end - 15;
+
+                    while data < loop_until {
+                        #asm {
+                            /* load data */
+                            movdqu.x   needles_upper_vec:, [needles_upper_data];
+                            movdqu.x   needles_lower_vec:, [needles_lower_data];
+                            movdqu.x   results_lower_vec:, [data];
+
+                            /* check for equality */
+                            movdqu.x   results_upper_vec:, results_lower_vec;
+                            pcmpeqb.x  results_upper_vec, needles_upper_vec;
+
+                            pcmpeqb.x  results_lower_vec, needles_lower_vec;
+                            por.x results_lower_vec, results_lower_vec, results_upper_vec;
+
+                            /* coalesce and count bits */
+                            pmovmskb.x found_gpr:, results_lower_vec;
+                            popcnt.w   total_gpr:, found_gpr;
+
+                            /* export */
+                            mov.w      [result_data], total_gpr;
+                        }
+
+                        total += result;
+                        data += 16;
+                    }
+
+                    for data .. min(data + 15, end - 1)
+                        if no_case_compare(<<cast(*u8)it, needle)
+                            total += 1;
+
+                    return total;
+
+
+                case .AVX2;
+                    data := cast(u64)haystack.data;
+                    end := cast(u64)haystack.data + cast(u64)haystack.count;
+
+                    needles_upper : [32] u8 = ---;
+                    memset(needles_upper.data, needle, 32);
+                    needles_upper_data := needles_upper.data;
+
+                    needles_lower : [32] u8 = ---;
+                    memset(needles_lower.data, to_lower(needle), 32);
+                    needles_lower_data := needles_lower.data;
+
+                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
+
+                    result : u32 = ---;
+                    result_data := *result;
+
+                    loop_until := end - 31;
+
+                    while data < loop_until {
+                        #asm {
+                            /* load data */
+                            movdqu.y   needles_upper_vec:, [needles_upper_data];
+                            movdqu.y   needles_lower_vec:, [needles_lower_data];
+                            movdqu.y   haystack_vec:, [data];
+
+                            /* check for equality */
+                            pcmpeqb.y  results_upper_vec:, haystack_vec, needles_upper_vec;
+                            pcmpeqb.y  results_lower_vec:, haystack_vec, needles_lower_vec;
+                            por.y      results_lower_vec, results_lower_vec, results_upper_vec;
+
+                            /* coalesce and count bits */
+                            pmovmskb.y found_gpr:, results_lower_vec;
+                            popcnt.d   total_gpr:, found_gpr;
+
+                            /* export */
+                            mov.d      [result_data], total_gpr;
+                        }
+
+                        total += result;
+                        data += 32;
+                    }
+
+                    for data .. min(data + 31, end - 1)
+                        if no_case_compare(<<cast(*u8)it, needle)
+                            total += 1;
+
+                    return total;
+            }
+    }
+
+    for 0 .. haystack.count - 1 {
+        if compare.compare(haystack[it], needle) {
+            total += 1;
+        }
+    }
+
+    return total;
 }
 
 
@@ -634,6 +970,11 @@ validate_from_index :: (str: string) #expand {
     else                 `from_index = clamp(`from_index, 0, str.count);
 }
 
+no_case_compare :: inline (a: u8, b: u8) -> bool {
+    return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
+        == (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b);
+}
+
 #scope_export
 
 
@@ -648,7 +989,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
             end := cast(u64)haystack.data + cast(u64)haystack.count;
 
             if simd_mode == {
-                case .SSE;
+                case .SSE2;
                     handled = true;
 
                     needles : [16] u8 = ---;
@@ -664,10 +1005,10 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
 
                     while data < loop_until {
                         #asm {
+                            /* check for equality */
                             movdqu.x   needle_vec:, [needle_data];
-                            movdqu.x   haystack_vec:, [data];
-
-                            pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
+                            movdqu.x   results_vec:, [data];
+                            pcmpeqb.x  results_vec, needle_vec;
 
                             /* calculate index of first equal character */
                             pmovmskb.x found_gpr:, results_vec;
@@ -735,7 +1076,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
             end := cast(u64)haystack.data + cast(u64)haystack.count;
 
             if simd_mode == {
-                case .SSE;
+                case .SSE2;
                     handled = true;
                     needles : [16] u8 = ---;
                     memset(needles.data, needle, 16);
@@ -765,12 +1106,14 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                             movdqu.x haystack_vec:, [data];
 
                             /* check for case-sensitive equality */
-                            pcmpeqb.x result_cased_vec:, needle_vec, haystack_vec;
+                            movdqu.x result_cased_vec:, haystack_vec;
+                            pcmpeqb.x result_cased_vec, needle_vec, haystack_vec;
 
                             /* check for ignore-case equality */
                             por.x haystack_vec, case_vec;
                             por.x needle_vec, case_vec;
-                            pcmpeqb.x result_nocase_vec:, needle_vec, haystack_vec;
+                            movdqu.x result_nocase_vec:, haystack_vec;
+                            pcmpeqb.x result_nocase_vec, needle_vec;
 
                             /* generate mask for which bits should be case-sensitive */
                             movdqa.x mask_vec:, haystack_vec;
@@ -784,7 +1127,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                             pand.x result_cased_vec, mask_vec;
 
                             /* invert mask then apply it to keep ignore-case bits */
-                            pcmpeqb.x bounds_vec, bounds_vec, bounds_vec;
+                            pcmpeqb.x bounds_vec, bounds_vec;
                             pxor.x mask_vec, bounds_vec;
                             pand.x result_nocase_vec, mask_vec;
 
@@ -974,7 +1317,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
     if compare.kind == {
         case .CASE_SENSITIVE;
             if simd_mode == {
-                case .SSE;
+                case .SSE2;
                     if from_index >= 15 {
                         handled = true;
 
@@ -990,10 +1333,10 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
 
                         while data >= end {
                             #asm {
+                                /* check for equality */
                                 movdqu.x needle_vec:, [needle_data];
-                                movdqu.x haystack_vec:, [data];
-
-                                pcmpeqb.x results_vec:, haystack_vec, needle_vec;
+                                movdqu.x results_vec:, [data];
+                                pcmpeqb.x results_vec, needle_vec;
 
                                 /* calculate index of last equal character */
                                 pmovmskb.x found_gpr:, results_vec;
@@ -1062,7 +1405,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
 
         case .IGNORE_CASE;
             if simd_mode == {
-                case .SSE;
+                case .SSE2;
                     if from_index >= 15 {
                         handled = true;
 
@@ -1095,12 +1438,14 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                                 movdqu.x haystack_vec:, [data];
 
                                 /* check for case-sensitive equality */
-                                pcmpeqb.x result_cased_vec:, needle_vec, haystack_vec;
+                                movdqu.x result_cased_vec:, haystack_vec;
+                                pcmpeqb.x result_cased_vec, needle_vec;
 
                                 /* check for ignore-case equality */
                                 por.x haystack_vec, case_vec;
                                 por.x needle_vec, case_vec;
-                                pcmpeqb.x result_nocase_vec:, needle_vec, haystack_vec;
+                                movdqu.x result_nocase_vec:, haystack_vec;
+                                pcmpeqb.x result_nocase_vec, needle_vec;
 
                                 /* generate mask for which bits should be case-sensitive */
                                 movdqa.x mask_vec:, haystack_vec;
@@ -1114,7 +1459,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                                 pand.x result_cased_vec, mask_vec;
 
                                 /* invert mask then apply it to keep ignore-case bits */
-                                pcmpeqb.x bounds_vec, bounds_vec, bounds_vec;
+                                pcmpeqb.x bounds_vec, bounds_vec;
                                 pxor.x mask_vec, bounds_vec;
                                 pand.x result_nocase_vec, mask_vec;
 
@@ -1446,13 +1791,13 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 it = unsafe_slice(splitter.text, index + separator_offset_to_start, end_index);
                 end_index = index + separator_offset_to_end;
 
-                if splitter.skip_empty && it.count == empty_count  continue;
+                if !splitter.skip_empty || it.count != empty_count {
+                    it_index += 1;
+                    #insert body;
 
-                it_index += 1;
-                #insert body;
-
-                if splitter.max_results != 0 && it_index >= max_it_index
-                    break;
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
 
                 index, found = last_index(splitter.text, splitter.separator, index, splitter.compare, splitter.last_index);
             }
@@ -1483,13 +1828,13 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 it = unsafe_slice(splitter.text, start_index, index + separator_offset_to_end);
                 start_index = index + separator_offset_to_start;
 
-                if splitter.skip_empty && it.count == empty_count  continue;
+                if !splitter.skip_empty || it.count != empty_count {
+                    it_index += 1;
+                    #insert body;
 
-                it_index += 1;
-                #insert body;
-
-                if splitter.max_results != 0 && it_index >= max_it_index
-                    break;
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
 
                 index, found = first_index(splitter.text, splitter.separator, index + splitter.separator.count, splitter.compare, splitter.first_index);
             }
@@ -1525,17 +1870,27 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
             end_index := splitter.text.count;
             from_index, to_index, found := splitter.index_proc(splitter.text, splitter.separator, splitter.text.count, true);
             while found {
-                it = unsafe_slice(splitter.text, to_index, end_index);
-                end_index = from_index;
+                if #complete splitter.keep_separator == {
+                    case .AS_PREFIX;
+                    it = unsafe_slice(splitter.text, from_index, end_index);
+                    end_index = from_index;
 
-                if splitter.skip_empty && it == ""  continue;
+                    case .AS_POSTFIX;
+                    it = unsafe_slice(splitter.text, to_index, end_index);
+                    end_index = to_index;
 
-                it_index += 1;
+                    case .NO;
+                    it = unsafe_slice(splitter.text, to_index, end_index);
+                    end_index = from_index;
+                }
 
-                #insert body;
+                if !splitter.skip_empty || it != "" {
+                    it_index += 1;
+                    #insert body;
 
-                if splitter.max_results != 0 && it_index >= max_it_index
-                    break;
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
 
                 from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, from_index, true);
             }
@@ -1546,17 +1901,27 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
             start_index := 0;
             from_index, to_index, found := splitter.index_proc(splitter.text, splitter.separator, 0, false);
             while found {
-                it = unsafe_slice(splitter.text, start_index, from_index);
-                start_index = to_index;
+                if #complete splitter.keep_separator == {
+                    case .AS_PREFIX;
+                    it = unsafe_slice(splitter.text, start_index, from_index);
+                    start_index = from_index;
 
-                if splitter.skip_empty && it == ""  continue;
+                    case .AS_POSTFIX;
+                    it = unsafe_slice(splitter.text, start_index, to_index);
+                    start_index = to_index;
 
-                it_index += 1;
+                    case .NO;
+                    it = unsafe_slice(splitter.text, start_index, from_index);
+                    start_index = to_index;
+                }
 
-                #insert body;
+                if !splitter.skip_empty || it != "" {
+                    it_index += 1;
+                    #insert body;
 
-                if splitter.max_results != 0 && it_index >= max_it_index
-                    break;
+                    if splitter.max_results != 0 && it_index >= max_it_index
+                        break;
+                }
 
                 from_index, to_index, found = splitter.index_proc(splitter.text, splitter.separator, to_index, false);
             }
@@ -1588,51 +1953,85 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
 
         if reverse {
             end_index := splitter.text.count;
-            for < index: splitter.text.count - 1 .. 0 {
-                if is_any(splitter.text[index], splitter.separator, splitter.compare) {
-                    it = unsafe_slice(splitter.text, index + 1, end_index);
-                    end_index = index;
+            index, found := last_index(splitter.text, splitter.separator, splitter.compare);
+            if splitter.keep_separator == {
+                case .NO;
+                empty_count = 0;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 0;
 
-                    if splitter.skip_empty && it == ""  continue;
+                case .AS_PREFIX;
+                empty_count = 1;
+                separator_offset_to_start = 0;
+                separator_offset_to_end = 0;
 
+                case .AS_POSTFIX;
+                empty_count = 1;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 1;
+            }
+
+            while found {
+                it = unsafe_slice(splitter.text, index + separator_offset_to_start, end_index);
+                end_index = index + separator_offset_to_end;
+
+                if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
                 }
+
+                index, found = last_index(splitter.text, splitter.separator, index, splitter.compare);
             }
 
             it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
-            for index: 0 .. splitter.text.count - 1 {
-                if is_any(splitter.text[index], splitter.separator, splitter.compare) {
-                    it = unsafe_slice(splitter.text, start_index, index);
-                    start_index = index + 1;
+            index, found := first_index(splitter.text, splitter.separator, splitter.compare);
+            if splitter.keep_separator == {
+                case .NO;
+                empty_count = 0;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 0;
 
-                    if splitter.skip_empty && it == ""  continue;
+                case .AS_PREFIX;
+                empty_count = 1;
+                separator_offset_to_start = 0;
+                separator_offset_to_end = 0;
 
+                case .AS_POSTFIX;
+                empty_count = 1;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 1;
+            }
+
+            while found {
+                it = unsafe_slice(splitter.text, start_index, index + separator_offset_to_end);
+                start_index = index + separator_offset_to_start;
+
+                if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
                 }
+
+                index, found = first_index(splitter.text, splitter.separator, index + 1, splitter.compare);
             }
 
             it = unsafe_slice(splitter.text, start_index);
         }
 
-        if !splitter.skip_empty || it != "" {
+        if !splitter.skip_empty || it.count != empty_count {
             it_index += 1;
-
             #insert body;
         }
     }
@@ -1655,51 +2054,85 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+        separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
 
         if reverse {
             end_index := splitter.text.count;
-            for < index: splitter.text.count - 1 .. 0 {
-                if splitter.text[index] == splitter.separator {
-                    it = unsafe_slice(splitter.text, index + 1, end_index);
-                    end_index = index;
+            index, found := last_index(splitter.text, splitter.separator, splitter.compare);
+            if splitter.keep_separator == {
+                case .NO;
+                empty_count = 0;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 0;
 
-                    if splitter.skip_empty && it == ""  continue;
+                case .AS_PREFIX;
+                empty_count = 1;
+                separator_offset_to_start = 0;
+                separator_offset_to_end = 0;
 
+                case .AS_POSTFIX;
+                empty_count = 1;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 1;
+            }
+
+            while found {
+                it = unsafe_slice(splitter.text, index + separator_offset_to_start, end_index);
+                end_index = index + separator_offset_to_end;
+
+                if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
-                        break;;
+                        break;
                 }
+
+                index, found = last_index(splitter.text, splitter.separator, index, splitter.compare);
             }
 
             it = unsafe_slice(splitter.text, 0, end_index);
         }
         else {
             start_index := 0;
-            for index: 0 .. splitter.text.count - 1 {
-                if splitter.text[index] == splitter.separator {
-                    it = unsafe_slice(splitter.text, start_index, index);
-                    start_index = index + 1;
+            index, found := first_index(splitter.text, splitter.separator, splitter.compare);
+            if splitter.keep_separator == {
+                case .NO;
+                empty_count = 0;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 0;
 
-                    if splitter.skip_empty && it == ""  continue;
+                case .AS_PREFIX;
+                empty_count = 1;
+                separator_offset_to_start = 0;
+                separator_offset_to_end = 0;
 
+                case .AS_POSTFIX;
+                empty_count = 1;
+                separator_offset_to_start = 1;
+                separator_offset_to_end = 1;
+            }
+
+            while found {
+                it = unsafe_slice(splitter.text, start_index, index + separator_offset_to_end);
+                start_index = index + separator_offset_to_start;
+
+                if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
                 }
+
+                index, found = first_index(splitter.text, splitter.separator, index + 1, splitter.compare);
             }
 
             it = unsafe_slice(splitter.text, start_index);
         }
 
-        if !splitter.skip_empty || it != "" {
+        if !splitter.skip_empty || it.count != empty_count {
             it_index += 1;
-
             #insert body;
         }
     }
@@ -1771,10 +2204,10 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
 }
 
 
+
 for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
     reverse := flags & .REVERSE;
-    assert(splitter.keep_separator != .AS_PREFIX, "line_split does not allow keeping the line endings .AS_PREFIX");
 
     `it : string = ---;
     `it_index : int = -1;
@@ -1787,78 +2220,106 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
     }
     else {
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-        complete := false;
 
         if reverse {
-            end_index := splitter.text.count;
-            start_index := splitter.text.count - 1;
-            if splitter.text[start_index] == Chars.LF
-                start_index -= 1;
+            index := splitter.text.count;
+            end_index : int = ---;
+            found := false;
 
-            for < index: start_index .. 0 {
-                if splitter.text[index] == Chars.LF {
-                    if splitter.keep_separator == .AS_POSTFIX {
-                        it = unsafe_slice(splitter.text, index + 1, end_index);
-                    }
-                    else {
-                        it = unsafe_slice(splitter.text, index + 1, end_index - 1);
-                        if it && it[it.count - 1] == Chars.CR
-                            it.count -= 1;
-                    }
+            if #complete splitter.keep_separator == {
+                case .AS_PREFIX;
+                end_index = index;
+
+                case .AS_POSTFIX;
+                end_index = index;
+                if splitter.text[index - 1] == Chars.LF  index -= 1;
+
+                case .NO;
+                if splitter.text[index - 1] == Chars.LF  index -= 1;
+                if index > 0 && splitter.text[index - 1] == Chars.CR  index -= 1;
+                end_index = index;
+            }
+
+            index, found = last_index(splitter.text, Chars.LF, index, splitter.compare);
+
+            while found {
+                if #complete splitter.keep_separator == {
+                    case .AS_PREFIX;
+                    if index > 0 && splitter.text[index - 1] == Chars.CR
+                        index -= 1;
+                    it = unsafe_slice(splitter.text, index, end_index);
+                    end_index = index;
+
+                    case .AS_POSTFIX;
+                    it = unsafe_slice(splitter.text, index + 1, end_index);
                     end_index = index + 1;
 
-                    if splitter.skip_empty && it_is_empty()  continue;
+                    case .NO;
+                    it = unsafe_slice(splitter.text, index + 1, end_index);
+                    if index > 0 && splitter.text[index - 1] == Chars.CR
+                        end_index = index - 1;
+                    else
+                        end_index = index;
+                }
 
+                if !splitter.skip_empty || !it_is_empty() {
                     it_index += 1;
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
                 }
+
+                index, found = last_index(splitter.text, Chars.LF, index, splitter.compare);
             }
 
-            if splitter.keep_separator == .AS_POSTFIX {
+            if end_index > 0 {
                 it = unsafe_slice(splitter.text, 0, end_index);
-            }
-            else {
-                it = unsafe_slice(splitter.text, 0, end_index - 1);
-                if it && it[it.count - 1] == Chars.CR
-                    it.count -= 1;
-            }
 
-            if !splitter.skip_empty || !it_is_empty() {
-                it_index += 1;
-                #insert body;
+                if !splitter.skip_empty || !it_is_empty() {
+                    it_index += 1;
+                    #insert body;
+                }
             }
         }
         else {
             start_index := 0;
+            index, found := first_index(splitter.text, Chars.LF, splitter.compare);
 
-            for index: 0 .. splitter.text.count - 1 {
-                if splitter.text[index] == Chars.LF {
-                    if splitter.keep_separator == .AS_POSTFIX {
-                        it = unsafe_slice(splitter.text, start_index, index + 1);
-                    }
-                    else {
-                        it = unsafe_slice(splitter.text, start_index, index);
-                        if it && it[it.count - 1] == Chars.CR
-                            it.count -= 1;
-                    }
+            while found {
+                if #complete splitter.keep_separator == {
+                    case .AS_PREFIX;
+                    end_index := index;
+                    if end_index > 0 && splitter.text[end_index - 1] == Chars.CR
+                        end_index -= 1;
+                    it = unsafe_slice(splitter.text, start_index, end_index);
+                    start_index = end_index;
+
+                    case .AS_POSTFIX;
+                    it = unsafe_slice(splitter.text, start_index, index + 1);
                     start_index = index + 1;
 
-                    if splitter.skip_empty && it_is_empty()  continue;
+                    case .NO;
+                    end_index := index;
+                    if end_index > 0 && splitter.text[end_index - 1] == Chars.CR
+                        end_index -= 1;
+                    it = unsafe_slice(splitter.text, start_index, end_index);
+                    start_index = index + 1;
+                }
 
+                if !splitter.skip_empty || !it_is_empty() {
                     it_index += 1;
                     #insert body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
                 }
+
+                index, found = first_index(splitter.text, Chars.LF, index + 1, splitter.compare);
             }
 
             if start_index < splitter.text.count {
-                it = unsafe_slice(splitter.text, start_index);
-                if it && it[it.count - 1] == Chars.CR  it.count -= 1;
+                it = unsafe_slice(splitter.text, start_index, splitter.text.count);
 
                 if !splitter.skip_empty || !it_is_empty() {
                     it_index += 1;
@@ -1869,8 +2330,8 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
     }
 
     it_is_empty :: () -> bool #expand {
-        if `splitter.keep_separator == .AS_POSTFIX
-            return `it.count == 1 || `it.count == 2 && `it[0] == Chars.CR;
+        if `splitter.keep_separator != .NO
+            return `it == "" || `it.count == 1 || `it.count == 2 && `it[0] == Chars.CR;
         else
             return `it == "";
     }
@@ -1884,270 +2345,4 @@ Chars :: struct {
     LF    :: #char "\n";
     NBSP  :: #char " "; // careful!
     WHITESPACE :: u8.[SPACE, TAB, CR, LF];
-}
-
-
-naive_with_simd_test_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if start_index > haystack.count - needle.count  return -1, false;
-
-    handled := false;
-
-    if compare.kind == {
-        case .CASE_SENSITIVE;
-            handled = true;
-
-            if simd_mode == {
-                case .OFF;
-                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
-                    needle_end := cast(u64)needle.count - 1;
-                    for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
-                        needle_index := needle.data;
-                        for character: test_index .. test_index + needle_end {
-                            if <<cast(*u8)character != <<needle_index
-                                continue test_index;
-                            needle_index += 1;
-                        }
-                        return cast(int)(test_index - cast(u64)haystack.data), true;
-                    }
-                case .SSE;
-                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
-                    needle_end := cast(u64)needle.count - 1;
-                    test_index := cast(u64)haystack.data + cast(u64)start_index;
-
-                    end_simd := end - 15;
-                    if test_index < end_simd {
-                        needle_buffer : [16] u8;
-                        needle_ptr := *needle_buffer;
-                        memset(needle_ptr, <<needle.data, 16);
-
-#if true {
-                        // 13.051240    13.722530
-                        results : struct { index, found : u16; };
-                        results_data := *results;
-
-                        while test_index < end_simd {
-                            #asm {
-                                movdqu.x   needle_vec:, [needle_ptr];
-                                movdqu.x   haystack_vec:, [test_index];
-
-                                /* check for equality */
-                                pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
-                                pmovmskb.x found_gpr:, results_vec;
-
-                                /* calculate index of first equal character */
-                                tzcnt.w    index_gpr:, found_gpr;
-
-                                /* pack found:index and export */
-                                shl.d      found_gpr, 16;
-                                or.d       found_gpr, index_gpr;
-                                mov.d      [results_data], found_gpr;
-                            }
-
-                            if results.found {
-                                word_index := test_index + results.index;
-                                second_index := word_index + 1;
-                                needle_index := needle.data + 1;
-                                for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
-                                        test_index = second_index;
-                                        break;
-                                    }
-                                    needle_index += 1;
-                                }
-                                if test_index < second_index {
-                                    return cast(int)(word_index - cast(u64)haystack.data), true;
-                                }
-                            }
-                            else
-                                test_index += 16;
-                        }
-}
-else {
-                        // 14.304011    15.433144
-                        results : struct { found : u16; index : u16; } #align 16;
-                        results_data := *results;
-
-                        while test_index < end_simd {
-                            #asm {
-                                movdqu.x   needle_vec:, [needle_ptr];
-                                movdqu.x   haystack_vec:, [test_index];
-
-                                /* check for equality */
-                                pcmpeqb.x  results_vec:, haystack_vec, needle_vec;
-                                pmovmskb.x found_gpr:, results_vec;
-
-                                /* calculate index of first equal character */
-                                tzcnt.w    index_gpr:, found_gpr;
-
-                                /* pack index:found and export */
-                                shl.d      index_gpr, 16;
-                                or.d       index_gpr, found_gpr;
-                                mov.d      [results_data], index_gpr;
-                            }
-
-                            if results.found {
-                                word_index := test_index + results.index;
-                                second_index := word_index + 1;
-                                needle_index := needle.data + 1;
-                                for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
-                                        test_index = second_index;
-                                        break;
-                                    }
-                                    needle_index += 1;
-                                }
-                                if test_index < second_index {
-                                    return cast(int)(word_index - cast(u64)haystack.data), true;
-                                }
-                            }
-                            else
-                                test_index += 16;
-                        }
-}
-                    }
-
-                    for index: test_index .. end {
-                        needle_index := needle.data;
-                        for character: test_index .. test_index + needle_end {
-                            if !compare.compare(<<cast(*u8)character, <<needle_index)
-                                continue index;
-                            needle_index += 1;
-                        }
-                        return cast(int)(test_index - cast(u64)haystack.data), true;
-                    }
-                case .AVX2;
-                    end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
-                    needle_end := cast(u64)needle.count - 1;
-                    test_index := cast(u64)haystack.data + cast(u64)start_index;
-
-                    end_simd := end - 31;
-                    if test_index < end_simd {
-                        needle_buffer : [32] u8;
-                        needle_ptr := *needle_buffer;
-                        memset(needle_ptr, <<needle.data, 32);
-
-                        results : struct { index, found : u32; };
-                        results_data := *results;
-
-                        while test_index < end_simd {
-                            #asm {
-                                movdqu.y   needle_vec:, [needle_ptr];
-                                movdqu.y   haystack_vec:, [test_index];
-
-                                /* check for equality */
-                                pcmpeqb.y  results_vec:, haystack_vec, needle_vec;
-                                pmovmskb.y found_gpr:, results_vec;
-
-                                /* calculate index of first equal character */
-                                xor.q      index_gpr:, index_gpr;
-                                tzcnt.d    index_gpr, found_gpr;
-
-                                /* pack found:index and export */
-                                shl.q      found_gpr, 32;
-                                or.q       found_gpr, index_gpr;
-                                mov.q      [results_data], found_gpr;
-                            }
-
-#if true {
-                            if results.found {
-                                word_index := test_index + results.index;
-                                second_index := word_index + 1;
-                                needle_index := needle.data + 1;
-                                for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
-                                        test_index = second_index;
-                                        break;
-                                    }
-                                    needle_index += 1;
-                                }
-                                if test_index < second_index {
-                                    return cast(int)(word_index - cast(u64)haystack.data), true;
-                                }
-                            }
-                            else
-                                test_index += 32;
-}
-else {
-                            while results.found {
-                                //print("% %\n", results.found, results.index);
-                                word_index := test_index + results.index;
-                                second_index := word_index + 1;
-                                needle_index := needle.data + 1;
-                                found := true;
-                                for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
-                                        found = false;
-                                        break;
-                                    }
-                                    needle_index += 1;
-                                }
-                                if found  return cast(int)(word_index - cast(u64)haystack.data), true;
-
-                                //results.index = ~(cast(u32)1 << results.index);
-                                //print("%\n", results.index);
-
-                                debug : u16;
-
-                                #asm {
-                                    /* load result back in*/
-                                    mov.q found_gpr:, [results_data];
-                                    mov.d index_gpr:, found_gpr;
-                                    shr.q found_gpr, 32;
-
-                                    /* get index bit */
-                                    cl : gpr === c;
-                                    mov.b cl, index_gpr;
-                                    mov.d index_gpr, 1;
-                                    shl.d index_gpr, cl;
-
-                                    /* remove index bit from found flags */
-                                    not.d index_gpr;
-                                    and.d found_gpr, index_gpr;
-
-                                    /* calculate index */
-                                    tzcnt.d index_gpr, found_gpr;
-                                    shl.q found_gpr, 32;
-                                    or.q found_gpr, index_gpr;
-                                    mov.q [results_data], found_gpr;
-                                }
-                            }
-
-                            test_index += 32;
-}
-                        }
-                    }
-
-                    for index: test_index .. end {
-                        needle_index := needle.data;
-                        for character: test_index .. test_index + needle_end {
-                            if !compare.compare(<<cast(*u8)character, <<needle_index)
-                                continue index;
-                            needle_index += 1;
-                        }
-                        return cast(int)(test_index - cast(u64)haystack.data), true;
-                    }
-            }
-
-        case .IGNORE_CASE;
-            if simd_mode == {
-                case .SSE;
-                case .AVX2;
-            }
-    }
-
-    if !handled {
-        end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
-        needle_end := cast(u64)needle.count - 1;
-        for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
-            needle_index := needle.data;
-            for character: test_index .. test_index + needle_end {
-                if !compare.compare(<<cast(*u8)character, <<needle_index)
-                    continue test_index;
-                needle_index += 1;
-            }
-            return cast(int)(test_index - cast(u64)haystack.data), true;
-        }
-    }
-
-    return -1, false;
 }

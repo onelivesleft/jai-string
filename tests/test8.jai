@@ -1,12 +1,10 @@
 #import "Basic";
 #import "Sort";
 #import "Time";
-#import "Strings"(index_algorithm=.NAIVE);
+#import "Strings"(index_algorithm=.SIMPLE);
 heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
 
-#load "../Strings_Shared/boyer_moore.jai";
-#load "../Strings_Shared/knuth_morris_pratt.jai";
 
 #load "data/shakespeare.jai";
 #load "data/degenerate.jai";
@@ -131,7 +129,7 @@ main :: () {
         #if sse
         {{
             set_index_algorithm(naive_with_simd_first_index);
-            set_simd_mode(.SSE);
+            set_simd_mode(.SSE2);
             t = get_time();
             index, found := first_index(haystack, needle);
             total : u64 = 0;
@@ -180,7 +178,7 @@ main :: () {
     #if kmp          array_add(*entries, entry("Knuth-Morris-Pratt", kmp_delta, kmp_total));
     #if boyer_moore  array_add(*entries, entry("Boyer-Moore", boyer_moore_delta, boyer_moore_total));
     #if simd_off     array_add(*entries, entry("Naive", simd_off_delta, simd_off_total));
-    #if sse          array_add(*entries, entry("Naive + SSE", sse_delta, sse_total));
+    #if sse          array_add(*entries, entry("Naive + SSE2", sse_delta, sse_total));
     #if avx2         array_add(*entries, entry("Naive + AVX2", avx2_delta, avx2_total));
 
     quick_sort(entries, (a: Entry) -> float64 { return a.time; });

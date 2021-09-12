@@ -5,14 +5,16 @@ heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
 
-errors_only :: true;
+errors_only :: false;
 
 
 main :: () {
-    set_simd_mode(.SSE);
+    set_simd_mode(.AUTO);
 
     //set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
     //set_index_algorithm(knuth_morris_pratt_first_index, knuth_morris_pratt_last_index);
+
+    really_long_string := heap.replace(really_long_string_no_cr, "\n", "\r\n");
 
     test(1, slice(test_string, 0, 999), test_string);
     test(2, slice(test_string, -999, -888), "");
@@ -223,6 +225,21 @@ main :: () {
     test(105, temp3, "soma taxt\there");
     test(106, temp4, "soma text\there");
     test(107, temp5, "soma taxt\thara");
+
+    index = 0;
+    for split("  aa    bb  cc ", " ", skip_empty = true) {
+        if index == {
+            case 0; test(9108, it, "aa");
+                    test(9109, it_index, 0);
+            case 1; test(9110, it, "bb");
+                    test(9111, it_index, 1);
+            case 2; test(9112, it, "cc");
+                    test(9113, it_index, 2);
+        }
+        index += 1;
+    }
+    test(9114, index, 3);
+
 
     index = 0;
     for split("  aa    bb \t cc ", cast([]u8) " \t", skip_empty = true) {
@@ -644,20 +661,22 @@ main :: () {
     for < line_split(really_long_string, keep_separator = .AS_POSTFIX) {
         if index == {
             case 0; test(308, starts_with(it, rls_4), true);
-                    test(309, ends_with(it, "\n"), true);
+                    test(309, ends_with(it, "\r\n"), true);
             case 1; test(310, starts_with(it, rls_3), true);
-                    test(311, ends_with(it, "\n"), true);
+                    test(311, ends_with(it, "\r\n"), true);
             case 2; test(312, starts_with(it, rls_2), true);
-                    test(313, ends_with(it, "\n"), true);
+                    test(313, ends_with(it, "\r\n"), true);
             case 3; test(314, starts_with(it, rls_1), true);
-                    test(315, ends_with(it, "\n"), true);
+                    test(315, ends_with(it, "\r\n"), true);
             case 4; test(316, starts_with(it, rls_0), true);
-                    test(317, ends_with(it, "\n"), true);
+                    test(317, ends_with(it, "\r\n"), true);
         }
         //print("%:\n[%]\n\n", it_index, it);
         index += 1;
     }
     test(318, index, 5);
+
+    // string
 
     index = 0;
     for split(" aa bb cc ", " ", keep_separator = .AS_PREFIX) {
@@ -712,6 +731,125 @@ main :: () {
 
     test(342, index, 5);
 
+
+    // char
+
+    index = 0;
+    for split(" aa bb cc ", #char " ", keep_separator = .AS_PREFIX) {
+        if index == {
+            case 0; test(343, it, "");
+            case 1; test(344, it, " aa");
+            case 2; test(345, it, " bb");
+            case 3; test(346, it, " cc");
+            case 4; test(347, it, " ");
+        }
+        index += 1;
+    }
+    test(348, index, 5);
+
+    index = 0;
+    for split(" aa bb cc ", #char " ", keep_separator = .AS_POSTFIX) {
+        if index == {
+            case 0; test(349, it, " ");
+            case 1; test(350, it, "aa ");
+            case 2; test(351, it, "bb ");
+            case 3; test(352, it, "cc ");
+            case 4; test(353, it, "");
+        }
+        index += 1;
+    }
+    test(354, index, 5);
+
+    index = 0;
+    for < split(" aa bb cc ", #char " ", keep_separator = .AS_PREFIX) {
+        if index == {
+            case 0; test(355, it, " ");
+            case 1; test(356, it, " cc");
+            case 2; test(357, it, " bb");
+            case 3; test(358, it, " aa");
+            case 4; test(359, it, "");
+        }
+        index += 1;
+    }
+    test(360, index, 5);
+
+    index = 0;
+    for < split(" aa bb cc ", #char " ", keep_separator = .AS_POSTFIX) {
+        if index == {
+            case 0; test(361, it, "");
+            case 1; test(362, it, "cc ");
+            case 2; test(363, it, "bb ");
+            case 3; test(364, it, "aa ");
+            case 4; test(365, it, " ");
+        }
+        index += 1;
+    }
+
+    test(366, index, 5);
+
+
+
+    // chars
+
+    index = 0;
+    for split(" aa bb cc ", cast([]u8)" b", keep_separator = .AS_PREFIX) {
+        if index == {
+            case 0; test(343, it, "");
+            case 1; test(344, it, " aa");
+            case 2; test(345, it, " ");
+            case 3; test(346, it, "b");
+            case 4; test(347, it, "b");
+            case 5; test(348, it, " cc");
+            case 6; test(349, it, " ");
+        }
+        index += 1;
+    }
+    test(350, index, 7);
+
+    index = 0;
+    for split(" aa bb cc ", cast([]u8)" b", keep_separator = .AS_POSTFIX) {
+        if index == {
+            case 0; test(351, it, " ");
+            case 1; test(352, it, "aa ");
+            case 2; test(353, it, "b");
+            case 3; test(354, it, "b");
+            case 4; test(355, it, " ");
+            case 5; test(356, it, "cc ");
+            case 6; test(357, it, "");
+        }
+        index += 1;
+    }
+    test(358, index, 7);
+
+    index = 0;
+    for < split(" aa bb cc ", cast([]u8)" b", keep_separator = .AS_PREFIX) {
+        if index == {
+            case 0; test(359, it, " ");
+            case 1; test(360, it, " cc");
+            case 2; test(361, it, "b");
+            case 3; test(362, it, "b");
+            case 4; test(363, it, " ");
+            case 5; test(364, it, " aa");
+            case 6; test(365, it, "");
+        }
+        index += 1;
+    }
+    test(366, index, 7);
+
+    index = 0;
+    for < split(" aa bb cc ", cast([]u8)" b", keep_separator = .AS_POSTFIX) {
+        if index == {
+            case 0; test(367, it, "");
+            case 1; test(368, it, "cc ");
+            case 2; test(369, it, " ");
+            case 3; test(370, it, "b");
+            case 4; test(371, it, "b");
+            case 5; test(372, it, "aa ");
+            case 6; test(373, it, " ");
+        }
+        index += 1;
+    }
+    test(374, index, 7);
 /*
     escaped := #string __
 \e\\\n\r\t\"\0\xAB\d123\uABCD\UABCDEF12
@@ -731,15 +869,116 @@ __;
 
 
     banana_sandwiches := "banana sandwiches are nice but banana & pear sandwiches are nicer";
-    test(345, trim_start_to(banana_sandwiches, #char "a"), "anana sandwiches are nice but banana & pear sandwiches are nicer");
-    test(346, trim_start_past(banana_sandwiches, #char "a"), "nana sandwiches are nice but banana & pear sandwiches are nicer");
-    test(347, trim_start_to(banana_sandwiches, "nan"), "nana sandwiches are nice but banana & pear sandwiches are nicer");
-    test(348, trim_start_past(banana_sandwiches, "nan"), "a sandwiches are nice but banana & pear sandwiches are nicer");
+    test(375, trim_start_to(banana_sandwiches, #char "a"), "anana sandwiches are nice but banana & pear sandwiches are nicer");
+    test(376, trim_start_past(banana_sandwiches, #char "a"), "nana sandwiches are nice but banana & pear sandwiches are nicer");
+    test(377, trim_start_to(banana_sandwiches, "nan"), "nana sandwiches are nice but banana & pear sandwiches are nicer");
+    test(378, trim_start_past(banana_sandwiches, "nan"), "a sandwiches are nice but banana & pear sandwiches are nicer");
 
-    test(349, trim_end_after(banana_sandwiches, #char "p"), "banana sandwiches are nice but banana & p");
-    test(350, trim_end_from(banana_sandwiches, #char "p"), "banana sandwiches are nice but banana & ");
-    test(351, trim_end_after(banana_sandwiches, "sandwiches"), "banana sandwiches are nice but banana & pear sandwiches");
-    test(352, trim_end_from(banana_sandwiches, " banana"), "banana sandwiches are nice but");
+    test(379, trim_end_after(banana_sandwiches, #char "p"), "banana sandwiches are nice but banana & p");
+    test(380, trim_end_from(banana_sandwiches, #char "p"), "banana sandwiches are nice but banana & ");
+    test(381, trim_end_after(banana_sandwiches, "sandwiches"), "banana sandwiches are nice but banana & pear sandwiches");
+    test(382, trim_end_from(banana_sandwiches, " banana"), "banana sandwiches are nice but");
+
+    test(383, trim_to(banana_sandwiches, #char "a"), "anana sandwiches are nice but banana & pear sandwiches a");
+    test(384, trim_to(banana_sandwiches, "sandwiches"), "sandwiches are nice but banana & pear sandwiches");
+    test(385, trim_past(banana_sandwiches, #char "a"), "nana sandwiches are nice but banana & pear sandwiches ");
+    test(386, trim_past(banana_sandwiches, "sandwiches"), " are nice but banana & pear ");
+
+
+    // Ho**Abou***-nic***Am******hess?
+
+    index = 0;
+    for split(map, "*?", question_mark_index, keep_separator = .AS_PREFIX) {
+        if index == {
+            case  0; test(387, it, "Ho");
+            case  1; test(388, it, "**Abou");
+            case  2; test(389, it, "**");
+            case  3; test(390, it, "*-nic");
+            case  4; test(391, it, "**");
+            case  5; test(392, it, "*Am");
+            case  6; test(393, it, "**");
+            case  7; test(394, it, "**");
+            case  8; test(395, it, "**hess?");
+        }
+        index += 1;
+    }
+    test(396, index, 9);
+
+    index = 0;
+    for < split(map, "*?", question_mark_index, keep_separator = .AS_PREFIX) {
+        if index == {
+            case  0; test(397, it, "*hess?");
+            case  1; test(398, it, "**");
+            case  2; test(399, it, "**");
+            case  3; test(400, it, "*Am*");
+            case  4; test(401, it, "**");
+            case  5; test(402, it, "*-nic");
+            case  6; test(403, it, "**");
+            case  7; test(404, it, "*Abou");
+            case  8; test(405, it, "Ho*");
+        }
+        index += 1;
+    }
+    test(406, index, 9);
+
+
+    // Ho**Abou***-nic***Am******hess?
+    // 9999988888776666655444433221111
+
+    index = 0;
+    for split(map, "*?", question_mark_index, keep_separator = .AS_POSTFIX) {
+        if index == {
+            case  0; test(406, it, "Ho**");
+            case  1; test(407, it, "Abou**");
+            case  2; test(408, it, "*-");
+            case  3; test(409, it, "nic**");
+            case  4; test(410, it, "*A");
+            case  5; test(411, it, "m**");
+            case  6; test(412, it, "**");
+            case  7; test(413, it, "**");
+            case  8; test(414, it, "hess?");
+        }
+        index += 1;
+    }
+    test(415, index, 9);
+
+    index = 0;
+    for < split(map, "*?", question_mark_index, keep_separator = .AS_POSTFIX) {
+        if index == {
+            case  0; test(416, it, "ess?");
+            case  1; test(417, it, "*h");
+            case  2; test(418, it, "**");
+            case  3; test(419, it, "m***");
+            case  4; test(420, it, "*A");
+            case  5; test(421, it, "nic**");
+            case  6; test(422, it, "*-");
+            case  7; test(423, it, "bou**");
+            case  8; test(424, it, "Ho**A");
+        }
+        index += 1;
+    }
+    test(425, index, 9);
+
+
+    index = 0;
+    for < line_split(really_long_string, keep_separator = .AS_PREFIX) {
+        if index == {
+            case 0; test(426, it, "\r\n");
+            case 1; test(427, ends_with(it, rls_4), true);
+                    test(428, starts_with(it, "\r\n"), true);
+            case 2; test(429, ends_with(it, rls_3), true);
+                    test(430, starts_with(it, "\r\n"), true);
+            case 3; test(431, ends_with(it, rls_2), true);
+                    test(432, starts_with(it, "\r\n"), true);
+            case 4; test(433, ends_with(it, rls_1), true);
+                    test(434, starts_with(it, "\r\n"), true);
+            case 5; test(435, it, rls_0);
+        }
+        //print("%:\n[%]\n\n", it_index, it);
+        index += 1;
+    }
+    test(436, index, 6);
+
 
     { // end of main
         if !errors_only
@@ -821,7 +1060,7 @@ until it meets all needs. This is wrong, empirically, and we should stop teachin
 ___;
 
 
-really_long_string :: #string ___
+really_long_string_no_cr :: #string ___
 How long have I studied?  How many times have I read the same books, over and over?  Were I to free us, I would be the most knowledgeable man in England, at least about the contents of my own library, but it is a farce.  I have found nothing!
 
 Every practice and ritual, every sacrament and offering I have read about, seen in illustrations, inferred from context… I have tried, and none of them have worked.  Nothing works to placate whichever god (or demon) the idol represents…  Nothing, that is, except that which I have already given, except the offering I know it accepts.

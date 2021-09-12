@@ -125,8 +125,8 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
     * `.IGNORE_CASE`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
-    * `.SIMPLE`, `.SIMPLE_SSE`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
-    * `.BOYER_MOORE`, `.BOYER_MOORE_SSE`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
+    * `.SIMPLE`, `.SIMPLE_SSE2`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`, `.BOYER_MOORE_SSE2`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
 * `strict`<br>By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
@@ -134,7 +134,7 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 #### A note on indexing algorithms
 
-Whereas other functions in the library will utilize SIMD features (SSE & AVX2) when told to with the `set_simd_mode` mode command, you must explicitly set an index algorithm to use them if that is what you wish:  the defailt indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
+Whereas other functions in the library will utilize SIMD features (SSE2 & AVX2) when told to with the `set_simd_mode` mode command, you must explicitly set an index algorithm to use them if that is what you wish:  the defailt indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
 
 To help with this there is the `index_profile.exe` tool (in the `tools/` folder): provide it with a file and a typical search string from your data and it will show you how each available algorithm performs with the data you are manipulating.
 
@@ -150,7 +150,7 @@ Sets the index procedures used internally when searching through strings with st
 * `set_simd_mode (mode)`<br>Sets whether to use SIMD optimisations.  One of:
     * `.OFF`<br>Disables all SIMD optimisations, utilizing scalar code only.
     * `.AUTO`<br>Uses the fastest SIMD instruction set available on the CPU.
-    * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
+    * `.SSE2`<br>Uses SSE2 (128bit) optimisations.  This is the default.
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
 
 
@@ -162,10 +162,10 @@ Returns whether the two strings are equal, using current or specified comparator
 
 
 * `advance_to (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
-Modifies `haystack` in place, moving its start point forward until it hits `%Tool` (or empties).
+Modifies `haystack` in-place, moving its start point forward until it hits `%Tool` (or empties).
 
 * `advance_past (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
-Modifies `haystack` in place, moving its start point forward until it hits and reaches the end of `%Tool` (or empties).
+Modifies `haystack` in-place, moving its start point forward until it hits and reaches the end of `%Tool` (or empties).
 
 
 * `slice (str: string, from_index: int, to_index: int) -> string, normalized_from_index: int, normalized_to_index: int`<br>
@@ -186,22 +186,28 @@ Returns the string view of `str` with all characters from the start and end whic
 * `trim (str: string, tool: %Tool, compare := default_compare) -> string`<br>
 Returns the string view of `str` with all characters matching tool removed from the start and end.
 
+* `trim_to (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
+Returns the string view of `str` with all characters before the first instance and after the last instance of tool removed.  If tool is not found then the entire string is returned.
+
+* `trim_past (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
+Returns the string view of `str` with all characters before the first instance and after the last instance of tool, as well as the tool itself, removed.  If tool is not found then the entire string is returned.
+
 * `trim_start (str: string, tool: %Tool, compare := default_compare) -> string`<br>
 Returns the string view of `str` with all characters matching tool removed from the start.
 
-* `trim_start_to (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+* `trim_start_to (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
 Returns the string view of `str` with all characters before the first instance of tool removed from the start.  If tool is not found then the entire string is returned.
 
-* `trim_start_past (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+* `trim_start_past (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
 Returns the string view of `str` with all characters before the first instance of tool, and the tool, removed from the start.  If tool is not found then the entire string is returned.
 
-* `trim_end (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+* `trim_end (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
 Returns the string view of `str` with all characters matching tool removed from the end.
 
-* `trim_end_after (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+* `trim_end_after (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
 Returns the string view of `str` with all characters after the last instance of tool removed from the end.  If tool is not found then the entire string is returned.
 
-* `trim_end_from (str: string, tool: %Tool, compare := default_compare) -> string`<br>
+* `trim_end_from (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
 Returns the string view of `str` with all characters after the last instance of tool, and the tool, removed from the end.  If tool is not found then the entire string is returned.
 
 
@@ -311,8 +317,8 @@ When enabled (it defaults to false) the module will provide these additional pro
     * `.IGNORE_CASE`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
-    * `.SIMPLE`, `.SIMPLE_SSE`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
-    * `.BOYER_MOORE`, `.BOYER_MOORE_SSE`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
+    * `.SIMPLE`, `.SIMPLE_SSE2`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
+    * `.BOYER_MOORE`, `.BOYER_MOORE_SSE2`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
 * `strict`<br>By default the module will be fairly permissive of inputs, doing the Right Thing without error for odd values (indices outwith the string for instance).  Setting `strict` to true will make the module behave more stringently, erroring on such inputs.
@@ -339,7 +345,7 @@ Sets the index procedures used internally when searching through strings with st
 Sets whether to use SIMD optimisations.  One of:
     * `.OFF`<br>Disables all SIMD optimisations, utilizing scalar code only.
     * `.AUTO`<br>Uses the fastest SIMD instruction set available on the CPU.
-    * `.SSE`<br>Uses SSE (128bit) optimisations.  This is the default.
+    * `.SSE2`<br>Uses SSE2 (128bit) optimisations.  This is the default.
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
 Note that this will *not* alter the string index algorithm you are using: if you wish to enable or disable SIMD functionalty with string indexing you must do so by choosing the appropriate algorithms using `set_index_algorithm`, or the `index_algorithm` module parameter.
 
