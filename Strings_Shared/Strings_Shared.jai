@@ -6,7 +6,7 @@ Index_Proc :: #type(haystack: string, needle: string, boundary_index: int, rever
 String_Index_Proc :: #type(haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool;
 
 Character_Compare :: struct {
-    kind : enum { CASE_SENSITIVE; IGNORE_CASE; CUSTOM; };
+    kind : enum u8 { CASE_SENSITIVE; IGNORE_CASE; CUSTOM; };
     compare : #type(a: u8, b: u8) -> bool;
 }
 
@@ -102,7 +102,7 @@ return result == 0;
 */
 
 
-string_from_char :: inline (char: *u8) -> string {
+char_as_string :: inline (char: *u8) -> string {
     result : string = ---;
     result.data = char;
     result.count = 1;
@@ -144,20 +144,207 @@ slice_index :: inline (str: string, index: int) -> normalized_index: int, valid_
 
 
 to_lower :: (str: string) {
-    for 0 .. str.count - 1 {
-        if str[it] >= #char "A" && str[it] <= #char "Z" {
-            c : int = str[it] + #char "a" - #char "A";
-            str[it] = cast(u8) c;
+    if str == ""  return;
+
+    data : u64 = cast(u64)str.data;
+    end  : u64 = data + cast(u64)str.count - 1;
+
+    if simd_mode == {
+        case .SSE2;
+            case_bit : u8 : 32;
+            case_bytes := #insert #run make_16(case_bit);
+            a_bytes := #insert #run make_16(#char "A");
+            z_bytes := #insert #run make_16(#char "Z");
+            case_data := *case_bytes;
+            a_data := *a_bytes;
+            z_data := *z_bytes;
+
+            loop_until := end - 15;
+            while data < loop_until {
+                #asm {
+                    /* load data */
+                    movdqu.x case_vec:, [case_data];
+                    movdqu.x a_vec:, [a_data];
+                    movdqu.x z_vec:, [z_data];
+                    movdqu.x string_vec:, [data];
+
+                    /* generate mask for which bits are uppercase letters */
+                    movdqa.x mask_vec:, string_vec;
+                    pcmpgtb.x mask_vec, z_vec;
+
+                    pcmpgtb.x a_vec, string_vec;
+                    por.x mask_vec, a_vec;
+
+                    /* apply mask to keep non-upper chars */
+                    movdqu.x non_upper_vec:, string_vec;
+                    pand.x non_upper_vec, mask_vec;
+
+                    /* convert uppercase to lowercase, and rest to garbage */
+                    por.x string_vec, case_vec;
+
+                    /* invert mask then apply it to add lowered chars */
+                    pcmpeqb.x a_vec, a_vec;
+                    pxor.x mask_vec, a_vec;
+                    pand.x string_vec, mask_vec;
+
+                    /* combine results and output */
+                    por.x string_vec, non_upper_vec;
+                    movdqu.x [data], string_vec;
+                }
+
+                data += 16;
+            }
+
+        case .AVX2;
+            case_bit : u8 : 32;
+            case_bytes := #insert #run make_32(case_bit);
+            a_bytes := #insert #run make_32(#char "A");
+            z_bytes := #insert #run make_32(#char "Z");
+            case_data := *case_bytes;
+            a_data := *a_bytes;
+            z_data := *z_bytes;
+
+            loop_until := end - 31;
+            while data < loop_until {
+                #asm {
+                    /* load data */
+                    movdqu.y case_vec:, [case_data];
+                    movdqu.y a_vec:, [a_data];
+                    movdqu.y z_vec:, [z_data];
+                    movdqu.y string_vec:, [data];
+
+                    /* generate mask for which bits are uppercase letters */
+                    pcmpgtb.y mask_vec:, string_vec, z_vec;
+                    pcmpgtb.y a_vec, a_vec, string_vec;
+                    por.y mask_vec, mask_vec, a_vec;
+
+                    /* apply mask to keep non-upper chars */
+                    pand.y non_upper_vec:, string_vec, mask_vec;
+
+                    /* convert uppercase to lowercase, and rest to garbage */
+                    por.y string_vec, string_vec, case_vec;
+
+                    /* invert mask then apply it to add lowered chars */
+                    pcmpeqb.y a_vec, a_vec, a_vec;
+                    pxor.y mask_vec, mask_vec, a_vec;
+                    pand.y string_vec, string_vec, mask_vec;
+
+                    /* combine results and output */
+                    por.y string_vec, string_vec, non_upper_vec;
+                    movdqu.y [data], string_vec;
+                }
+
+                data += 32;
+            }
+    }
+
+    for data .. end {
+        if <<cast(*u8)it >= #char "A" && <<cast(*u8)it <= #char "Z" {
+            <<cast(*u8)it += 32;
         }
     }
 }
 
 
+
 to_upper :: (str: string) {
-    for 0 .. str.count - 1 {
-        if str[it] >= #char "a" && str[it] <= #char "z" {
-            c : int = str[it] + #char "A" - #char "a";
-            str[it] = cast(u8) c;
+    if str == ""  return;
+
+    data : u64 = cast(u64)str.data;
+    end  : u64 = data + cast(u64)str.count - 1;
+
+    if simd_mode == {
+        case .SSE2;
+            case_bit : u8 : 32;
+            case_bytes := #insert #run make_16(case_bit);
+            a_bytes := #insert #run make_16(#char "a");
+            z_bytes := #insert #run make_16(#char "z");
+            case_data := *case_bytes;
+            a_data := *a_bytes;
+            z_data := *z_bytes;
+
+            loop_until := end - 15;
+            while data < loop_until {
+                #asm {
+                    /* load data */
+                    movdqu.x case_vec:, [case_data];
+                    movdqu.x a_vec:, [a_data];
+                    movdqu.x z_vec:, [z_data];
+                    movdqu.x string_vec:, [data];
+
+                    /* generate mask for which bits are uppercase letters */
+                    movdqa.x mask_vec:, string_vec;
+                    pcmpgtb.x mask_vec, z_vec;
+
+                    pcmpgtb.x a_vec, string_vec;
+                    por.x mask_vec, a_vec;
+
+                    /* apply mask to keep non-upper chars */
+                    movdqu.x non_lower_vec:, string_vec;
+                    pand.x non_lower_vec, mask_vec;
+
+                    /* convert lowercase to uppercase, and rest to garbage */
+                    pxor.x string_vec, case_vec;
+
+                    /* invert mask then apply it to add uppered chars */
+                    pcmpeqb.x a_vec, a_vec;
+                    pxor.x mask_vec, a_vec;
+                    pand.x string_vec, mask_vec;
+
+                    /* combine results and output */
+                    por.x string_vec, non_lower_vec;
+                    movdqu.x [data], string_vec;
+                }
+
+                data += 16;
+            }
+
+        case .AVX2;
+            case_bit : u8 : 32;
+            case_bytes := #insert #run make_32(case_bit);
+            a_bytes := #insert #run make_32(#char "a");
+            z_bytes := #insert #run make_32(#char "z");
+            case_data := *case_bytes;
+            a_data := *a_bytes;
+            z_data := *z_bytes;
+
+            loop_until := end - 31;
+            while data < loop_until {
+                #asm {
+                    /* load data */
+                    movdqu.y case_vec:, [case_data];
+                    movdqu.y a_vec:, [a_data];
+                    movdqu.y z_vec:, [z_data];
+                    movdqu.y string_vec:, [data];
+
+                    /* generate mask for which bits are uppercase letters */
+                    pcmpgtb.y mask_vec:, string_vec, z_vec;
+                    pcmpgtb.y a_vec, a_vec, string_vec;
+                    por.y mask_vec, mask_vec, a_vec;
+
+                    /* apply mask to keep non-upper chars */
+                    pand.y non_lower_vec:, string_vec, mask_vec;
+
+                    /* convert lowercase to uppercase, and rest to garbage */
+                    pxor.y string_vec, string_vec, case_vec;
+
+                    /* invert mask then apply it to add uppered chars */
+                    pcmpeqb.y a_vec, a_vec, a_vec;
+                    pxor.y mask_vec, mask_vec, a_vec;
+                    pand.y string_vec, string_vec, mask_vec;
+
+                    /* combine results and output */
+                    por.y string_vec, string_vec, non_lower_vec;
+                    movdqu.y [data], string_vec;
+                }
+
+                data += 32;
+            }
+    }
+
+    for data .. end {
+        if <<cast(*u8)it >= #char "a" && <<cast(*u8)it <= #char "z" {
+            <<cast(*u8)it -= 32;
         }
     }
 }
@@ -168,8 +355,7 @@ to_capitalized :: (str: string, preserve_caps := true) {
 
     str[0] = to_upper(str[0]);
     if !preserve_caps
-        for 1 .. str.count - 1
-            str[it] = to_lower(str[it]);
+        to_lower(unsafe_slice(str, 1));
 }
 
 
@@ -199,8 +385,6 @@ bit_mask_32_zero := *bit_masks_32 + 32;
 */
 
 
-
-// @TODO look at simding this again when we have data blocks in #asm
 
 equal :: (a: string, b: string, compare : Character_Compare) -> bool {
     if compare.kind == .CASE_SENSITIVE
@@ -724,6 +908,90 @@ trim_end_from :: (str: string, needle: string, $$index: Index_Proc) -> string, f
     from_index, found, to_index := last_index(str, needle, str.count, index);
     if !found  return str, false;
     return unsafe_slice(str, 0, from_index), true;
+}
+
+
+reverse :: (str: string) {
+    if !str  return;
+
+    low_data  : u64 = cast(u64)str.data;
+    high_data : u64 = low_data + cast(u64)str.count;
+
+    if simd_mode == {
+        case .SSE2;
+            if low_data + 32 < high_data {
+                shuffle_bytes := u8.[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+                shuffle_data := shuffle_bytes.data;
+
+                while low_data + 32 <= high_data {
+                    high_data -= 16;
+                    #asm {
+                        /* load data */
+                        movdqu.x low_vec:, [low_data];
+                        movdqu.x high_vec:, [high_data];
+                        movdqu.x shuffle_vec:, [shuffle_data];
+
+                        /* shuffle */
+                        pshufb.x low_vec, shuffle_vec;
+                        pshufb.x high_vec, shuffle_vec;
+
+                        /* export out to reversed positions */
+                        movdqu.x [high_data], low_vec;
+                        movdqu.x [low_data], high_vec;
+                    }
+
+                    low_data += 16;
+                }
+            }
+
+        case .AVX2;
+            if low_data + 64 < high_data {
+                shuffle_bytes := u8.[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+                                     15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+                shuffle_data := shuffle_bytes.data;
+
+                while low_data + 64 <= high_data {
+                    //high_data -= 32;
+
+                    #asm {
+                        sub.q high_data, 32;
+                        /* load data */
+                        movdqu.y low_vec:, [low_data];
+                        movdqu.y high_vec:, [high_data];
+                        movdqu.y shuffle_vec:, [shuffle_data];
+
+                        /* shuffle both 128-bit sections */
+                        pshufb.y low_vec, low_vec, shuffle_vec;
+                        pshufb.y high_vec, high_vec, shuffle_vec;
+
+                        /* swap 128-bit sections */
+                        perm2i128 low_vec, low_vec, low_vec, 1;
+                        perm2i128 high_vec, high_vec, high_vec, 1;
+
+                        /* export out to reversed positions */
+                        movdqu.y [high_data], low_vec;
+                        movdqu.y [low_data], high_vec;
+                        add.q low_data, 32;
+                    }
+
+                    //low_data += 32;
+                }
+            }
+    }
+
+    high_data -= 1;
+
+    // @TODO scalar code can sill be asm'd with bswap
+    while low_data < high_data {
+        #asm {
+            mov.b low_gpr:, [low_data];
+            mov.b high_gpr:, [high_data];
+            mov.b [high_data], low_gpr;
+            mov.b [low_data], high_gpr;
+        }
+        low_data += 1;
+        high_data -= 1;
+    }
 }
 
 
@@ -1632,8 +1900,6 @@ last_index :: inline (haystack: string, needle: string, $$index: Index_Proc) -> 
     from_index, to_index, found := index(haystack, needle, haystack.count, true);
     return from_index, found, to_index;
 }
-
-
 
 
 Split_By :: struct {

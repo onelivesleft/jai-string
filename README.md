@@ -51,6 +51,8 @@ The comparator is a struct; you can make your own like this:
     }
 ```
 
+The built-in comparators are `case_sensitive` and `ignore_case`.
+
 *(The other two options to `.CUSTOM` are `.CASE_SENSITIVE` and `.IGNORE_CASE`: you may roll your own versions of those comparators if you wish, and by choosing the relevant identifier the correct SIMD optimisations will be invoked)*
 
 
@@ -118,6 +120,9 @@ In the docs below, any time a type of `%Tool` is specified, it means there are f
 
 ## Strings
 
+This module provides procedures which predominantly interact with string views; i.e. the jai `string` type.  None of the procdures in this module allocate: to generate new strings from old ones see the `Strings_Alloc` module below.
+
+
 ### `#module_parameters`
 
 * `compare`<br>Default comparator used to check if two string characters are equal.  You may change it using `set_default_compare`.  One of:
@@ -154,31 +159,18 @@ Sets the index procedures used internally when searching through strings with st
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
 
 
-* `is_any (needle: u8, characters: [] u8, compare := default_compare) -> bool`<br>
-Returns whether `needle` is equal to any of `characters`.
-
-* `equal (a: string, b: string, compare := default_compare) -> bool`<br>
-Returns whether the two strings are equal, using current or specified comparator.
-
-
-* `advance_to (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
-Modifies `haystack` in-place, moving its start point forward until it hits `%Tool` (or empties).
-
-* `advance_past (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
-Modifies `haystack` in-place, moving its start point forward until it hits and reaches the end of `%Tool` (or empties).
-
-
 * `slice (str: string, from_index: int, to_index: int) -> string, normalized_from_index: int, normalized_to_index: int`<br>
-Returns a string view inside `str`, between the specified indices.  You may use a negative index to specify backwards from the end.  If you do not specify a `to_index` then it will go to the end of the string.  The last two return parameters are the positive indexes the slice ends up using, after validation.
+Returns a string view inside `str`, between the specified indices.  You may use a negative index to specify backwards from the end of the string.  If you do not specify a `to_index` then it will include all characters up to the end of the string.  The last two return parameters are the positive indexes the slice ends up using, after validation.
 
 * `slice_index (str: string, index: int) -> normalized_index: int, valid_when_strict: bool`<br>
 Returns the validated and normalized index which would be used with the provided string, as well as whether such an input would be valid in `strict` mode.
 
 * `unsafe_slice (str: string, from_index: int, to_index: int) -> string`<br>
-Same thing as `slice`, but without any checking on the indices, and without being able to use negative indices (and thus faster).  If you do not specify a `to_index` then it will go to the end of the string.
+Same thing as `slice`, but without any checking on the indices, and without being able to use negative indices (and thus faster).  If you do not specify a `to_index` then it will include all characters up to the end of the string.
 
 * `substring (str: string, from_index: int, count: int) -> string`<br>
-Same as `slice`, except instead of a `to_index` you specify a character count.
+Same as `slice`, except instead of a `to_index` you specify a character count.  If you do not specify a `count` then it will include all characters up to the end of the string.
+
 
 * `trim (str: string) -> string`<br>
 Returns the string view of `str` with all characters from the start and end which are <= `#char " "` removed (in effect all whitespace and control codes).
@@ -191,6 +183,7 @@ Returns the string view of `str` with all characters before the first instance a
 
 * `trim_past (str: string, tool: %Tool, compare := default_compare) -> string, found: bool`<br>
 Returns the string view of `str` with all characters before the first instance and after the last instance of tool, as well as the tool itself, removed.  If tool is not found then the entire string is returned.
+
 
 * `trim_start (str: string, tool: %Tool, compare := default_compare) -> string`<br>
 Returns the string view of `str` with all characters matching tool removed from the start.
@@ -211,32 +204,50 @@ Returns the string view of `str` with all characters after the last instance of 
 Returns the string view of `str` with all characters after the last instance of tool, and the tool, removed from the end.  If tool is not found then the entire string is returned.
 
 
+* `advance_to (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
+Modifies `haystack` in-place, moving its start point forward until it hits `%Tool` (or empties).
+
+* `advance_past (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
+Modifies `haystack` in-place, moving its start point forward until it hits and reaches the end of `%Tool` (or empties).
+
+
 * `first_index (haystack: string, needle: %Tool, start_index := 0, compare := default_compare) -> index: int, found: bool, [to_index: int]`<br>
 Returns the first index in `haystack` at which `needle` occurs, or `-1` if it does not occur.  `found` will be true if `needle` was found.  In the case when `%Tool` is an `Index_Proc`, `to_index` will be set to the index the pattern terminates at.
 
 * `last_index (haystack: string, needle: %Tool, start_index := 0, compare := default_compare) -> index: int, found: bool, [to_index: int]`<br>
 As per `first_index`, but working backwards from the end of the `haystack`.
 
+
+* `equal (a: string, b: string, compare := default_compare) -> bool`<br>
+Returns whether the two strings are equal, using current or specified comparator.
+
+
+* `is_any (needle: u8, characters: [] u8, compare := default_compare) -> bool`<br>
+Returns whether `needle` is equal to any of `characters`.
+
+
 * `contains (haystack: string, needle: %Tool, compare := default_compare) -> bool`<br>
 Whether `needle` occurs within `haystack`.
+
 
 * `count (haystack: string, needle: %Tool, compare := default_compare) -> int`<br>
 How many times `needle` occurs within `haystack` (non-overlapping).
 
-* `count (haystack: string, needle: [] Character_Translation) -> int`<br>
-How many times `needle` occurs within `haystack` (non-overlapping).
 
 * `starts_with (haystack: string, needle: %Tool, compare := default_compare) -> bool`<br>
 Returns whether `haystack` begins with `needle`.
 
+
 * `ends_with (haystack: string, needle: %Tool, compare := default_compare) -> bool`<br>
 Returns whether `haystack` ends with `needle`.
+
 
 * `is_lower (char: u8) -> bool`<br>
 Whether `char` falls in the range `#char "a" - #char "z"`.
 
 * `is_upper (char: u8) -> bool`<br>
 Whether `char` falls in the range `#char "A" - #char "Z"`.
+
 
 * `to_lower (str: string)`<br>
 Mutates `str` in-place, overwritting any upper-case characters with their lower-case equivalent.
@@ -247,25 +258,21 @@ Mutates `str` in-place, overwritting any lower-case characters with their upper-
 * `to_capitalized (str: string, preserve_caps := true)`<br>
 Sets the first letter of `str` to upper-case.  If `preserve_caps` is set to false, will set all following letters to lower-case.
 
+
 * `reverse (str: string)`<br>
 Reverses the characters in `str` in-place.
+
 
 * `replace (haystack: string, needle: %Tool, replacement: u8, max_replacements := 0) -> change_count: int`<br>
 Replaces `needle` with the `replacement` character specified.
 
-* `replace (haystack: string, translation: [] Character_Translation, max_replacements := 0) -> change_count: int`<br>
-Replaces characters specified within the translation table.  A `Character_Translation` is:
 
-```jai
-Character_Translation :: struct {
-    needle: u8;
-    replacement: u8;
-}
-```
-
-
-* `split (text: string, separator: %Tool, skip_empty := false, max_results := 0)`<br>
-Used to iterate over `text` in a `for` loop, splitting the string by the chosen tool.  If `skip_empty` is set then your code will not be called with the empty string (i.e. when there are two consecutive `seperator`s).  If `max_results` is non-zero then `text` will only be split into at most that many pieces.
+* `split (text: string, separator: %Tool, skip_empty := false, max_results := 0, keep_separator := .NO, compare := default_compare)`<br>
+Used to iterate over `text` in a `for` loop, splitting the string by the chosen tool.
+If `skip_empty` is set then your code will not be called with the empty string (i.e. when there are two consecutive `seperator`s).
+If `max_results` is non-zero then `text` will only be split into at most that
+many pieces.
+If `keep_separator` is set to `.AS_PREFIX` or `.AS_POSTFIX` then the separator will be included in the strings, at the specified position.
 
 For example:
 ```jai
@@ -276,26 +283,43 @@ For example:
             case  2; assert(word == "cc");
         }
     }
+
+    for word, index: split("Hello, World.", #char " ", keep_separator = .AS_POSTFIX) {
+        if index == {
+            case  0; assert(word == "Hello, ");
+            case  1; assert(word == "World.");
+        }
+    }
 ```
 
 * `split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
 Works like the above `split`, except the string is split at the specified indices.
 
-* `line_split (text: string, keep_end := false, skip_empty := false, max_results := 0)`<br>
-Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).  By default the values returned will have the end-of-line characters removed, but you may elect to keep them by setting `keep_end` to true.
+* `line_split (text: string, keep_end := false, skip_empty := false, max_results := 0, keep_separator := .NO)`<br>
+Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).
 
 
-* `string_from_char (char: *u8) -> string`<br>
-Returns a string view on the character specified.
+* `char_as_string (char: *u8) -> string`<br>
+Returns a string view on the single character specified.
+
 
 * `reverse_index_proc (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool`<br>
-Can be used to automatically make a reversed version of an `Index_Proc` (see `question_mark_index` example above).  Very inefficient!
+Can be used to automatically make a reversed version of an `Index_Proc` (see `question_mark_index` example above).  It does so in an extremely inefficient way; if you care about the performance of the reverse search then you should code it directly.
 
 
 <hr>
 
 
 ## Strings_Alloc
+
+This module provides procedures which return new strings.  You can set the allocator used when you import the module, but can also override the allocator on each call.  Typically you should namespace the import, identifying the allocator used (you shouldn't globally import both this and the base `Strings` module, as they have identical procedure names which will collide).
+
+For example:
+```jai
+#import "Strings";
+heap :: #import "Strings_Alloc";
+temp :: #import "Strings_Alloc"(__temporary_allocator);
+```
 
 
 ### `#module_parameters`
@@ -349,20 +373,23 @@ Sets whether to use SIMD optimisations.  One of:
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
 Note that this will *not* alter the string index algorithm you are using: if you wish to enable or disable SIMD functionalty with string indexing you must do so by choosing the appropriate algorithms using `set_index_algorithm`, or the `index_algorithm` module parameter.
 
+
 * `copy (str: string) -> string`<br>
 Returns of a copy of `str`.
+
 
 * `reverse (str: string) -> string`<br>
 Returns a copy of `str` with the characters in the reverse order.
 
-* `capitalized (str: string, preserve_caps := true) -> string`<br>
-Returns a copy of `str` with the first letter converted to upper-case.  If `preserve_caps` is disabled then all subsequent letters will be converted to lower-case.
 
 * `lower (str: string) -> string`<br>
 Returns a copy of `str` with all upper-case characters converted to their lower-case equivalent.
 
 * `upper (str: string)`<br>
 Returns a copy of `str` with all lower-case characters converted to their upper-case equivalent.
+
+* `capitalized (str: string, preserve_caps := true) -> string`<br>
+Returns a copy of `str` with the first letter converted to upper-case.  If `preserve_caps` is disabled then all subsequent letters will be converted to lower-case.
 
 
 * `replace (haystack: string, needle: %Tool, replacement: string,  max_replacements := 0, compare := default_compare) -> string`<br>
@@ -381,15 +408,24 @@ Returns a single string, the result of joining all the strings in the `strings` 
 * `join (strings: [] string, separator: u8) -> string`<br>
 Returns a single string, the result of joining all the strings in the `strings` array together with `separator` between them.
 
-* `split (text: string, separator: %Tool, reversed := false, skip_empty := false, max_results := 0, compare := default_compare) -> [] string`<br>
-Creates an array of strings by splitting `text` at each instance of `separator`.  `reversed` will reverse the order of the array.  `skip_empty` will not include any empty strings in the array (i.e. when there are consecutive separators).  If `max_results` is non-zero then the array will contain at most that many entries.
+
+* `split (text: string, separator: %Tool, reversed := false, skip_empty := false, max_results := 0, keep_separator := .NO, compare := default_compare) -> [] string`<br>
+Creates an array of strings by splitting `text` at each instance of `separator`.
+If `reversed` is set then the order in the array will be reversed.
+If `skip_empty` is set then empty strings will not be added to the array (i.e. when there are two consecutive `seperator`s).
+If `max_results` is non-zero then `text` will only be split into at most that
+many pieces.
+If `keep_separator` is set to `.AS_PREFIX` or `.AS_POSTFIX` then the separator will be included in the strings, at the specified position.
+
 *NOTE* if you can accomplish your task by iterating with `split` from the `Strings` module then that may be the better, more performant solution.
+
 
 * `split (text: string, indexes: .. int, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split`, but splitting the string at the specified indices.
 
 * `split (text: string, splitter: Split_By, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split`, but using the specified `Split_By` struct.  i.e. a struct returned by the `split` function in the `Strings` module.
+
 
 * `pad_start (str: string, desired_count: int, pad_with := " ") -> string`<br>
 Returns a copy of `str` with `pad_with` repeated at the beginning such that the string length reaches the `desired_count`.
@@ -409,8 +445,10 @@ Returns a copy of `str` with `pad_with` repeated from the begining *and* from th
 * `pad_center (str: string, desired_count: int, pad_with: u8) -> string`<br>
 Returns a copy of `str` with `pad_with` repeated from the begining *and* from the end such that the string length reaches the `desired_count`.
 
+
 * `repeat (str: string, times: int) -> string`<br>
 Returns a string consisting of `str` repeated `times` times.
+
 
 * `camel_from_snake (str: string, preserve_caps := false) -> string`<br>
 Returns a copy of underscore-separated `str`, changed into programmer CamelCase; i.e. with the leading letter, and every letter after an underscore, converted to upper-case, and with underscores removed.  If `preserve_caps` is enabled then the the underscore removal still happens, but the case is kept.
@@ -421,6 +459,7 @@ For example:
     assert( camel_from_snake("play_RTS", true) == "playRTS" );
 ```
 
+
 * `snake_from_camel (str: string, preserve_caps := false) -> string`<br>
 Returns a copy of CamelCased `str`, changed into programmer snake case; i.e. converted to lower-case, but split by `_` at each formerly upper-case letter edge.  If `preserve_caps` is enabled then the the split still happens, but the case is kept.
 
@@ -430,10 +469,11 @@ For example:
     assert( snake_from_camel("PlayRTS", true) == "play_RTS" );
 ```
 
+
 * `apply_backslash (str: string) -> string, well_formed: bool`<br>
 Converts legal jai backslash escape sequences (i.e. `\n`, `\t`, etc) into their specified character. i.e. a two character string `"\n"` will yield a single character string with byte value `10`;
-`well_formed` will be true if all backslash characters in `str` are followed by an appropriate escape
-sequence.
+`well_formed` will be true if all backslash characters in `str` are followed by an appropriate escape sequence.
+
 
 * `escape (str: string) -> string`<br>
 Replaces the special characters which jai uses backslash escapes to represent with said backslash escape sequence. i.e. the single character string with byte value `10` will yield the two character string `"\n"`

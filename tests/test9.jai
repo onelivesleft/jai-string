@@ -8,7 +8,7 @@
 main :: () {
     haystack := shakespeare;
     needle : u8 = #char "a";
-    times :: 1000;
+    times :: 1;
 
     t : float64;
 

@@ -3,7 +3,9 @@
 
 // TODO
 // v1.0 checklist:
+// [ ] Check eveything which could be using `first_index` is doing so
 // [ ] Wait for compiler to allow .AVX2
+// [x] Update readme
 // [x] `keep_separator` on all `split`
 // [x] `trim_to`, `trim_past`
 // [x] trim_start_to, trim_start_past, trim_end_from, trim_end_after
@@ -13,11 +15,15 @@
 // [x] default_compare
 
 // Extras
-// [ ] SIMD to_lower / to_upper
+// [ ] Add SIMD_mode to Comparator?
+// [ ] double-up in `repeat`
 // [ ] SIMD first_index/last_index chars
-// [ ] SIMD replace char
-// [ ] SIMD replace chars
-// [ ] SIMD count chars
+// [ ] SIMD replace char   // wait until we can split asm blocks
+// [ ] SIMD replace chars  // wait until we can split asm blocks
+// [ ] SIMD is_any?
+// [x] SIMD reverse
+// [x] SIMD count chars
+// [x] SIMD to_lower / to_upper
 // [x] SIMD count char
 
 
@@ -514,6 +520,7 @@ trim_end_from :: inline (str: string, needle: string) -> string, found: bool  {
 replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {
     change_count := 0;
     index, found := first_index(haystack, needle);
+
     while found {
         haystack[index] = replacement;
         change_count += 1;
@@ -584,29 +591,6 @@ replace :: (haystack: string, needle: string, $$index: Index_Proc, replacement: 
 }
 
 
-Character_Translation :: struct {
-    needle: u8;
-    replacement: u8;
-}
-
-
-replace :: (haystack: string, translation: [] Character_Translation, max_replacements := 0) -> change_count: int {
-    change_count := 0;
-    for index: 0 .. haystack.count - 1 {
-        for entry: translation {
-            if haystack[index] == entry.needle {
-                haystack[index] = entry.replacement;
-                change_count += 1;
-                if max_replacements > 0 && change_count >= max_replacements
-                    break index;
-                break;
-            }
-        }
-    }
-
-    return change_count;
-}
-
 
 count :: inline (haystack: string, needle: u8) -> total: int {
     return count(haystack, needle, current_compare);
@@ -618,15 +602,10 @@ count :: inline (haystack: string, needle: [] u8) -> total: int {
 }
 
 count :: (haystack: string, needle: [] u8, compare: Character_Compare) -> total: int {
-    if needle.count == 0  return 0;
+    if haystack == ""  return 0;
 
     total := 0;
-    for 0 .. haystack.count - 1 {
-        if is_any(haystack[it], needle, compare) {
-            total += 1;
-        }
-    }
-
+    for needle  total += count(haystack, it, compare);
     return total;
 }
 
@@ -634,7 +613,6 @@ count :: (haystack: string, needle: [] u8, compare: Character_Compare) -> total:
 count :: inline (haystack: string, needle: string) -> total: int {
     return count(haystack, needle, current_compare);
 }
-
 
 count :: (haystack: string, needle: string, compare: Character_Compare) -> total: int {
     if needle == ""  return 0;
@@ -659,37 +637,6 @@ count :: (haystack: string, needle: string, $$index: Index_Proc) -> total: int {
     }
 
     return total;
-}
-
-
-count :: (haystack: string, translation: [] Character_Translation) -> total: int {
-    if translation.count == 0  return 0;
-
-    total := 0;
-    for 0 .. haystack.count - 1 {
-        for entry: translation {
-            if haystack[it] == entry.needle {
-                total += 1;
-                break;
-            }
-        }
-    }
-
-    return total;
-}
-
-
-
-reverse :: (str: string) {
-    low_index := 0;
-    high_index := str.count - 1;
-    while low_index < high_index {
-        c := str[low_index];
-        str[low_index] = str[high_index];
-        str[high_index] = c;
-        low_index += 1;
-        high_index -= 1;
-    }
 }
 
 

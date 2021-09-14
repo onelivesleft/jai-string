@@ -173,7 +173,7 @@ test :: (needle: $T, call: (T) -> int) {
             print("\"%\" ", needle);
     }
     else #if T == u8 {
-        print("'%' ", string_from_char(*needle));
+        print("'%' ", char_as_string(*needle));
     }
     else {
         print("% ", needle);

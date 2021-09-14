@@ -15,7 +15,7 @@ main :: () {
         for < #char "y" .. #char "a" {
             from : u8 = cast(u8)it;
             next : u8 = cast(u8)it + 1;
-            foo = scratch.replace(foo, string_from_char(*from), string_from_char(*next));
+            foo = scratch.replace(foo, char_as_string(*from), char_as_string(*next));
         }
         foo = scratch.replace(foo, "#", "a");
     }

@@ -3,6 +3,7 @@
 
 
 // TODO
+// [ ] get `apply_backslash` and `escape` to handle `\u` and `\U`
 // [x] create a Scratch allocator
 // [x] rename concatenate to join
 // [x] allow user to set allocator used by string builder
@@ -57,7 +58,7 @@ copy :: (str: string, allocator: Allocator = null, allocator_data: *void = null,
         result[result.count - 1] = #char "\0";
     }
     else {
-        result = alloc_string(str.count, allocator = allocator, allocator_data = allocator_data);
+        result = alloc_string(str.count, allocator = a, allocator_data = ad);
         memcpy(result.data, str.data, str.count);
     }
 
@@ -243,7 +244,7 @@ join :: inline (strings: [] string, allocator: Allocator = null, allocator_data:
 
 
 join :: (strings: [] string, separator: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return join(strings, string_from_char(*separator), allocator, allocator_data);
+    return join(strings, char_as_string(*separator), allocator, allocator_data);
 }
 
 
@@ -410,7 +411,7 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, all
 
 
 pad_start :: inline (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_start(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+    return pad_start(str, desired_count, char_as_string(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
@@ -456,7 +457,7 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, alloc
 
 
 pad_end :: inline (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_end(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+    return pad_end(str, desired_count, char_as_string(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
@@ -516,7 +517,7 @@ pad_center :: (str: string, desired_count: int, pad_with := default_pad_with, al
 
 
 pad_center :: inline (str: string, desired_count: int, pad_with: u8, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return pad_center(str, desired_count, string_from_char(*pad_with), allocator, allocator_data, null_terminate);
+    return pad_center(str, desired_count, char_as_string(*pad_with), allocator, allocator_data, null_terminate);
 }
 
 
@@ -813,12 +814,16 @@ escape :: (str: string, allocator: Allocator = null, allocator_data: *void = nul
 
 #if add_convenience_functions {
     print :: (format_string: string, args: .. Any, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-        builder: String_Builder;
-        defer free_buffers(*builder);
+        result : String_Builder;
+        set_result_allocator();
 
-        print_to_builder(*builder, format_string, ..args);
+        print_to_builder(*result, format_string, ..args);
 
-        return builder_to_string(*builder, allocator = allocator, allocator_data = allocator_data, null_terminate = null_terminate);
+        a, ad := get_allocator(allocator, allocator_data);
+        output := builder_to_string(*result, allocator = a, allocator_data = ad);
+        if a != __temporary_allocator
+            set_temporary_storage_mark(result_temporary_storage_mark);
+        return output;
     } @PrintLike
 
 

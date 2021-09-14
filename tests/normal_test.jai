@@ -313,7 +313,7 @@ main :: () {
     test(1401, index, 3);
 
     c : u8 = xx #char "H";
-    test(141, string_from_char(*c), "H");
+    test(141, char_as_string(*c), "H");
 
     test(142, starts_with("Hello world", "Hello"), true);
     test(143, starts_with("Hello world", "hello"), false);
@@ -499,9 +499,8 @@ main :: () {
     test(2385, index, 5);
 
     map := heap.copy("How about a nice game of chess?");
-    replace(map, Character_Translation.[
-        .{#char " ", #char "-"},
-        .{#char "a", #char "A"}]);
+    replace(map, #char " ", #char "-");
+    replace(map, #char "a", #char "A");
     test(239, map, "How-About-A-nice-gAme-of-chess?");
 
 
@@ -978,6 +977,8 @@ __;
         index += 1;
     }
     test(436, index, 6);
+
+    test(437, count(really_long_string, cast([]u8)"ae"), count(really_long_string, #char "a") + count(really_long_string, #char "e"));
 
 
     { // end of main
