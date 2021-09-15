@@ -911,7 +911,7 @@ trim_end_from :: (str: string, needle: string, $$index: Index_Proc) -> string, f
 }
 
 
-reverse :: (str: string) {
+_reverse :: (str: string) {
     if !str  return;
 
     low_data  : u64 = cast(u64)str.data;
@@ -2029,7 +2029,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
 
         #insert body;
     }
-    else {
+    else for escape: 1..1 { // so break avoids the cleanup #insert
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
         separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
 
@@ -2059,7 +2059,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
 
                 if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2096,7 +2096,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
 
                 if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2129,7 +2129,7 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
 
         #insert body;
     }
-    else {
+    else for escape: 1..1 { // so break avoids the cleanup #insert
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
 
         if reverse {
@@ -2152,7 +2152,7 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
 
                 if !splitter.skip_empty || it != "" {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2183,7 +2183,7 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
 
                 if !splitter.skip_empty || it != "" {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2217,7 +2217,7 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
 
         #insert body;
     }
-    else {
+    else for escape: 1..1 { // so break avoids the cleanup #insert
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
         separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
 
@@ -2247,7 +2247,7 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
 
                 if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2284,7 +2284,7 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
 
                 if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2318,7 +2318,7 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
 
         #insert body;
     }
-    else {
+    else for escape: 1..1 { // so break avoids the cleanup #insert
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
         separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
 
@@ -2348,7 +2348,7 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
 
                 if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2385,7 +2385,7 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
 
                 if !splitter.skip_empty || it.count != empty_count {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2418,7 +2418,7 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
 
         #insert body;
     }
-    else {
+    else for escape: 1..1 { // so break avoids the cleanup #insert
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
 
         if reverse {
@@ -2432,7 +2432,7 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
 
                 it_index += 1;
 
-                #insert body;
+                #insert(break = break escape) body;
 
                 if splitter.max_results != 0 && it_index >= max_it_index
                     break;
@@ -2452,7 +2452,7 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
 
                 it_index += 1;
 
-                #insert body;
+                #insert(break = break escape) body;
 
                 if splitter.max_results != 0 && it_index >= max_it_index
                     break;
@@ -2484,7 +2484,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
 
         #insert body;
     }
-    else {
+    else for escape: 1..1 { // so break avoids the cleanup #insert
         max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
 
         if reverse {
@@ -2530,7 +2530,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
 
                 if !splitter.skip_empty || !it_is_empty() {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;
@@ -2575,7 +2575,7 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
 
                 if !splitter.skip_empty || !it_is_empty() {
                     it_index += 1;
-                    #insert body;
+                    #insert(break = break escape) body;
 
                     if splitter.max_results != 0 && it_index >= max_it_index
                         break;

@@ -69,19 +69,10 @@ copy :: (str: string, allocator: Allocator = null, allocator_data: *void = null,
 reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     if !str  return empty();
 
-    a, ad := get_allocator(allocator, allocator_data);
-    result : string = ---;
-    terminating := null_terminate && str[0] != #char "\0";
-    if terminating
-        result = alloc_string(str.count + 1, allocator = a, allocator_data = ad);
-    else
-        result = alloc_string(str.count, allocator = a, allocator_data = ad);
-
-    end := str.count - 1;
-    for i: 0 .. end
-        result[i] = str[end - i];
-
-    if terminating  result[str.count] = #char "\0";
+    result := copy(str, allocator, allocator_data, null_terminate);
+    if null_terminate  result.count -= 1;
+    _reverse(result);
+    if null_terminate  result.count += 1;
 
     return result;
 }

@@ -1,10 +1,9 @@
 // All functions return a string view and/or mutate a string view in-place
 
 
-// TODO
-// v1.0 checklist:
-// [ ] Check eveything which could be using `first_index` is doing so
+// @Release v1.0 checklist:
 // [ ] Wait for compiler to allow .AVX2
+// [x] Check eveything which could be using `first_index` is doing so
 // [x] Update readme
 // [x] `keep_separator` on all `split`
 // [x] `trim_to`, `trim_past`
@@ -14,13 +13,14 @@
 // [x] trim string characters?
 // [x] default_compare
 
+// @Todo
 // Extras
 // [ ] Add SIMD_mode to Comparator?
-// [ ] double-up in `repeat`
 // [ ] SIMD first_index/last_index chars
 // [ ] SIMD replace char   // wait until we can split asm blocks
 // [ ] SIMD replace chars  // wait until we can split asm blocks
 // [ ] SIMD is_any?
+// [.] double-up in `repeat`
 // [x] SIMD reverse
 // [x] SIMD count chars
 // [x] SIMD to_lower / to_upper
@@ -109,10 +109,10 @@ substring :: (str: string, from_index: int, count: int) -> string, normalized_fr
 }
 
 
+reverse :: _reverse;
+
 
 // @Note `needle` is guaranteed to be at least 2 characters long, as the call site is internal to the module and checks.
-
-
 reverse_index_proc :: (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool {
     for < haystack_index: haystack.count - 1 .. 0 {
         s := unsafe_slice(haystack, haystack_index);
