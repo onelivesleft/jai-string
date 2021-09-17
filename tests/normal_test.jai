@@ -5,7 +5,7 @@ heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
 
-errors_only :: false;
+errors_only :: true;
 
 
 main :: () {

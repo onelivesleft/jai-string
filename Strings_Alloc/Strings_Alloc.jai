@@ -78,15 +78,6 @@ reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = nu
 }
 
 
-capitalized :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    if !str  return empty();
-
-    result := copy(str, allocator, allocator_data, null_terminate);
-    to_capitalized(result, preserve_caps);
-
-    return result;
-}
-
 
 replace :: inline (haystack: string, needle: string, replacement: string, max_replacements := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     return replace(haystack, needle, replacement, max_replacements, current_compare, allocator, allocator_data);
@@ -556,6 +547,16 @@ lower :: (str: string, allocator: Allocator = null, allocator_data: *void = null
 upper :: (str: string, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
     result := copy(str, allocator, allocator_data, null_terminate);
     to_upper(result);
+    return result;
+}
+
+
+capitalized :: (str: string, preserve_caps: = true, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    if !str  return empty();
+
+    result := copy(str, allocator, allocator_data, null_terminate);
+    to_capitalized(result, preserve_caps);
+
     return result;
 }
 
