@@ -819,16 +819,16 @@ escape :: (str: string, allocator: Allocator = null, allocator_data: *void = nul
     } @PrintLike
 
 
-    builder_to_string :: (builder: String_Builder, extra_bytes_to_prepend := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
+    builder_to_string :: (builder: *String_Builder, extra_bytes_to_prepend := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
         a, ad := get_allocator(allocator, allocator_data);
 
         if null_terminate {
-            buffer := get_current_buffer(*builder);
+            buffer := get_current_buffer(builder);
             if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
-                append(*builder, #char "\0");
+                append(builder, #char "\0");
         }
 
-        return builder_to_string(*builder, allocator = a, allocator_data = ad, extra_bytes_to_prepend);
+        return builder_to_string(builder, allocator = a, allocator_data = ad, extra_bytes_to_prepend);
     }
 }
 

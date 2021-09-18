@@ -204,10 +204,10 @@ Returns the string view of `str` with all characters after the last instance of 
 Returns the string view of `str` with all characters after the last instance of tool, and the tool, removed from the end.  If tool is not found then the entire string is returned.
 
 
-* `advance_to (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
+* `advance_to (haystack: *string, needle: %Tool) -> characters_skipped: int`<br>
 Modifies `haystack` in-place, moving its start point forward until it hits `%Tool` (or empties).
 
-* `advance_past (haystack: string, needle: %Tool) -> characters_skipped: int`<br>
+* `advance_past (haystack: *string, needle: %Tool) -> characters_skipped: int`<br>
 Modifies `haystack` in-place, moving its start point forward until it hits and reaches the end of `%Tool` (or empties).
 
 

@@ -15,6 +15,10 @@
 
 // @Todo
 // Extras
+// [ ] get_index(split(foo, bar), i) -> string - return string view on foo as if it had been split and then indexed by i
+//     - is this useful?  example which prompted it was better done using trim_start_past anyway...
+//       maybe useful if you can set a start and end index? hmmm
+// [ ] split_into_two, split_into_three ?
 // [ ] Add SIMD_mode to Comparator?
 // [ ] SIMD first_index/last_index chars
 // [ ] SIMD replace char   // wait until we can split asm blocks
