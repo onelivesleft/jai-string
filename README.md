@@ -159,6 +159,14 @@ Sets the index procedures used internally when searching through strings with st
     * `.AVX2`<br>Uses AVX2 (256bit) optimisations.
 
 
+* `char_as_string (char: *u8) -> string`<br>
+Returns a string view on the single character specified.
+
+
+* `reverse_index_proc (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool`<br>
+Can be used to automatically make a reversed version of an `Index_Proc` (see `question_mark_index` example above).  It does so in an extremely inefficient way; if you care about the performance of the reverse search then you should code it directly.
+
+
 * `slice (str: string, from_index: int, to_index: int) -> string, normalized_from_index: int, normalized_to_index: int`<br>
 Returns a string view inside `str`, between the specified indices.  You may use a negative index to specify backwards from the end of the string.  If you do not specify a `to_index` then it will include all characters up to the end of the string.  The last two return parameters are the positive indexes the slice ends up using, after validation.
 
@@ -292,19 +300,24 @@ For example:
     }
 ```
 
-* `split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
+* `index_split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
 Works like the above `split`, except the string is split at the specified indices.
 
 * `line_split (text: string, keep_end := false, skip_empty := false, max_results := 0, keep_separator := .NO)`<br>
 Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).
 
+* `split_into_two (text: string, separator: %Tool) -> string, string`<br>
+Splits `text` into two parts by `separator`.  This can be preferable to calling the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
 
-* `char_as_string (char: *u8) -> string`<br>
-Returns a string view on the single character specified.
+* `split_into_three (text: string, first_separator: %Tool, second_separator := first_separator) -> string, string, string`<br>
+Splits `text` into three parts by `separator`.  This can be preferable to the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
 
-
-* `reverse_index_proc (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool`<br>
-Can be used to automatically make a reversed version of an `Index_Proc` (see `question_mark_index` example above).  It does so in an extremely inefficient way; if you care about the performance of the reverse search then you should code it directly.
+* `split_into (array: *[$N] string, text: string, separator: %Tool)`<br>
+Splits `text` into N parts.  You must set up the array beforehand, then pass in a pointer to it:
+```jai
+parts : [4] string;
+split_into(*parts, text, separator)
+```
 
 
 <hr>
@@ -419,12 +432,14 @@ If `keep_separator` is set to `.AS_PREFIX` or `.AS_POSTFIX` then the separator w
 
 *NOTE* if you can accomplish your task by iterating with `split` from the `Strings` module then that may be the better, more performant solution.
 
+* `line_split (text: string, reversed := false, skip_empty := false, max_results := 0, keep_separator := Keep_Separator.NO) -> [] string`<br>
+As per `split` above, but splitting by lines as per `line_split` in the `Strings` module.
 
-* `split (text: string, indexes: .. int, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
-As per `split`, but splitting the string at the specified indices.
+* `index_split (text: string, indexes: .. int, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
+As per `split` above, but splitting the string at the specified indices.
 
 * `split (text: string, splitter: Split_By, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
-As per `split`, but using the specified `Split_By` struct.  i.e. a struct returned by the `split` function in the `Strings` module.
+As per `split` above, but using the specified `Split_By` struct.  i.e. a struct returned by the `split` function in the `Strings` module.
 
 
 * `pad_start (str: string, desired_count: int, pad_with := " ") -> string`<br>

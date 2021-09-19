@@ -8,7 +8,99 @@ temp :: #import "Strings_Alloc"(__temporary_allocator);
 errors_only :: true;
 
 
+errors : [..] int;
+
+test :: (test_id: int, value: string, expected: string) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+test :: (test_id: int, value: u8, expected: u8) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+test :: (test_id: int, value: int, expected: int) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+test :: (test_id: int, value: bool, expected: bool) {
+    if value != expected {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+
+test :: (test_id: int, value: [] $T, expected: [] T) {
+    if !array_equal(value, expected) {
+        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
+        array_add(*errors, test_id);
+    }
+    else if !errors_only {
+        print("(%) OK\n", test_id);
+    }
+}
+
+array_equal :: (a: [] $T, b: [] T) -> bool {
+    if a.count != b.count  return false;
+    for i: 0 .. a.count - 1  if a[i] != b[i]  return false;
+    return true;
+}
+
+
+test_string :: #string ___
+One reason we have endless bloat is that we teach that all code should expand
+until it meets all needs. This is wrong, empirically, and we should stop teaching it.
+___;
+
+
+really_long_string_no_cr :: #string ___
+How long have I studied?  How many times have I read the same books, over and over?  Were I to free us, I would be the most knowledgeable man in England, at least about the contents of my own library, but it is a farce.  I have found nothing!
+
+Every practice and ritual, every sacrament and offering I have read about, seen in illustrations, inferred from context… I have tried, and none of them have worked.  Nothing works to placate whichever god (or demon) the idol represents…  Nothing, that is, except that which I have already given, except the offering I know it accepts.
+
+Our immortal souls are trapped here in this purgatory, and I know what I must do.
+___;
+
+rls_0 :: "How long have I studied?  How many times have I read the same books, over and over?  Were I to free us, I would be the most knowledgeable man in England, at least about the contents of my own library, but it is a farce.  I have found nothing!";
+rls_1 :: "";
+rls_2 :: "Every practice and ritual, every sacrament and offering I have read about, seen in illustrations, inferred from context… I have tried, and none of them have worked.  Nothing works to placate whichever god (or demon) the idol represents…  Nothing, that is, except that which I have already given, except the offering I know it accepts.";
+rls_3 :: "";
+rls_4 :: "Our immortal souls are trapped here in this purgatory, and I know what I must do.";
+
+
 main :: () {
+    defer {
+        if !errors_only
+            for word: split("How about a nice game of chess?", #char " ")
+                print("%\n", word);
+
+        if errors.count != 0
+            print("\nErrors:\n%\n", errors);
+        else
+            print("\nAll OK!\n");
+    }
+
     set_simd_mode(.AUTO);
 
     //set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
@@ -395,7 +487,7 @@ main :: () {
 
 
     index = 0;
-    for split(" aa bb cc ", -15, -13, 1, 3, 1, 4, 6, 7, 9, 15, 21) {
+    for index_split(" aa bb cc ", -15, -13, 1, 3, 1, 4, 6, 7, 9, 15, 21) {
         if index == {
             case  0; test(193, it, "");
             case  1; test(194, it, "");
@@ -415,7 +507,7 @@ main :: () {
     test(2041, index, 12);
 
     index = 0;
-    for < split(" aa bb cc ", -15, -13, 1, 4, 3, 4, 6, 7, 9, 15, 21) {
+    for < index_split(" aa bb cc ", -15, -13, 1, 4, 3, 4, 6, 7, 9, 15, 21) {
         if index == {
             case  0; test(205, it, "");
             case  1; test(206, it, "");
@@ -434,7 +526,7 @@ main :: () {
     }
     test(2161, index, 12);
 
-    temp_parts = temp.split("  aa    bb \t cc ", 2, 4, 8, 10, 13, 15);
+    temp_parts = temp.index_split("  aa    bb \t cc ", 2, 4, 8, 10, 13, 15);
     test(217, temp_parts, string.["  ", "aa", "    ", "bb", " \t ", "cc", " "]);
 
     valid : bool;
@@ -451,7 +543,7 @@ main :: () {
 
 
     index = 0;
-    for split(" aa bb cc ", -15, -13, 1, 3, 1, 4, 6, 7, 9, 15, 21, skip_empty = true) {
+    for index_split(" aa bb cc ", -15, -13, 1, 3, 1, 4, 6, 7, 9, 15, 21, skip_empty = true) {
         if index == {
             case  0; test(223, it, " ");
             case  1; test(224, it, "aa");
@@ -466,7 +558,7 @@ main :: () {
     test(2291, index, 7);
 
     index = 0;
-    for < split(" aa bb cc ", -15, -13, 1, 4, 3, 4, 6, 7, 9, 15, 21, skip_empty = true) {
+    for < index_split(" aa bb cc ", -15, -13, 1, 4, 3, 4, 6, 7, 9, 15, 21, skip_empty = true) {
         if index == {
             case  0; test(230, it, " ");
             case  1; test(231, it, "cc");
@@ -980,97 +1072,35 @@ __;
 
     test(437, count(really_long_string, cast([]u8)"ae"), count(really_long_string, #char "a") + count(really_long_string, #char "e"));
 
+    first, second, third : string = ---;
+    first, second = split_into_two(" aa bb cc ", #char " ");
+    test(438, first, "");
+    test(439, second, "aa bb cc ");
 
-    { // end of main
-        if !errors_only
-            for word: split("How about a nice game of chess?", #char " ")
-                print("%\n", word);
+    first, second = split_into_two(" aa bb cc ", "bb");
+    test(440, first, " aa ");
+    test(441, second, " cc ");
 
-        if errors.count != 0
-            print("\nErrors:\n%\n", errors);
-        else
-            print("\nAll OK!\n");
-    }
+    first, second = split_into_two(" aa bb cc ", cast([]u8)" a");
+    test(442, first, "");
+    test(443, second, "aa bb cc ");
+
+    first, second, third = split_into_three(" aa bb cc ", #char " ");
+    test(444, first, "");
+    test(445, second, "aa");
+    test(446, third, "bb cc ");
+
+    first, second, third = split_into_three(" aa bb cc ", "b");
+    test(447, first, " aa ");
+    test(448, second, "");
+    test(449, third, " cc ");
+
+    first, second, third = split_into_three(" aa bb cc ", cast([]u8)" a");
+    test(450, first, "");
+    test(451, second, "");
+    test(452, third, "a bb cc ");
+
+    split_into_parts : [5] string = ---;
+    split_into(*split_into_parts, " aa bb cc ", #char " ");
+    test(453, split_into_parts, .["", "aa", "bb", "cc", ""]);
 }
-
-
-
-errors : [..] int;
-
-test :: (test_id: int, value: string, expected: string) {
-    if value != expected {
-        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
-        array_add(*errors, test_id);
-    }
-    else if !errors_only {
-        print("(%) OK\n", test_id);
-    }
-}
-
-test :: (test_id: int, value: u8, expected: u8) {
-    if value != expected {
-        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
-        array_add(*errors, test_id);
-    }
-    else if !errors_only {
-        print("(%) OK\n", test_id);
-    }
-}
-
-test :: (test_id: int, value: int, expected: int) {
-    if value != expected {
-        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
-        array_add(*errors, test_id);
-    }
-    else if !errors_only {
-        print("(%) OK\n", test_id);
-    }
-}
-
-test :: (test_id: int, value: bool, expected: bool) {
-    if value != expected {
-        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
-        array_add(*errors, test_id);
-    }
-    else if !errors_only {
-        print("(%) OK\n", test_id);
-    }
-}
-
-
-test :: (test_id: int, value: [] $T, expected: [] T) {
-    if !array_equal(value, expected) {
-        print("(%)\nWanted: [%]\nResult: [%]\n\n", test_id, expected, value);
-        array_add(*errors, test_id);
-    }
-    else if !errors_only {
-        print("(%) OK\n", test_id);
-    }
-}
-
-array_equal :: (a: [] $T, b: [] T) -> bool {
-    if a.count != b.count  return false;
-    for i: 0 .. a.count - 1  if a[i] != b[i]  return false;
-    return true;
-}
-
-
-test_string :: #string ___
-One reason we have endless bloat is that we teach that all code should expand
-until it meets all needs. This is wrong, empirically, and we should stop teaching it.
-___;
-
-
-really_long_string_no_cr :: #string ___
-How long have I studied?  How many times have I read the same books, over and over?  Were I to free us, I would be the most knowledgeable man in England, at least about the contents of my own library, but it is a farce.  I have found nothing!
-
-Every practice and ritual, every sacrament and offering I have read about, seen in illustrations, inferred from context… I have tried, and none of them have worked.  Nothing works to placate whichever god (or demon) the idol represents…  Nothing, that is, except that which I have already given, except the offering I know it accepts.
-
-Our immortal souls are trapped here in this purgatory, and I know what I must do.
-___;
-
-rls_0 :: "How long have I studied?  How many times have I read the same books, over and over?  Were I to free us, I would be the most knowledgeable man in England, at least about the contents of my own library, but it is a farce.  I have found nothing!";
-rls_1 :: "";
-rls_2 :: "Every practice and ritual, every sacrament and offering I have read about, seen in illustrations, inferred from context… I have tried, and none of them have worked.  Nothing works to placate whichever god (or demon) the idol represents…  Nothing, that is, except that which I have already given, except the offering I know it accepts.";
-rls_3 :: "";
-rls_4 :: "Our immortal souls are trapped here in this purgatory, and I know what I must do.";

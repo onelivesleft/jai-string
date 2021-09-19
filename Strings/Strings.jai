@@ -644,6 +644,109 @@ count :: (haystack: string, needle: string, $$index: Index_Proc) -> total: int {
 }
 
 
+split_into_two :: inline (text: string, separator: u8) -> string, string {
+    index, found := first_index(text, separator);
+    if !found  return text, "";
+    return unsafe_slice(text, 0, index), unsafe_slice(text, index + 1);
+}
+
+split_into_two :: inline (text: string, separator: [] u8) -> string, string {
+    index, found := first_index(text, separator);
+    if !found  return text, "";
+    return unsafe_slice(text, 0, index), unsafe_slice(text, index + 1);
+}
+
+split_into_two :: inline (text: string, separator: string) -> string, string {
+    index, found := first_index(text, separator);
+    if !found  return text, "";
+    return unsafe_slice(text, 0, index), unsafe_slice(text, index + separator.count);
+}
+
+split_into_two :: inline (text: string, $$separator: Index_Proc) -> string, string {
+    from_index, found, to_index := first_index(text, separator);
+    if !found  return text, "";
+    return unsafe_slice(text, 0, from_index), unsafe_slice(text, to_index);
+}
+
+
+split_into_three :: inline (text: string, separator: u8) -> string, string, string {
+    index, found := first_index(text, separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, index + 1), separator);
+    return unsafe_slice(text, 0, index), second, third;
+}
+
+split_into_three :: inline (text: string, separator: [] u8) -> string, string, string {
+    index, found := first_index(text, separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, index + 1), separator);
+    return unsafe_slice(text, 0, index), second, third;
+}
+
+split_into_three :: inline (text: string, separator: string) -> string, string, string {
+    index, found := first_index(text, separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, index + separator.count), separator);
+    return unsafe_slice(text, 0, index), second, third;
+}
+
+split_into_three :: inline (text: string, $$separator: Index_Proc) -> string, string, string {
+    from_index, found, to_index := first_index(text, separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, to_index), separator);
+    return unsafe_slice(text, 0, from_index), second, third;
+}
+
+
+split_into_three :: inline (text: string, first_separator: u8, second_separator: $T) -> string, string, string {
+    index, found := first_index(text, first_separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, index + 1), second_separator);
+    return unsafe_slice(text, 0, index), second, third;
+}
+
+split_into_three :: inline (text: string, first_separator: [] u8, second_separator: $T) -> string, string, string {
+    index, found := first_index(text, first_separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, index + 1), second_separator);
+    return unsafe_slice(text, 0, index), second, third;
+}
+
+split_into_three :: inline (text: string, first_separator: string, second_separator: $T) -> string, string, string {
+    index, found := first_index(text, first_separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, index + separator.count), second_separator);
+    return unsafe_slice(text, 0, index), second, third;
+}
+
+split_into_three :: inline (text: string, $$first_separator: Index_Proc, second_separator: $T) -> string, string, string {
+    from_index, found, to_index := first_index(text, first_separator);
+    if !found  return text, "", "";
+
+    second, third := split_into_two(unsafe_slice(text, to_index), second_separator);
+    return unsafe_slice(text, 0, from_index), second, third;
+}
+
+
+split_into :: (array: *[$N] string, text: string, separator: $T) #expand {
+    last_index : int;
+    for split(text, separator, max_results = N) {
+        (<<array)[it_index] = it;
+        last_index = it_index;
+    }
+    for last_index + 1 .. N - 1 {
+        (<<array)[it] = "";
+    }
+}
+
+
 split :: inline (text: string, separator: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_String {
     return make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator);
 }
@@ -677,13 +780,15 @@ split :: inline (text: string, separator: u8, max_results := 0, skip_empty := fa
 }
 
 
-split :: inline (text: string, indexes: .. int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
+index_split :: inline (text: string, indexes: .. int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
     #if strict {
         assert(indexes.count > 0, "Cannot split with no indexes!");
         prev := indexes[0];
         for indexes {
-            assert(it >= prev, "Cannot split with decreasing index! %->%", prev, it);
-            prev = it;
+            normalized, valid := slice_index(text, it);
+            assert(valid, "Invalid split index: % = %", it, normalized);
+            assert(normalized >= prev, "Cannot split with decreasing index! %->%", prev, it);
+            prev = normalized;
         }
     }
     return make_split(text, indexes, max_results, skip_empty);

@@ -296,7 +296,7 @@ split :: (text: string, separator: u8, reversed := false, max_results := 0, skip
 }
 
 
-split :: (text: string, indexes: .. int, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+index_split :: (text: string, indexes: .. int, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     #if strict {
         prev_index := 0;
         for index: indexes {
