@@ -1,0 +1,10 @@
+digraph {
+
+    s30064779389 [label="LAMBDA_BODY #70000207d\nnormal_test.jai:70",shape=ellipse]
+    s30064779494 [label="LAMBDA_BODY #7000020e6\nnormal_test.jai:102",shape=ellipse]
+    s30064779389 [label="LAMBDA_BODY #70000207d\nnormal_test.jai:70",shape=ellipse]
+    s12884909899 [label="RUN #300001f4b\n.added_strings_w3.jai:11",shape=ellipse]
+    s12884909901 [label="LAMBDA_BODY #300001f4d\n.added_strings_w3.jai:11",shape=ellipse]
+    s30064779494 [label="LAMBDA_BODY #7000020e6\nnormal_test.jai:102",shape=ellipse]
+
+}

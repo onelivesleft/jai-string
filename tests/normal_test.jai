@@ -67,6 +67,17 @@ array_equal :: (a: [] $T, b: [] T) -> bool {
     return true;
 }
 
+split_into_three :: (text: string, separator: u8) -> string, string, string {
+    first, tail := split_into_two(text, separator);
+    second, third := split_into_two(tail, separator);
+    return first, second, third;
+}
+
+split_into_three :: (text: string, separator: $T) -> string, string, string {
+    first, tail := split_into_two(text, separator);
+    second, third := split_into_two(tail, separator);
+    return first, second, third;
+}
 
 test_string :: #string ___
 One reason we have endless bloat is that we teach that all code should expand

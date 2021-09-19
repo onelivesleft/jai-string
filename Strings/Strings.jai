@@ -668,71 +668,22 @@ split_into_two :: inline (text: string, $$separator: Index_Proc) -> string, stri
     return unsafe_slice(text, 0, from_index), unsafe_slice(text, to_index);
 }
 
-
-split_into_three :: inline (text: string, separator: u8) -> string, string, string {
-    index, found := first_index(text, separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, index + 1), separator);
-    return unsafe_slice(text, 0, index), second, third;
+split_into_two :: inline (text: string, separator: $T, keep_separator : Keep_Separator) -> string, string {
+    first, second := split_into_two(text, separator, keep_separator, current_compare);
+    return first, second;
 }
 
-split_into_three :: inline (text: string, separator: [] u8) -> string, string, string {
-    index, found := first_index(text, separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, index + 1), separator);
-    return unsafe_slice(text, 0, index), second, third;
+split_into_two :: inline (text: string, separator: $T, compare : Character_Compare) -> string, string {
+    first, second := split_into_two(text, separator, .NO, compare);
+    return first, second;
 }
 
-split_into_three :: inline (text: string, separator: string) -> string, string, string {
-    index, found := first_index(text, separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, index + separator.count), separator);
-    return unsafe_slice(text, 0, index), second, third;
+split_into_two :: inline (text: string, separator: $T, keep_separator : Keep_Separator, compare: Character_Compare) -> string, string {
+    parts : [2] string = ---;
+    split(*parts, text, separator, keep_separator = keep_separator, compare = compare);
+    return parts[0], parts[1];
 }
 
-split_into_three :: inline (text: string, $$separator: Index_Proc) -> string, string, string {
-    from_index, found, to_index := first_index(text, separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, to_index), separator);
-    return unsafe_slice(text, 0, from_index), second, third;
-}
-
-
-split_into_three :: inline (text: string, first_separator: u8, second_separator: $T) -> string, string, string {
-    index, found := first_index(text, first_separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, index + 1), second_separator);
-    return unsafe_slice(text, 0, index), second, third;
-}
-
-split_into_three :: inline (text: string, first_separator: [] u8, second_separator: $T) -> string, string, string {
-    index, found := first_index(text, first_separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, index + 1), second_separator);
-    return unsafe_slice(text, 0, index), second, third;
-}
-
-split_into_three :: inline (text: string, first_separator: string, second_separator: $T) -> string, string, string {
-    index, found := first_index(text, first_separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, index + separator.count), second_separator);
-    return unsafe_slice(text, 0, index), second, third;
-}
-
-split_into_three :: inline (text: string, $$first_separator: Index_Proc, second_separator: $T) -> string, string, string {
-    from_index, found, to_index := first_index(text, first_separator);
-    if !found  return text, "", "";
-
-    second, third := split_into_two(unsafe_slice(text, to_index), second_separator);
-    return unsafe_slice(text, 0, from_index), second, third;
-}
 
 
 split :: (array: *[$N] string, text: string, separator: $T, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> count: int #expand {

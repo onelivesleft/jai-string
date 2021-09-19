@@ -313,11 +313,8 @@ Works like the above `split`, except the string is split at the specified indice
 * `line_split (text: string, keep_end := false, skip_empty := false, max_results := 0, keep_separator := .NO)`<br>
 Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).
 
-* `split_into_two (text: string, separator: %Tool) -> string, string`<br>
+* `split_into_two (text: string, separator: %Tool, keep_separator := .NO, compare := default_compare) -> string, string`<br>
 Splits `text` into two parts by `separator`.
-
-* `split_into_three (text: string, first_separator: %Tool, second_separator := first_separator) -> string, string, string`<br>
-Splits `text` into three parts by specified separators.
 
 
 <hr>
