@@ -4,7 +4,7 @@ String modules for Jai
 
 * `Strings` provides procs which mutate strings in place or return information or string-views.
 * `Strings_Alloc` provides procs which return allocated data.
-* `Scratch` provides a simple allocator for doing multiple operations in a row without grabbing more memory on each one.
+* `Scratch` provides a simple allocator for doing multiple operations in a row without grabbing more memory on each one. [Info](Scratch/module.jai)
 
 For example, you could import and use them like this:
 
@@ -150,7 +150,7 @@ This module provides procedures which predominantly interact with string views; 
 
 #### A note on indexing algorithms
 
-Whereas other functions in the library will utilize SIMD features (SSE2 & AVX2) when told to with the `set_simd_mode` mode command, you must explicitly set an index algorithm to use them if that is what you wish:  the defailt indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
+Whereas other functions in the library will utilize SIMD features (SSE2 & AVX2) when told to with the `set_simd_mode` command, you must explicitly set an index algorithm to use them if that is what you wish:  the defailt indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
 
 To help with this there is the `index_profile.exe` tool (in the `tools/` folder): provide it with a file and a typical search string from your data and it will show you how each available algorithm performs with the data you are manipulating.
 
