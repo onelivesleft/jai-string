@@ -310,10 +310,10 @@ Works like `split` using `#char "\n"` as the tool, but will automatically handle
 Splits `text` into two parts by `separator`.  This can be preferable to calling the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
 
 * `split_into_three (text: string, first_separator: %Tool, second_separator := first_separator) -> string, string, string`<br>
-Splits `text` into three parts by `separator`.  This can be preferable to the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
+Splits `text` into three parts by specified separators.  This can be preferable to the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
 
-* `split_into (array: *[$N] string, text: string, separator: %Tool)`<br>
-Splits `text` into N parts.  You must set up the array beforehand, then pass in a pointer to it:
+* `split_into (array: *[$N] string, text: string, separator: %Tool, skip_empty := false, max_results := 0, keep_separator := .NO, compare := default_compare) -> result_count: int`<br>
+Splits `text` into N parts.  Returns the number of results.  You must set up the array beforehand, then pass in a pointer to it:
 ```jai
 parts : [4] string;
 split_into(*parts, text, separator)
