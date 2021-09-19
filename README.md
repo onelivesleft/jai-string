@@ -300,6 +300,13 @@ For example:
     }
 ```
 
+* `split (array: *[$N] string, text: string, separator: %Tool, skip_empty := false, max_results := 0, keep_separator := .NO, compare := default_compare) -> result_count: int`<br>
+As `split`, but places the results into a predefined array instead of looping over them.  Returns the number of results.  You must set up the array beforehand, then pass in a pointer to it:
+```jai
+parts : [4] string;
+split(*parts, text, separator)
+```
+
 * `index_split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
 Works like the above `split`, except the string is split at the specified indices.
 
@@ -307,17 +314,10 @@ Works like the above `split`, except the string is split at the specified indice
 Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).
 
 * `split_into_two (text: string, separator: %Tool) -> string, string`<br>
-Splits `text` into two parts by `separator`.  This can be preferable to calling the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
+Splits `text` into two parts by `separator`.
 
 * `split_into_three (text: string, first_separator: %Tool, second_separator := first_separator) -> string, string, string`<br>
-Splits `text` into three parts by specified separators.  This can be preferable to the `Strings_Alloc` version with `max_results` because it can be used easily on the stack.
-
-* `split_into (array: *[$N] string, text: string, separator: %Tool, skip_empty := false, max_results := 0, keep_separator := .NO, compare := default_compare) -> result_count: int`<br>
-Splits `text` into N parts.  Returns the number of results.  You must set up the array beforehand, then pass in a pointer to it:
-```jai
-parts : [4] string;
-split_into(*parts, text, separator)
-```
+Splits `text` into three parts by specified separators.
 
 
 <hr>

@@ -735,7 +735,7 @@ split_into_three :: inline (text: string, $$first_separator: Index_Proc, second_
 }
 
 
-split_into :: (array: *[$N] string, text: string, separator: $T, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> count: int #expand {
+split :: (array: *[$N] string, text: string, separator: $T, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> count: int #expand {
     count : int;
     mr := ifx max_results <= 0 || max_results > N then N else max_results;
     for split(text, separator, max_results = mr, skip_empty = skip_empty, keep_separator = keep_separator, compare = compare) {
@@ -749,8 +749,8 @@ split_into :: (array: *[$N] string, text: string, separator: $T, max_results := 
     return count;
 }
 
-split_into :: (array: *[$N] string, text: string, separator: $T, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> count: int #expand {
-    return split_into(array, text, separator, max_results, skip_empty, keep_separator, current_compare);
+split :: (array: *[$N] string, text: string, separator: $T, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> count: int #expand {
+    return split(array, text, separator, max_results, skip_empty, keep_separator, current_compare);
 }
 
 

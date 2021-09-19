@@ -1101,18 +1101,18 @@ __;
     test(452, third, "a bb cc ");
 
     split_into_parts : [5] string = ---;
-    split_into(*split_into_parts, " aa bb cc ", #char " ");
+    split(*split_into_parts, " aa bb cc ", #char " ");
     test(453, split_into_parts, .["", "aa", "bb", "cc", ""]);
 
-    result_count := split_into(*split_into_parts, " aa bb cc ", "bb");
+    result_count := split(*split_into_parts, " aa bb cc ", "bb");
     test(454, split_into_parts, .[" aa ", " cc ", "", "", ""]);
     test(455, result_count, 2);
 
-    result_count = split_into(*split_into_parts, " aa bb cc ", "bb", keep_separator = .AS_PREFIX);
+    result_count = split(*split_into_parts, " aa bb cc ", "bb", keep_separator = .AS_PREFIX);
     test(456, split_into_parts, .[" aa ", "bb cc ", "", "", ""]);
     test(457, result_count, 2);
 
-    result_count = split_into(*split_into_parts, " aa bb cc ", "BB", keep_separator = .AS_PREFIX, compare = ignore_case);
+    result_count = split(*split_into_parts, " aa bb cc ", "BB", keep_separator = .AS_PREFIX, compare = ignore_case);
     test(458, split_into_parts, .[" aa ", "bb cc ", "", "", ""]);
     test(459, result_count, 2);
 }
