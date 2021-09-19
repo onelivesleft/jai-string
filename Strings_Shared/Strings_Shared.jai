@@ -74,6 +74,7 @@ ignore_case :: Character_Compare.{
     }
 };
 
+
 // ignore_case in asm, but it's slower...
 /*
 ptr_a := *a;
@@ -206,7 +207,7 @@ to_lower :: (str: string) {
 
             loop_until := end - 31;
             while data < loop_until {
-                #asm {
+                #asm AVX,AVX2 {
                     /* load data */
                     movdqu.y case_vec:, [case_data];
                     movdqu.y a_vec:, [a_data];
@@ -310,7 +311,7 @@ to_upper :: (str: string) {
 
             loop_until := end - 31;
             while data < loop_until {
-                #asm {
+                #asm AVX,AVX2 {
                     /* load data */
                     movdqu.y case_vec:, [case_data];
                     movdqu.y a_vec:, [a_data];
@@ -375,7 +376,7 @@ is_upper :: inline (char: u8) -> bool {
 //
 //bit_mask_16_zero : *u8 = (cast(*u8)*bit_masks_16) + 16;
 
-// @TODO why does this crash when declared here?
+// @TODO asm can't handle globals yet: when it does put them out here
 
 /*
 bit_masks_32 := u8.[0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -918,6 +919,41 @@ _reverse :: (str: string) {
     high_data : u64 = low_data + cast(u64)str.count;
 
     if simd_mode == {
+        case .AVX2;
+            if low_data + 64 < high_data {
+                shuffle_bytes := u8.[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+                                     15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
+                shuffle_data := shuffle_bytes.data;
+
+                while low_data + 64 <= high_data {
+                    //high_data -= 32;
+
+                    #asm AVX,AVX2 {
+                        sub.q high_data, 32;
+                        /* load data */
+                        movdqu.y low_vec:, [low_data];
+                        movdqu.y high_vec:, [high_data];
+                        movdqu.y shuffle_vec:, [shuffle_data];
+
+                        /* shuffle both 128-bit sections */
+                        pshufb.y low_vec, low_vec, shuffle_vec;
+                        pshufb.y high_vec, high_vec, shuffle_vec;
+
+                        /* swap 128-bit sections */
+                        perm2i128 low_vec, low_vec, low_vec, 1;
+                        perm2i128 high_vec, high_vec, high_vec, 1;
+
+                        /* export out to reversed positions */
+                        movdqu.y [high_data], low_vec;
+                        movdqu.y [low_data], high_vec;
+                        add.q low_data, 32;
+                    }
+
+                    //low_data += 32;
+                }
+            }
+            #through; // we might still have 32 <= bytes <= 64 to swap
+
         case .SSE2;
             if low_data + 32 < high_data {
                 shuffle_bytes := u8.[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
@@ -944,44 +980,10 @@ _reverse :: (str: string) {
                 }
             }
 
-        case .AVX2;
-            if low_data + 64 < high_data {
-                shuffle_bytes := u8.[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-                                     15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
-                shuffle_data := shuffle_bytes.data;
-
-                while low_data + 64 <= high_data {
-                    //high_data -= 32;
-
-                    #asm {
-                        sub.q high_data, 32;
-                        /* load data */
-                        movdqu.y low_vec:, [low_data];
-                        movdqu.y high_vec:, [high_data];
-                        movdqu.y shuffle_vec:, [shuffle_data];
-
-                        /* shuffle both 128-bit sections */
-                        pshufb.y low_vec, low_vec, shuffle_vec;
-                        pshufb.y high_vec, high_vec, shuffle_vec;
-
-                        /* swap 128-bit sections */
-                        perm2i128 low_vec, low_vec, low_vec, 1;
-                        perm2i128 high_vec, high_vec, high_vec, 1;
-
-                        /* export out to reversed positions */
-                        movdqu.y [high_data], low_vec;
-                        movdqu.y [low_data], high_vec;
-                        add.q low_data, 32;
-                    }
-
-                    //low_data += 32;
-                }
-            }
     }
 
     high_data -= 1;
 
-    // @TODO scalar code can sill be asm'd with bswap
     while low_data < high_data {
         #asm {
             mov.b low_gpr:, [low_data];
@@ -1055,7 +1057,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     }
 
                     for data .. min(data + 15, end - 1)
-                        if <<cast(*u8)it == needle
+                        if compare.compare(<<cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1077,7 +1079,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     loop_until := end - 31;
 
                     while data < loop_until {
-                        #asm {
+                        #asm AVX,AVX2 {
                             /* check for equality */
                             movdqu.y   needle_vec:, [needle_data];
                             movdqu.y   results_vec:, [data];
@@ -1096,7 +1098,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     }
 
                     for data .. min(data + 31, end - 1)
-                        if <<cast(*u8)it == needle
+                        if compare.compare(<<cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1136,7 +1138,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                             pcmpeqb.x  results_upper_vec, needles_upper_vec;
 
                             pcmpeqb.x  results_lower_vec, needles_lower_vec;
-                            por.x results_lower_vec, results_lower_vec, results_upper_vec;
+                            por.x results_lower_vec, results_upper_vec;
 
                             /* coalesce and count bits */
                             pmovmskb.x found_gpr:, results_lower_vec;
@@ -1151,7 +1153,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     }
 
                     for data .. min(data + 15, end - 1)
-                        if no_case_compare(<<cast(*u8)it, needle)
+                        if compare.compare(<<cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1177,7 +1179,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     loop_until := end - 31;
 
                     while data < loop_until {
-                        #asm {
+                        #asm AVX,AVX2 {
                             /* load data */
                             movdqu.y   needles_upper_vec:, [needles_upper_data];
                             movdqu.y   needles_lower_vec:, [needles_lower_data];
@@ -1201,7 +1203,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     }
 
                     for data .. min(data + 31, end - 1)
-                        if no_case_compare(<<cast(*u8)it, needle)
+                        if compare.compare(<<cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1236,11 +1238,6 @@ make_64 :: (value: u8) -> string {
 validate_from_index :: (str: string) #expand {
     if `from_index < 0  `from_index = clamp(str.count + `from_index, 0, str.count);
     else                 `from_index = clamp(`from_index, 0, str.count);
-}
-
-no_case_compare :: inline (a: u8, b: u8) -> bool {
-    return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
-        == (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b);
 }
 
 #scope_export
@@ -1311,7 +1308,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                     loop_until := end - 31;
 
                     while data < loop_until {
-                        #asm {
+                        #asm AVX,AVX2 {
                             movdqu.y   needle_vec:,    [needle_data];
                             movdqu.y   haystack_vec:,  [data];
 
@@ -1374,8 +1371,8 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                             movdqu.x haystack_vec:, [data];
 
                             /* check for case-sensitive equality */
-                            movdqu.x result_cased_vec:, haystack_vec;
-                            pcmpeqb.x result_cased_vec, needle_vec, haystack_vec;
+                            movdqu.x result_cased_vec:, needle_vec;
+                            pcmpeqb.x result_cased_vec, haystack_vec;
 
                             /* check for ignore-case equality */
                             por.x haystack_vec, case_vec;
@@ -1444,7 +1441,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                     loop_until := end - 31;
 
                     while data < loop_until {
-                        #asm {
+                        #asm AVX,AVX2 {
                             movdqu.y case_vec:, [case_data];
                             movdqu.y a_vec:, [a_data];
                             movdqu.y z_vec:, [z_data];
@@ -1499,8 +1496,6 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                             return cast(int)(it - cast(u64)haystack.data), true;
             }
     }
-
-    // @TODO make case_sensitive and ignore_case versions of below loop
 
     if !handled {
         for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
@@ -1642,7 +1637,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                         results_data := *results;
 
                         while data >= end {
-                            #asm {
+                            #asm AVX,AVX2 {
                                 movdqu.y needle_vec:, [needle_data];
                                 movdqu.y haystack_vec:, [data];
 
@@ -1779,7 +1774,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                         results_data := *results;
 
                         while data >= end {
-                            #asm {
+                            #asm AVX,AVX2 {
                                 movdqu.y case_vec:, [case_data];
                                 movdqu.y a_vec:, [a_data];
                                 movdqu.y z_vec:, [z_data];
@@ -1937,6 +1932,12 @@ Split_By_Index :: struct {
 }
 
 
+Split_By_Count :: struct {
+    using base: Split_By;
+    count : int;
+}
+
+
 Split_By_Line :: struct {
     using base: Split_By;
 }
@@ -1995,6 +1996,16 @@ make_split :: (text: string, indexes: [] int, max_results := 0, skip_empty := fa
     split_struct : Split_By_Index = ---;
     fill_split_struct();
     split_struct.indexes = indexes;
+    return split_struct;
+}
+
+
+make_split :: (text: string, count: int, max_results := 0) -> Split_By_Count {
+    split_struct : Split_By_Count = ---;
+    split_struct.text = text;
+    split_struct.max_results = max_results;
+    assert(count > 0, "Count must be greater than 0 : %", count);
+    split_struct.count = count;
     return split_struct;
 }
 
@@ -2470,6 +2481,65 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
     }
 }
 
+
+
+for_expansion :: (splitter: *Split_By_Count, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    for escape: 1..1 { // so break avoids the cleanup #insert
+        if splitter.max_results != 0 && splitter.max_results < 2 {
+            it = splitter.text;
+            it_index = 0;
+
+            #insert body;
+        }
+        else {
+            max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+
+            if reverse {
+                end_index := splitter.text.count;
+                start_index := end_index - splitter.count;
+                while start_index > 0 {
+                    it = unsafe_slice(splitter.text, start_index, end_index);
+                    end_index = start_index;
+                    start_index -= splitter.count;
+
+                    it_index += 1;
+                    defer if splitter.max_results != 0 && it_index >= max_it_index  break;
+
+                    #insert(break = break escape) body;
+                }
+
+                it = unsafe_slice(splitter.text, 0, end_index);
+            }
+            else {
+                start_index := 0;
+                end_index := start_index + splitter.count;
+                while end_index < splitter.text.count {
+                    it = unsafe_slice(splitter.text, start_index, end_index);
+                    start_index = end_index;
+                    end_index += splitter.count;
+
+                    it_index += 1;
+                    defer if splitter.max_results != 0 && it_index >= max_it_index  break;
+
+                    #insert(break = break escape) body;
+                }
+
+                it = unsafe_slice(splitter.text, start_index);
+            }
+
+            if it {
+                it_index += 1;
+                #insert body;
+            }
+        }
+    }
+}
 
 
 for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expand {

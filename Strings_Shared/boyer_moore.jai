@@ -130,7 +130,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                         //print("% %", results.index, results.found);
                         haystack_ptr += results.index;
                         needle_index := needle_end;
-                        while needle_index >= 0 && <<cast(*u8)haystack_ptr == needle[needle_index] {
+                        while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                             haystack_ptr -= 1;
                             needle_index -= 1;
                         }
@@ -145,7 +145,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
 
             while haystack_ptr < end {
                 needle_index := needle_end;
-                while needle_index >= 0 && <<cast(*u8)haystack_ptr == needle[needle_index] {
+                while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                     haystack_ptr -= 1;
                     needle_index -= 1;
                 }
@@ -230,7 +230,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                     if results.found {
                         haystack_ptr += results.index;
                         needle_index := needle_end;
-                        while needle_index >= 0 && no_case_compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
+                        while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                             haystack_ptr -= 1;
                             needle_index -= 1;
                         }
@@ -245,7 +245,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
 
             while haystack_ptr < end {
                 needle_index := needle_end;
-                while needle_index >= 0 && no_case_compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
+                while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                     haystack_ptr -= 1;
                     needle_index -= 1;
                 }
@@ -430,7 +430,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
                      if results.found {
                         needle_index := needle_end;
                         haystack_index := cast(u64)haystack.count - (haystack_ptr - cast(u64)haystack.data);
-                        while needle_index >= 0 && no_case_compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
+                        while needle_index >= 0 && compare.compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
                             haystack_index -= 1;
                             needle_index -= 1;
                         }
@@ -447,7 +447,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
             while haystack_ptr > cast(u64)haystack.data {
                 needle_index := needle_end;
                 haystack_index := cast(u64)haystack.count - (haystack_ptr - cast(u64)haystack.data);
-                while needle_index >= 0 && no_case_compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
+                while needle_index >= 0 && compare.compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
                     haystack_index -= 1;
                     needle_index -= 1;
                 }
@@ -509,7 +509,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                     #asm {
+                     #asm AVX,AVX2 {
                         movdqu.y   needle_vec:, [needle_ptr];
                         movdqu.y   haystack_vec:, [haystack_ptr];
 
@@ -531,7 +531,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
                         //print("% %", results.index, results.found);
                         haystack_ptr += results.index;
                         needle_index := needle_end;
-                        while needle_index >= 0 && <<cast(*u8)haystack_ptr == needle[needle_index] {
+                        while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                             haystack_ptr -= 1;
                             needle_index -= 1;
                         }
@@ -546,7 +546,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
 
             while haystack_ptr < end {
                 needle_index := needle_end;
-                while needle_index >= 0 && <<cast(*u8)haystack_ptr == needle[needle_index] {
+                while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                     haystack_ptr -= 1;
                     needle_index -= 1;
                 }
@@ -581,7 +581,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y case_vec: vec, [case_ptr];
                         movdqu.y a_vec:, [a_ptr];
                         movdqu.y z_vec:, [z_ptr];
@@ -628,7 +628,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
                     if results.found {
                         haystack_ptr += results.index;
                         needle_index := needle_end;
-                        while needle_index >= 0 && no_case_compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
+                        while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                             haystack_ptr -= 1;
                             needle_index -= 1;
                         }
@@ -643,7 +643,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
 
             while haystack_ptr < end {
                 needle_index := needle_end;
-                while needle_index >= 0 && no_case_compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
+                while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
                     haystack_ptr -= 1;
                     needle_index -= 1;
                 }
@@ -704,7 +704,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
 
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 32;
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y   needle_vec:, [needle_ptr];
                         movdqu.y   haystack_vec:, [next_haystack_ptr];
 
@@ -779,7 +779,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
 
                 while haystack_ptr > end_simd && false {
                     next_haystack_ptr := haystack_ptr - 32;
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y case_vec:, [case_ptr];
                         movdqu.y a_vec:, [a_ptr];
                         movdqu.y z_vec:, [z_ptr];
@@ -825,7 +825,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
                      if results.found {
                         needle_index := needle_end;
                         haystack_index := cast(u64)haystack.count - (haystack_ptr - cast(u64)haystack.data);
-                        while needle_index >= 0 && no_case_compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
+                        while needle_index >= 0 && compare.compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
                             haystack_index -= 1;
                             needle_index -= 1;
                         }
@@ -842,7 +842,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
             while haystack_ptr > cast(u64)haystack.data {
                 needle_index := needle_end;
                 haystack_index := cast(u64)haystack.count - (haystack_ptr - cast(u64)haystack.data);
-                while needle_index >= 0 && no_case_compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
+                while needle_index >= 0 && compare.compare(get(haystack, xx haystack_index, true), get(needle, needle_index, true)) {
                     haystack_index -= 1;
                     needle_index -= 1;
                 }
@@ -949,9 +949,4 @@ make_16 :: (value: u8) -> string {
 
 make_32 :: (value: u8) -> string {
     return sprint("u8.[%1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1];", value);
-}
-
-no_case_compare :: inline (a: u8, b: u8) -> bool {
-    return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
-        == (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b);
 }

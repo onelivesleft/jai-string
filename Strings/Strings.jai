@@ -2,7 +2,7 @@
 
 
 // @Release v1.0 checklist:
-// [ ] Wait for compiler to allow .AVX2
+// [x] Wait for compiler to allow .AVX2
 // [x] Check eveything which could be using `first_index` is doing so
 // [x] Update readme
 // [x] `keep_separator` on all `split`
@@ -15,16 +15,15 @@
 
 // @Todo
 // Extras
-// [ ] get_index(split(foo, bar), i) -> string - return string view on foo as if it had been split and then indexed by i
-//     - is this useful?  example which prompted it was better done using trim_start_past anyway...
-//       maybe useful if you can set a start and end index? hmmm
-// [ ] split_into_two, split_into_three ?
+// [ ] extra comparators: is_lower, is_upper, is_alpha, is_number, is_alphanumeric
 // [ ] Add SIMD_mode to Comparator?
 // [ ] SIMD first_index/last_index chars
 // [ ] SIMD replace char   // wait until we can split asm blocks
 // [ ] SIMD replace chars  // wait until we can split asm blocks
 // [ ] SIMD is_any?
-// [.] double-up in `repeat`
+// [x] `count_split` split by index repeating (i.e. every X characters)
+// [x] double-up in `repeat`
+// [x] split_into_two
 // [x] SIMD reverse
 // [x] SIMD count chars
 // [x] SIMD to_lower / to_upper
@@ -735,6 +734,11 @@ split :: inline (text: string, separator: u8, max_results := 0, skip_empty := fa
 
 split :: inline (text: string, separator: u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Char {
     return make_split(text, separator, current_compare, max_results, skip_empty, keep_separator);
+}
+
+
+count_split :: inline (text: string, count: int, max_results := 0) -> Split_By_Count {
+    return make_split(text, count, max_results);
 }
 
 

@@ -43,17 +43,28 @@ By default characters being compared between two strings are compared using the 
 The comparator is a struct; you can make your own like this:
 
 ```jai
-    inverted :: type_of(case_sensitive) {
-        .CUSTOM,
-        (a: u8, b: u8) -> bool {
-            return a != b;
-        }
+are_numbers :: Character_Compare.{
+    .CUSTOM,
+    (a: u8, b: u8) -> bool {
+        return (a >= #char "0" && a <= #char "9")
+            == (b >= #char "0" && b <= #char "9");
     }
+};
+
+share_case :: Character_Compare.{
+    .CUSTOM,
+    (a: u8, b: u8) -> bool {
+        if is_alpha(a)
+            return is_alpha(b) && is_upper(a) == is_upper(b);
+        else
+            return !is_alpha(b);
+    }
+};
 ```
 
-The built-in comparators are `case_sensitive` and `ignore_case`.
+The two comparators built-in to the module are `case_sensitive`, `ignore_case`.
 
-*(The other two options to `.CUSTOM` are `.CASE_SENSITIVE` and `.IGNORE_CASE`: you may roll your own versions of those comparators if you wish, and by choosing the relevant identifier the correct SIMD optimisations will be invoked)*
+*(The other two options to `.CUSTOM` are `.CASE_SENSITIVE` and `.IGNORE_CASE`: you may roll your own versions of those comparators if you wish, and by choosing the relevant identifier the correct SIMD optimisations will be invoked - however, there's not a lot of point in doing so...)*
 
 
 ### Tool types: u8 / [] u8 / string / Index_Proc
@@ -307,14 +318,18 @@ parts : [4] string;
 split(*parts, text, separator)
 ```
 
-* `index_split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
-Works like the above `split`, except the string is split at the specified indices.
-
 * `line_split (text: string, keep_end := false, skip_empty := false, max_results := 0, keep_separator := .NO)`<br>
 Works like `split` using `#char "\n"` as the tool, but will automatically handle windows vs unix file formats (i.e. will take care of `"\r\n"`).
 
+* `count_split (text: string, count: int, max_results := 0)`<br>
+Works like the above `split`, except the string is split into sections with the specified `count`.
+
+* `index_split (text: string, indexes: .. int, skip_empty := false, max_results := 0)`<br>
+Works like the above `split`, except the string is split at the specified indices.
+
+
 * `split_into_two (text: string, separator: %Tool, keep_separator := .NO, compare := default_compare) -> string, string`<br>
-Splits `text` into two parts by `separator`.
+Splits `text` into two parts, by `separator`.
 
 
 <hr>
@@ -434,6 +449,10 @@ As per `split` above, but splitting by lines as per `line_split` in the `Strings
 
 * `index_split (text: string, indexes: .. int, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split` above, but splitting the string at the specified indices.
+
+* `count_split (text: string, count: int, reversed := false, max_results := 0) -> [] string`<br>
+As per `split` above, but splitting the string into sections with the specified `count`.
+
 
 * `split (text: string, splitter: Split_By, reversed := false, skip_empty := false, max_results := 0) -> [] string`<br>
 As per `split` above, but using the specified `Split_By` struct.  i.e. a struct returned by the `split` function in the `Strings` module.

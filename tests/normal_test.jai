@@ -284,7 +284,7 @@ main :: () {
     parts := heap.split(" aa bb cc ", " ");
     test(88, parts, string.["", "aa", "bb", "cc", ""]);
 
-    // @TODO
+    // @TODO compiler error : check if update fixes / report bug
     //backwards := heap.split(" aa bb cc ", " ", reversed = true, allocator = __temporary_allocator);
     backwards := heap.split(" aa bb cc ", " ", true, 0, false, .NO, __temporary_allocator);
     test(89, backwards, string.["", "cc", "bb", "aa", ""]);
@@ -1126,4 +1126,58 @@ __;
     result_count = split(*split_into_parts, " aa bb cc ", "BB", keep_separator = .AS_PREFIX, compare = ignore_case);
     test(458, split_into_parts, .[" aa ", "bb cc ", "", "", ""]);
     test(459, result_count, 2);
+
+    index = 0;
+    for count_split(" aa bb cc ", 3) {
+        if index == {
+            case 0; test(460, it, " aa");
+            case 1; test(461, it, " bb");
+            case 2; test(462, it, " cc");
+            case 3; test(463, it, " ");
+        }
+        index += 1;
+    }
+    test(464, index, 4);
+
+    index = 0;
+    for < count_split(" aa bb cc ", 3) {
+        if index == {
+            case 0; test(465, it, "cc ");
+            case 1; test(466, it, "bb ");
+            case 2; test(467, it, "aa ");
+            case 3; test(468, it, " ");
+        }
+        index += 1;
+    }
+    test(469, index, 4);
+
+    index = 0;
+    for count_split(" aa bb cc ", 2, 4) {
+        if index == {
+            case 0; test(470, it, " a");
+            case 1; test(471, it, "a ");
+            case 2; test(472, it, "bb");
+            case 3; test(473, it, " cc ");
+        }
+        index += 1;
+    }
+    test(474, index, 4);
+
+    index = 0;
+    for < count_split(" aa bb cc ", 2, 4) {
+        if index == {
+            case 0; test(475, it, "c ");
+            case 1; test(476, it, " c");
+            case 2; test(477, it, "bb");
+            case 3; test(478, it, " aa ");
+        }
+        index += 1;
+    }
+    test(479, index, 4);
+
+    temp_parts = temp.count_split(some_text, 2);
+    test(480, temp_parts, string.["so", "me", " t", "ex", "t\t", "he", "re"]);
+
+    temp_parts = temp.count_split(some_text, 3, true);
+    test(481, temp_parts, string.["ere", "t\th", "tex", "me ", "so"]);
 }

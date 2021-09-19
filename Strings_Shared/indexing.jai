@@ -82,7 +82,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if <<cast(*u8)character != <<needle_index {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -100,7 +100,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if <<cast(*u8)character != <<needle_index
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -143,12 +143,14 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         movdqu.x haystack_vec:, [haystack_ptr];
 
                         /* check for case-sensitive equality */
-                        pcmpeqb.x result_cased_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_cased_vec:, needle_vec;
+                        pcmpeqb.x result_cased_vec, haystack_vec;
 
                         /* check for ignore-case equality */
                         por.x haystack_vec, case_vec;
                         por.x needle_vec, case_vec;
-                        pcmpeqb.x result_nocase_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_nocase_vec:, needle_vec;
+                        pcmpeqb.x result_nocase_vec, haystack_vec;
 
                         /* generate mask for which bits should be case-sensitive */
                         movdqa.x mask_vec:, haystack_vec;
@@ -162,7 +164,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         pand.x result_cased_vec, mask_vec;
 
                         /* invert mask then apply it to keep ignore-case bits */
-                        pcmpeqb.x bounds_vec, bounds_vec, bounds_vec;
+                        pcmpeqb.x bounds_vec, bounds_vec;
                         pxor.x mask_vec, bounds_vec;
                         pand.x result_nocase_vec, mask_vec;
 
@@ -184,7 +186,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if !no_case_compare(<<cast(*u8)character, <<needle_index) {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -202,7 +204,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if !no_case_compare(<<cast(*u8)character, <<needle_index)
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -273,7 +275,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if <<cast(*u8)character != <<needle_index {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -291,7 +293,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
             for < index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if <<cast(*u8)character != <<needle_index
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -335,12 +337,14 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                         movdqu.x haystack_vec:, [next_haystack_ptr];
 
                         /* check for case-sensitive equality */
-                        pcmpeqb.x result_cased_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_cased_vec:, needle_vec;
+                        pcmpeqb.x result_cased_vec, haystack_vec;
 
                         /* check for ignore-case equality */
                         por.x haystack_vec, case_vec;
                         por.x needle_vec, case_vec;
-                        pcmpeqb.x result_nocase_vec:, needle_vec, haystack_vec;
+                        movdqu.x result_nocase_vec:, needle_vec;
+                        pcmpeqb.x result_nocase_vec, haystack_vec;
 
                         /* generate mask for which bits should be case-sensitive */
                         movdqa.x mask_vec:, haystack_vec;
@@ -354,7 +358,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                         pand.x result_cased_vec, mask_vec;
 
                         /* invert mask then apply it to keep ignore-case bits */
-                        pcmpeqb.x bounds_vec, bounds_vec, bounds_vec;
+                        pcmpeqb.x bounds_vec, bounds_vec;
                         pxor.x mask_vec, bounds_vec;
                         pand.x result_nocase_vec, mask_vec;
 
@@ -375,7 +379,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if !no_case_compare(<<cast(*u8)character, <<needle_index) {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -393,7 +397,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
             for < index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if !no_case_compare(<<cast(*u8)character, <<needle_index)
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -443,7 +447,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y   needle_vec:, [needle_ptr];
                         movdqu.y   haystack_vec:, [haystack_ptr];
 
@@ -466,7 +470,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if <<cast(*u8)character != <<needle_index {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -484,7 +488,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if <<cast(*u8)character != <<needle_index
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -518,7 +522,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y case_vec: vec, [case_ptr];
                         movdqu.y a_vec:, [a_ptr];
                         movdqu.y z_vec:, [z_ptr];
@@ -567,7 +571,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if !no_case_compare(<<cast(*u8)character, <<needle_index) {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -585,7 +589,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if !no_case_compare(<<cast(*u8)character, <<needle_index)
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -634,7 +638,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
 
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 32;
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y   needle_vec:, [needle_ptr];
                         movdqu.y   haystack_vec:, [next_haystack_ptr];
 
@@ -656,7 +660,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if <<cast(*u8)character != <<needle_index {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -674,7 +678,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
             for < index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if <<cast(*u8)character != <<needle_index
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -709,7 +713,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
 
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 32;
-                    #asm {
+                    #asm AVX,AVX2 {
                         movdqu.y case_vec:, [case_ptr];
                         movdqu.y a_vec:, [a_ptr];
                         movdqu.y z_vec:, [z_ptr];
@@ -756,7 +760,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if !no_case_compare(<<cast(*u8)character, <<needle_index) {
+                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -774,7 +778,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
             for < index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if !no_case_compare(<<cast(*u8)character, <<needle_index)
+                    if !compare.compare(<<cast(*u8)character, <<needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -816,12 +820,6 @@ make_16 :: (value: u8) -> string {
 make_32 :: (value: u8) -> string {
     return sprint("u8.[%1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1];", value);
 }
-
-no_case_compare :: inline (a: u8, b: u8) -> bool {
-    return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
-        == (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b);
-}
-
 
 
 /*

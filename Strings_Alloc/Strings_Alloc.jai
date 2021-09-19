@@ -296,6 +296,22 @@ split :: (text: string, separator: u8, reversed := false, max_results := 0, skip
 }
 
 
+count_split :: (text: string, count: int, reversed := false, max_results := 0, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
+    result : [..] string;
+    set_result_allocator();
+
+    if reversed
+        for < make_split(text, count, max_results)
+            array_add(*result, it);
+    else
+        for make_split(text, count, max_results)
+            array_add(*result, it);
+
+    return result;
+}
+
+
+
 index_split :: (text: string, indexes: .. int, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
     #if strict {
         prev_index := 0;
@@ -522,14 +538,24 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
 
     count := str.count * times;
-    if terminating  count += 1;
+    extra_byte := ifx terminating then 1 else 0;
 
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    repeated := alloc_string(count, result.allocator, result.allocator_data);
-    for 0 .. times - 1
-        memcpy(repeated.data + it * str.count, str.data, str.count);
+    repeated := alloc_string(count + extra_byte, result.allocator, result.allocator_data);
+    memcpy(repeated.data, str.data, str.count);
+
+    copied_count := str.count;
+    next_copied_count := copied_count * 2;
+    while next_copied_count < count {
+        memcpy(repeated.data + copied_count, repeated.data, copied_count);
+        copied_count = next_copied_count;
+        next_copied_count *= 2;
+    }
+
+    if copied_count < count
+        memcpy(repeated.data + copied_count, repeated.data, count - copied_count);
 
     if terminating  repeated[count] = #char "\0";
 

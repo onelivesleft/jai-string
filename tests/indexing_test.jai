@@ -6,19 +6,18 @@
 heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
 
-#load "../Strings_Shared/indexing.jai";
-#load "../Strings_Shared/knuth_morris_pratt.jai";
 
 #load "data/shakespeare.jai";
 #load "data/degenerate.jai";
 
 
 main :: () {
-    haystack :: degenerate;//shakespeare;// degenerate;
-    needle :: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffN";
+    haystack :: shakespeare;// degenerate;
+    needle :: "zealous";
+    //needle :: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffN";
     //needle :: "nffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     //"THE end\n";//" and "; //"ffffffffffffffffffffffffffffffffffffffffn"; "zealous";
-    times :: 10;
+    times :: 1;
 
     no_case :: true;
 
@@ -26,11 +25,11 @@ main :: () {
 
     simple           :: x;
     jai              :: x;
-    simple_sse2       :: x;
+    simple_sse2      :: x;
     simple_avx2      :: x;
     kmp              :: x;
     boyer_moore      :: x;
-    boyer_moore_sse2  :: x;
+    boyer_moore_sse2 :: x;
     boyer_moore_avx2 :: x;
 
     x :: true;  _ :: false;
