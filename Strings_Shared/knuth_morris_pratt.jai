@@ -7,11 +7,11 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index:
     if needle == ""  return from_index, true;
     if from_index >= haystack.count - needle.count  return -1, false;
 
-    if needle != last_used_needle || compare != last_used_compare || last_search_was_reversed {
-        last_search_was_reversed = false;
-        last_used_compare = compare;
-        if last_used_needle  free(last_used_needle);
-        last_used_needle = copy_string(needle);
+    if needle != thread_data[context.thread_index].last_used_needle || compare != thread_data[context.thread_index].last_used_compare || thread_data[context.thread_index].last_search_was_reversed {
+        thread_data[context.thread_index].last_search_was_reversed = false;
+        thread_data[context.thread_index].last_used_compare = compare;
+        if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle);
         make_needle_table(needle, compare, false);
     }
 
@@ -20,7 +20,7 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index:
     end := cast(u64)haystack.data + cast(u64)haystack.count - 1;
     for i: cast(u64)haystack.data + cast(u64)from_index .. end {
         while j >= 0 && !compare.compare(<<cast(*u8)i, needle[j])
-            j = needle_table[j];
+            j = thread_data[context.thread_index].needle_table[j];
         if j == needle_end  return cast(s64)((i - cast(u64)j) - cast(u64)haystack.data), true;
         j += 1;
     }
@@ -34,11 +34,11 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: 
     if from_index < needle.count  return -1, false;
     from_index = haystack.count - from_index;
 
-    if needle != last_used_needle || !last_search_was_reversed || compare != last_used_compare {
-        last_search_was_reversed = true;
-        last_used_compare = compare;
-        if last_used_needle  free(last_used_needle);
-        last_used_needle = copy_string(needle);
+    if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed || compare != thread_data[context.thread_index].last_used_compare {
+        thread_data[context.thread_index].last_search_was_reversed = true;
+        thread_data[context.thread_index].last_used_compare = compare;
+        if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle);
         make_needle_table(needle, compare, true);
     }
 
@@ -46,7 +46,7 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: 
     needle_end := needle.count - 1;
     for i: from_index .. haystack.count - 1 {
         while j >= 0 && !compare.compare(get(haystack, i, true), get(needle, j, true))
-            j = needle_table[j];
+            j = thread_data[context.thread_index].needle_table[j];
         if j == needle_end  return haystack.count - needle.count - (i - j), true;
         j += 1;
     }
@@ -58,10 +58,16 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: 
 #scope_file
 
 
-last_used_needle : string;
-last_used_compare : Character_Compare;
-last_search_was_reversed := false;
-needle_table : [..] int;
+#import "Strings_Shared";
+
+max_thread_count :: strings_shared_max_thread_count;
+
+thread_data : [max_thread_count] struct {
+    last_used_needle : string;
+    last_used_compare : Character_Compare;
+    last_search_was_reversed : bool;
+    needle_table : [..] int;
+};
 
 
 get :: inline (str: string, index: int, $reversed: bool) -> u8 {
@@ -71,16 +77,16 @@ get :: inline (str: string, index: int, $reversed: bool) -> u8 {
 
 
 make_needle_table :: (needle: string, compare: Character_Compare, $reversed: bool) {
-    if needle_table.count <= needle.count
-        array_resize(*needle_table, needle.count + 1, false);
+    if thread_data[context.thread_index].needle_table.count <= needle.count
+        array_resize(*thread_data[context.thread_index].needle_table, needle.count + 1, false);
 
-    needle_table.data[0] = -1;
+    thread_data[context.thread_index].needle_table.data[0] = -1;
 
     for i: 0 .. needle.count - 1 {
         j := i + 1;
-        needle_table[j] = needle_table[i] + 1;
-        while needle_table[j] > 0 && !compare.compare(get(needle, i, reversed), get(needle, needle_table[j] - 1, reversed))
-            needle_table[j] = needle_table[needle_table[j] - 1] + 1;
+        thread_data[context.thread_index].needle_table[j] = thread_data[context.thread_index].needle_table[i] + 1;
+        while thread_data[context.thread_index].needle_table[j] > 0 && !compare.compare(get(needle, i, reversed), get(needle, thread_data[context.thread_index].needle_table[j] - 1, reversed))
+            thread_data[context.thread_index].needle_table[j] = thread_data[context.thread_index].needle_table[thread_data[context.thread_index].needle_table[j] - 1] + 1;
     }
 
 //    for i: 1..needle.count  print("% ", needle_table.data[i]);

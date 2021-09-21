@@ -1,3 +1,12 @@
+// @Todo
+// [ ] Add SIMD_mode to Comparator?
+// [ ] SIMD first_index/last_index chars
+// [ ] SIMD replace char   // wait until we can split asm blocks
+// [ ] SIMD replace chars  // wait until we can split asm blocks
+// [ ] SIMD is_any?
+// [ ] Refactor docs: put into sections and add ToC
+// [x] make threadsafe (use context.thread_index into global arrays)
+
 #import "Basic";
 #import "Machine_X64";
 
@@ -23,29 +32,29 @@ Keep_Separator :: enum {
 
 #scope_file
 
-simd_mode : enum { OFF; AUTO; SSE2; AVX2; } = .SSE2;
+simd_mode : [strings_shared_max_thread_count] enum { SSE2; OFF; AUTO; AVX2; }; // @TODO use macro instead and have OFF be 0?
 
 #scope_export
 
 
 
-set_simd_mode :: (mode: type_of(simd_mode)) {
+set_simd_mode :: (mode: type_of(simd_mode[0])) {
     if mode == {
         case .AUTO;
         cpu_info := get_cpu_info();
         if check_feature(cpu_info.feature_leaves, .AVX2)
-            simd_mode = .AVX2;
+            simd_mode[context.thread_index] = .AVX2;
         else
-            simd_mode = .SSE2;
+            simd_mode[context.thread_index] = .SSE2;
 
         case .AVX2;
-        simd_mode = .AVX2;
+        simd_mode[context.thread_index] = .AVX2;
 
         case .SSE2;
-        simd_mode = .SSE2;
+        simd_mode[context.thread_index] = .SSE2;
 
         case .OFF;
-        simd_mode = .OFF;
+        simd_mode[context.thread_index] = .OFF;
     }
 }
 
@@ -150,7 +159,7 @@ to_lower :: (str: string) {
     data : u64 = cast(u64)str.data;
     end  : u64 = data + cast(u64)str.count - 1;
 
-    if simd_mode == {
+    if simd_mode[context.thread_index] == {
         case .SSE2;
             case_bit : u8 : 32;
             case_bytes := #insert #run make_16(case_bit);
@@ -254,7 +263,7 @@ to_upper :: (str: string) {
     data : u64 = cast(u64)str.data;
     end  : u64 = data + cast(u64)str.count - 1;
 
-    if simd_mode == {
+    if simd_mode[context.thread_index] == {
         case .SSE2;
             case_bit : u8 : 32;
             case_bytes := #insert #run make_16(case_bit);
@@ -918,7 +927,7 @@ _reverse :: (str: string) {
     low_data  : u64 = cast(u64)str.data;
     high_data : u64 = low_data + cast(u64)str.count;
 
-    if simd_mode == {
+    if simd_mode[context.thread_index] == {
         case .AVX2;
             if low_data + 64 < high_data {
                 shuffle_bytes := u8.[15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
@@ -1021,7 +1030,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
 
     if compare.kind == {
         case .CASE_SENSITIVE;
-            if simd_mode == {
+            if simd_mode[context.thread_index] == {
                 case .SSE2;
                     data := cast(u64)haystack.data;
                     end := cast(u64)haystack.data + cast(u64)haystack.count;
@@ -1106,7 +1115,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
             }
 
         case .IGNORE_CASE;
-            if simd_mode == {
+            if simd_mode[context.thread_index] == {
                 case .SSE2;
                     data := cast(u64)haystack.data;
                     end := cast(u64)haystack.data + cast(u64)haystack.count;
@@ -1236,8 +1245,9 @@ make_64 :: (value: u8) -> string {
 }
 
 validate_from_index :: (str: string) #expand {
+    if !`haystack `return -1, false;
     if `from_index < 0  `from_index = clamp(str.count + `from_index, 0, str.count);
-    else                 `from_index = clamp(`from_index, 0, str.count);
+    else                `from_index = clamp(`from_index, 0, str.count);
 }
 
 #scope_export
@@ -1253,7 +1263,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
             data := cast(u64)haystack.data + cast(u64)from_index;
             end := cast(u64)haystack.data + cast(u64)haystack.count;
 
-            if simd_mode == {
+            if simd_mode[context.thread_index] == {
                 case .SSE2;
                     handled = true;
 
@@ -1340,7 +1350,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
             data := cast(u64)haystack.data + cast(u64)from_index;
             end := cast(u64)haystack.data + cast(u64)haystack.count;
 
-            if simd_mode == {
+            if simd_mode[context.thread_index] == {
                 case .SSE2;
                     handled = true;
                     needles : [16] u8 = ---;
@@ -1579,7 +1589,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
 
     if compare.kind == {
         case .CASE_SENSITIVE;
-            if simd_mode == {
+            if simd_mode[context.thread_index] == {
                 case .SSE2;
                     if from_index >= 15 {
                         handled = true;
@@ -1667,7 +1677,7 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
             }
 
         case .IGNORE_CASE;
-            if simd_mode == {
+            if simd_mode[context.thread_index] == {
                 case .SSE2;
                     if from_index >= 15 {
                         handled = true;
@@ -1953,6 +1963,7 @@ Split_By_Proc :: struct {
 #scope_file
 
 fill_split_struct :: () #expand {
+    assert(`max_results >= 0, "max_results cannot be negative : %", `max_results);
     `split_struct.text           = `text;
     `split_struct.max_results    = `max_results;
     `split_struct.skip_empty     = `skip_empty;
@@ -2003,6 +2014,7 @@ make_split :: (text: string, indexes: [] int, max_results := 0, skip_empty := fa
 make_split :: (text: string, count: int, max_results := 0) -> Split_By_Count {
     split_struct : Split_By_Count = ---;
     split_struct.text = text;
+    assert(max_results >= 0, "max_results cannot be negative : %", max_results);
     split_struct.max_results = max_results;
     assert(count > 0, "Count must be greater than 0 : %", count);
     split_struct.count = count;
@@ -2036,7 +2048,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
     `it_index : int = -1;
 
     for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results != 0 && splitter.max_results < 2 {
+        if splitter.max_results == 1 {
             it = splitter.text;
             it_index = 0;
 
@@ -2049,6 +2061,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
             if reverse {
                 end_index := splitter.text.count;
                 index, found := last_index(splitter.text, splitter.separator, splitter.compare, splitter.last_index);
+
                 if splitter.keep_separator == {
                     case .NO;
                     empty_count = 0;
@@ -2086,6 +2099,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
             else {
                 start_index := 0;
                 index, found := first_index(splitter.text, splitter.separator, splitter.compare, splitter.first_index);
+
                 if splitter.keep_separator == {
                     case .NO;
                     empty_count = 0;
@@ -2137,7 +2151,7 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
     `it_index : int = -1;
 
     for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results != 0 && splitter.max_results < 2 {
+        if splitter.max_results == 1 {
             it = splitter.text;
             it_index = 0;
 
@@ -2225,7 +2239,7 @@ for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expa
     `it_index : int = -1;
 
     for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results != 0 && splitter.max_results < 2 {
+        if splitter.max_results == 1 {
             it = splitter.text;
             it_index = 0;
 
@@ -2327,7 +2341,7 @@ for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expan
     `it_index : int = -1;
 
     for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results != 0 && splitter.max_results < 2 {
+        if splitter.max_results == 1 {
             it = splitter.text;
             it_index = 0;
 
@@ -2427,7 +2441,7 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
     `it_index : int = -1;
 
     for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results != 0 && splitter.max_results < 2 {
+        if splitter.max_results == 1 {
             it = splitter.text;
             it_index = 0;
 
@@ -2491,7 +2505,7 @@ for_expansion :: (splitter: *Split_By_Count, body: Code, flags: For_Flags) #expa
     `it_index : int = -1;
 
     for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results != 0 && splitter.max_results < 2 {
+        if splitter.max_results == 1 {
             it = splitter.text;
             it_index = 0;
 

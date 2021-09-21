@@ -2,20 +2,8 @@
 // (defaulting to using the allocator specified in the module parameters).
 
 
-// TODO
+// @TODO
 // [ ] get `apply_backslash` and `escape` to handle `\u` and `\U`
-// [x] create a Scratch allocator
-// [x] rename concatenate to join
-// [x] allow user to set allocator used by string builder
-// [x] return "\0" for empty string when null_terminate is true
-// [x] snake_from_camel / camel_from_snake
-// [x] capitalize (maybe not ^)
-// [x] repeat
-// [x] justify / pad
-// [x] maybe split_lines?
-// [x] fast string compare
-// [x] null_terminate parameter?
-// [x] maybe conflate separators in split?
 
 
 #import "Basic";
@@ -23,11 +11,30 @@
 using shared :: #import "Strings_Shared";
 
 
+
 #scope_file
 
-current_compare := default_compare;
-current_first_index := default_first_index;
-current_last_index := default_last_index;
+make_thread_proc_array :: (proc_name: string) -> string {
+    builder : String_Builder;
+    init_string_builder(*builder);
+    append(*builder, ".[");
+    append(*builder, proc_name);
+    for 2 .. strings_shared_max_thread_count {
+        append(*builder, ",");
+        append(*builder, proc_name);
+    }
+    append(*builder, "];");
+    return builder_to_string(*builder);
+}
+
+current_compare : [strings_shared_max_thread_count] type_of(default_compare)
+    = #insert #run make_thread_proc_array("default_compare");
+
+current_first_index : [strings_shared_max_thread_count] type_of(default_first_index)
+    = #insert #run make_thread_proc_array("default_first_index");
+
+current_last_index : [strings_shared_max_thread_count] type_of(default_last_index)
+    = #insert #run make_thread_proc_array("default_last_index");
 
 string_builder_allocator :: __temporary_allocator;
 string_builder_allocator_data : *void : null;
@@ -35,14 +42,15 @@ string_builder_allocator_data : *void : null;
 #scope_export
 
 
+
 set_default_compare :: (character_compare := default_compare) {
-    current_compare = character_compare;
+    current_compare[context.thread_index] = character_compare;
 }
 
 
 set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc := default_last_index) {
-    current_first_index = first_index_proc;
-    current_last_index = last_index_proc;
+    current_first_index[context.thread_index] = first_index_proc;
+    current_last_index[context.thread_index] = last_index_proc;
 }
 
 
@@ -80,7 +88,7 @@ reverse :: (str: string, allocator: Allocator = null, allocator_data: *void = nu
 
 
 replace :: inline (haystack: string, needle: string, replacement: string, max_replacements := 0, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
-    return replace(haystack, needle, replacement, max_replacements, current_compare, allocator, allocator_data);
+    return replace(haystack, needle, replacement, max_replacements, current_compare[context.thread_index], allocator, allocator_data);
 }
 
 replace :: (haystack: string, needle: string, replacement: string, max_replacements := 0, compare : Character_Compare, allocator: Allocator = null, allocator_data: *void = null, $$null_terminate := false) -> string #must {
@@ -103,7 +111,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     first_loop := true;
     last_string := "";
-    for make_split(haystack, needle, compare, current_first_index, current_last_index, ifx max_replacements <= 0 then 0 else max_replacements + 1) {
+    for make_split(haystack, needle, compare, current_first_index[context.thread_index], current_last_index[context.thread_index], ifx max_replacements <= 0 then 0 else max_replacements + 1) {
         if first_loop  first_loop = false;
         else           append(*result, replacement);
         append(*result, it);
@@ -236,10 +244,10 @@ split :: (text: string, separator: string, compare: Character_Compare, reversed 
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator)
+        for < make_split(text, separator, compare, current_first_index[context.thread_index], current_last_index[context.thread_index], max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator)
+        for make_split(text, separator, compare, current_first_index[context.thread_index], current_last_index[context.thread_index], max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
@@ -247,7 +255,7 @@ split :: (text: string, separator: string, compare: Character_Compare, reversed 
 
 
 split :: inline (text: string, separator: string, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, allocator: Allocator = null, allocator_data: *void = null) -> [] string #must {
-    return split(text, separator, current_compare, reversed, max_results, skip_empty, keep_separator, allocator, allocator_data);
+    return split(text, separator, current_compare[context.thread_index], reversed, max_results, skip_empty, keep_separator, allocator, allocator_data);
 }
 
 
@@ -271,10 +279,10 @@ split :: (text: string, separator: [] u8, reversed := false, max_results := 0, s
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
+        for < make_split(text, separator, current_compare[context.thread_index], max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
+        for make_split(text, separator, current_compare[context.thread_index], max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
@@ -286,10 +294,10 @@ split :: (text: string, separator: u8, reversed := false, max_results := 0, skip
     set_result_allocator();
 
     if reversed
-        for < make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
+        for < make_split(text, separator, current_compare[context.thread_index], max_results, skip_empty, keep_separator)
             array_add(*result, it);
     else
-        for make_split(text, separator, current_compare, max_results, skip_empty, keep_separator)
+        for make_split(text, separator, current_compare[context.thread_index], max_results, skip_empty, keep_separator)
             array_add(*result, it);
 
     return result;
@@ -635,7 +643,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator: Allocator =
     result : String_Builder;
     set_result_allocator();
 
-    for word: make_split(str, #char "_", current_compare) {
+    for word: make_split(str, #char "_", current_compare[context.thread_index]) {
         if word {
             append(*result, word);
             buffer := get_current_buffer(*result);

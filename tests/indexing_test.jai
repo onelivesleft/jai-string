@@ -13,13 +13,13 @@ jai_string :: #import "String";
 
 main :: () {
     haystack :: shakespeare;// degenerate;
-    needle :: "zealous";
+    needle :: " and ";
     //needle :: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffN";
     //needle :: "nffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     //"THE end\n";//" and "; //"ffffffffffffffffffffffffffffffffffffffffn"; "zealous";
-    times :: 1;
+    times :: 100;
 
-    no_case :: true;
+    no_case :: false;
 
     debug :: false;
 
@@ -101,11 +101,11 @@ main :: () {
 
     #if jai               jai_entry              := entry("Jai");
     #if boyer_moore       boyer_moore_entry      := entry("Boyer-Moore");
-    #if boyer_moore_sse2   boyer_moore_sse2_entry  := entry("Boyer-Moore SSE2");
+    #if boyer_moore_sse2  boyer_moore_sse2_entry := entry("Boyer-Moore SSE2");
     #if boyer_moore_avx2  boyer_moore_avx2_entry := entry("Boyer-Moore AVX2");
     #if kmp               kmp_entry              := entry("Knuth-Morris-Pratt");
     #if simple            simple_entry           := entry("Simple");
-    #if simple_sse2        simple_sse2_entry       := entry("Simple SSE2");
+    #if simple_sse2       simple_sse2_entry      := entry("Simple SSE2");
     #if simple_avx2       simple_avx2_entry      := entry("Simple AVX2");
 
     prev_marker := -1;
@@ -334,10 +334,10 @@ main :: () {
     #if jai               array_add(*entries, jai_entry);
     #if kmp               array_add(*entries, kmp_entry);
     #if boyer_moore       array_add(*entries, boyer_moore_entry);
-    #if boyer_moore_sse2   array_add(*entries, boyer_moore_sse2_entry);
+    #if boyer_moore_sse2  array_add(*entries, boyer_moore_sse2_entry);
     #if boyer_moore_avx2  array_add(*entries, boyer_moore_avx2_entry);
     #if simple            array_add(*entries, simple_entry);
-    #if simple_sse2        array_add(*entries, simple_sse2_entry);
+    #if simple_sse2       array_add(*entries, simple_sse2_entry);
     #if simple_avx2       array_add(*entries, simple_avx2_entry);
 
     quick_sort(entries, (a: Entry) -> float64 { return a.first_time; });
@@ -364,7 +364,7 @@ main :: () {
             print("%   = %x / %x\n", heap.pad_start(time, 7), heap.pad_start(first_factor, 7), heap.pad_start(last_factor, 7));
         }
         else {
-            print("%\n", heap.pad_end(time, 7));
+            print("% %\n", it.first_checksum, heap.pad_end(time, 7));
         }
         if !it_index  print("\n");
     }

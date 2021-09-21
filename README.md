@@ -127,6 +127,17 @@ Notice the use of `reverse_index_proc` to handle when the `reverse` parameter is
 
 In the docs below, any time a type of `%Tool` is specified, it means there are four versions of the procedure, each corresponding to the behaviour described above.
 
+
+### Threading
+
+By default the library will support up to 16 threads.  If you want more then you need to set the `Strings_Shared` program parameter `max_thread_count`.
+
+i.e. before importing any other of these modules, do:
+
+```jai
+strings_shared :: #import "Strings_Shared"()(max_thread_count=32);
+```
+
 <hr>
 
 ## Strings
@@ -192,7 +203,7 @@ Same as `slice`, except instead of a `to_index` you specify a character count.  
 
 
 * `trim (str: string) -> string`<br>
-Returns the string view of `str` with all characters from the start and end which are <= `#char " "` removed (in effect all whitespace and control codes).
+Returns the string view of `str` with all characters from the start and end which are <= `#char " "` removed (i.e. all whitespace and control codes).
 
 * `trim (str: string, tool: %Tool, compare := default_compare) -> string`<br>
 Returns the string view of `str` with all characters matching tool removed from the start and end.
@@ -357,7 +368,7 @@ temp :: #import "Strings_Alloc"(__temporary_allocator);
 Allocator data used when allocating returned values.  This may be overridden in each individual call.
 
 * `add_convenience_functions`<br>
-When enabled (it defaults to false) the module will provide these additional procedures:
+Set this to false to disable these procs (it defaults to true) - they provide version of these standard procedures whic behave as per every other proc in this module wrt allocators:
   * `print` - identical to `sprint`, set to use this module's allocator.
   * `builder_to_string` - identical to `builder_to_string`, set to use this module's allocator.
 
