@@ -240,7 +240,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
         case .CASE_SENSITIVE;
             end := cast(u64)haystack.data;
             needle_end := needle.count - 1;
-            haystack_ptr := cast(u64)haystack.data + cast(u64)(start_index - needle_end);
+            haystack_ptr := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
 
             end_simd := end + 15;
             if haystack_ptr > end_simd {
@@ -624,7 +624,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
     if compare.kind == {
         case .CASE_SENSITIVE;
             needle_end := needle.count - 1;
-            haystack_ptr := cast(u64)haystack.data + cast(u64)(start_index - needle_end);
+            haystack_ptr := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
             end := cast(u64)haystack.data;
 
             end_simd := end + 31;

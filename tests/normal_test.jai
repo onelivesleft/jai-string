@@ -1,6 +1,6 @@
 #import "Basic";
 
-#import "Strings"(index_algorithm=.SIMPLE);
+#import "Strings"(index_algorithm=.BOYER_MOORE_AVX2);
 heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 

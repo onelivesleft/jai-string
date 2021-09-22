@@ -683,7 +683,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
         thread_data[context.thread_index].last_used_needle = copy_string(needle);
         make_bad_character_delta(needle, compare, true);
-        make_good_suffix_delta(good_suffix_delta, needle, compare, true);
+        make_good_suffix_delta(needle, compare, true);
     }
 
     needle_end := needle.count - 1;
