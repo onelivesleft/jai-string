@@ -168,6 +168,8 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
     if needle == ""  return start_index, true;
     if start_index > haystack.count - needle.count  return -1, false;
 
+    debug_break();
+
     if compare.kind == {
         case .CASE_SENSITIVE;
             end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
@@ -209,7 +211,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if <<cast(*u8)character != <<needle_index {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -227,7 +229,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if !compare.compare(<<cast(*u8)character, <<needle_index)
+                    if <<cast(*u8)character != <<needle_index
                         continue index;
                     needle_index += 1;
                 }
@@ -241,8 +243,6 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
             needle_end := cast(u64)needle.count - 1;
             haystack_ptr := cast(u64)haystack.data + cast(u64)start_index;
-
-            debug_break();
 
             end_simd := end - 15;
             if haystack_ptr < end_simd {
@@ -318,7 +318,10 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if !compare.compare(<<cast(*u8)character, <<needle_index) {
+                            a := <<cast(*u8)character;
+                            b := <<needle_index;
+                            if (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
+                            != (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -336,7 +339,10 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if !compare.compare(<<cast(*u8)character, <<needle_index)
+                    a := <<cast(*u8)character;
+                    b := <<needle_index;
+                    if (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
+                    != (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b)
                         continue index;
                     needle_index += 1;
                 }
@@ -896,6 +902,11 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
 
 #scope_file
 
+
+ignore_case_compare :: inline (a: u8, b: u8) -> bool {
+    return (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
+        == (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b);
+}
 
 
 make_16 :: (value: u8) -> string {
