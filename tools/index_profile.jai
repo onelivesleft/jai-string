@@ -70,14 +70,18 @@ main :: () {
 
     haystack := read_entire_file(haystack_file);
 
-    simple           :: true;
-    jai              :: true;
+    simple            :: true;
+    jai               :: true;
     simple_sse2       :: true;
-    simple_avx2      :: true;
-    kmp              :: true;
-    boyer_moore      :: true;
+    simple_avx2       :: true;
+    kmp               :: true;
+    boyer_moore       :: true;
     boyer_moore_sse2  :: true;
-    boyer_moore_avx2 :: true;
+    boyer_moore_avx2  :: true;
+
+    //#if kmp {
+    //    #load "../Strings_Shared/knuth_morris_pratt.jai";
+    //}
 
     format_float := *context.print_style.default_format_float;
     format_float.zero_removal = .NO;

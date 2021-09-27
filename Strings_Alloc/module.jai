@@ -52,22 +52,22 @@ else #if index_algorithm == .SIMPLE_AVX2 {
     default_last_index  :: simple_avx2_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE {
-    #load "../Strings_Shared/boyer_moore.jai";
+    //#load "../Strings_Shared/boyer_moore.jai";
     default_first_index :: boyer_moore_first_index;
     default_last_index  :: boyer_moore_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE_SSE2 {
-    #load "../Strings_Shared/boyer_moore.jai";
+    //#load "../Strings_Shared/boyer_moore.jai";
     default_first_index :: boyer_moore_sse2_first_index;
     default_last_index  :: boyer_moore_sse2_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE_AVX2 {
-    #load "../Strings_Shared/boyer_moore.jai";
+    //#load "../Strings_Shared/boyer_moore.jai";
     default_first_index :: boyer_moore_avx2_first_index;
     default_last_index  :: boyer_moore_avx2_last_index;
 }
 else #if index_algorithm == .KNUTH_MORRIS_PRATT {
-    #load "../Strings_Shared/knuth_morris_pratt.jai";
+    //#load "../Strings_Shared/knuth_morris_pratt.jai";
     default_first_index :: knuth_morris_pratt_first_index;
     default_last_index  :: knuth_morris_pratt_last_index;
 }

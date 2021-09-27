@@ -1,6 +1,6 @@
 #import "Basic";
 
-#import "Strings"(index_algorithm=.BOYER_MOORE_AVX2);
+#import "Strings"(index_algorithm=.SIMPLE_SSE2);
 heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
@@ -112,7 +112,7 @@ main :: () {
             print("\nAll OK!\n");
     }
 
-    set_simd_mode(.AUTO);
+    set_simd_mode(.OFF);
 
     //set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
     //set_index_algorithm(knuth_morris_pratt_first_index, knuth_morris_pratt_last_index);
