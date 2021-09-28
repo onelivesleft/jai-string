@@ -37,8 +37,13 @@ simple_last_index :: (haystack: string, needle: string, start_index: int, compar
     return -1, false;
 }
 
-/*
- asm_sse2_case_sensitive_first_index_inner :: #code #asm {
+asm_sse2_case_sensitive_first_index_setup :: #code {
+    reg :: #asm {
+        movdqu.x   needle_vec:, [needle_ptr];
+    }
+};
+
+asm_sse2_case_sensitive_first_index_inner :: #code #asm {
     movdqu.x   results_vec:, [haystack_ptr];
 
     /* check for equality */
@@ -54,6 +59,7 @@ simple_last_index :: (haystack: string, needle: string, start_index: int, compar
     mov.d      [results_data], found_gpr;
 };
 
+/*
 
 asm_sse2_ignore_case_first_index_inner :: #code #asm {
     movdqu.x haystack_vec:, [haystack_ptr];
@@ -168,7 +174,11 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
     if needle == ""  return start_index, true;
     if start_index > haystack.count - needle.count  return -1, false;
 
-    debug_break();
+    {
+        debug :: #import "Debug";
+        if debug.is_debugger_present()
+            debug_break();
+    }
 
     if compare.kind == {
         case .CASE_SENSITIVE;
@@ -190,21 +200,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                 }
 
                 while haystack_ptr < end_simd {
-                    #asm {
-                        movdqu.x   results_vec:, [haystack_ptr];
-
-                        /* check for equality */
-                        pcmpeqb.x  results_vec, reg.needle_vec;
-                        pmovmskb.x found_gpr:, results_vec;
-
-                        /* calculate index of first equal character */
-                        tzcnt.w    index_gpr:, found_gpr;
-
-                        /* pack found:index and export */
-                        shl.d      found_gpr, 16;
-                        or.w       found_gpr, index_gpr;
-                        mov.d      [results_data], found_gpr;
-                    }
+                    #insert_internal asm_sse2_case_sensitive_first_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr + results.index;
