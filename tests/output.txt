@@ -1,0 +1,942 @@
+
+Disassembly of 'count' at c:/jai/modules/Strings_Shared/Strings_Shared.jai:1009
+- Stack size 188
+
+-------- Basic Block 0 -------- defines v5-7 --------
+
+           (no dominating)
+
+   0|          lea   v6, stack+0
+   1|        clear   v6 {size 16}
+   2|     string==   v5, v1 == v6
+   3|         jump   1 if v5 == 0
+   4|     constant   v7 = 0
+   5| return_value   v7 -> 1
+   6|       return   
+
+-------- Basic Block 1 -------- defines v8-11 --------
+
+           ... dominating: block 0 instruction 3
+
+   7|          mov   v8, [v3] :1b
+   8|     constant   v9 = 1
+   9|         jump   5 if v8 != v9
+  10|         call   is_upper (v2) -> v10
+  11|         jump   2 if v10 == 0
+  12|          lea   v11, stack+10
+  13|       memcpy   v11, v3 {size 16}
+  14|         jump   4
+
+-------- Basic Block 2 -------- defines v12-14 --------
+
+           ... dominating: block 1 instruction 11
+
+  15|         call   is_lower (v2) -> v12
+  16|         jump   3 if v12 == 0
+  17|         call   to_upper (v2) -> v13
+  18|         copy   v2 = v13
+  19|          lea   v14, stack+10
+  20|       memcpy   v14, v3 {size 16}
+  21|         jump   4
+
+-------- Basic Block 3 -------- defines v15-16 --------
+
+           ... dominating: block 2 instruction 16
+
+  22|          lea   v15, bss+40
+  23|          lea   v16, stack+10
+  24|       memcpy   v16, v15 {size 16}
+
+-------- Basic Block 4 --------
+
+           ... dominating: block 1 instruction 11
+
+  25|         jump   6
+
+-------- Basic Block 5 -------- defines v17 --------
+
+           ... dominating: block 1 instruction 9
+
+  26|          lea   v17, stack+10
+  27|       memcpy   v17, v3 {size 16}
+
+-------- Basic Block 6 -------- defines v18-19 --------
+
+           ... dominating: block 1 instruction 9
+
+  28|     constant   v18 = 0
+  29|          mov   v19, [stack+10] :1b
+
+-------- Basic Block 7 -------- defines v20 --------
+
+           ... dominating: block 6 instruction 30
+
+  30|     constant   v20 = 0
+  31|         jump   23 if v19 != v20
+
+-------- Basic Block 8 -------- defines v21-26 --------
+
+           ... dominating: block 7 instruction 31
+
+  32|          lea   v21, data+8048
+  33|          mov   v22, [v0] :4b
+  34|         imul   v23 = v22 * 8
+  35|   add_extend   v25 = v21 + v23
+  36|          mov   v26, [v25] :8b
+
+-------- Basic Block 9 -------- defines v27 --------
+
+           ... dominating: block 8 instruction 37
+
+  37|     constant   v27 = 0
+  38|         jump   15 if v26 != v27
+
+-------- Basic Block 10 -------- defines v28-42 --------
+
+           ... dominating: block 9 instruction 38
+
+  39|          mov   v29, [v1+8] :8b
+  40|  cast_number   v31 (u64), v29 (*u8)
+  41|         copy   v28 = v31
+  42|          mov   v33, [v1+8] :8b
+  43|  cast_number   v35 (u64), v33 (*u8)
+  44|          mov   v36, [v1] :8b
+  45|  cast_number   v37 (u64), v36 (s64)
+  46|        binop   v32, v35 + v37
+  47|          lea   v38, stack+20
+  48|     constant   v39 = 0x10
+  49|       memset   v38, v2 {count v39}
+  50|         copy   v40 = v38
+  51|      add_int   v41 = v32 + -15
+  52|         call   is_debugger_present () -> v42
+  53|         jump   11 if v42 == 0
+  54|         call   debug_break ()
+
+-------- Basic Block 11 -------- defines v43-50 --------
+
+           ... dominating: block 10 instruction 53
+
+  55|      asm_x86   (contents not shown)
+  56|         copy   v46 = v28
+  57|      add_int   v49 = v28 + 15
+  58|      add_int   v50 = v32 + -1
+  59|         call   min (v49, v50) -> v48
+  60|         jump   14 if v46 > v48
+
+-------- Basic Block 12 -------- defines v51-54 --------
+
+           ... dominating: block 11 instruction 60
+
+  61|  cast_number   v52 (*u8), v46 (u64)
+  62|          mov   v53, [v52] :1b
+  63|         jump   13 if v53 != v2
+  64|      add_int   v54 = v18 + 1
+  65|         copy   v18 = v54
+
+-------- Basic Block 13 -------- defines v55 --------
+
+           ... dominating: block 12 instruction 61
+
+  66|      compare   v55 = (v46 >= v48)
+  67|      add_int   v46 = v46 + 1
+  68|         jump   12 if v55 == 0
+
+-------- Basic Block 14 --------
+
+           ... dominating: block 11 instruction 60
+
+  69| return_value   v18 -> 1
+  70|       return   
+
+-------- Basic Block 15 -------- defines v56 --------
+
+           ... dominating: block 8 instruction 37
+
+  71|     constant   v56 = 3
+  72|         jump   22 if v26 != v56
+
+-------- Basic Block 16 -------- defines v57-76 --------
+
+           ... dominating: block 15 instruction 72
+
+  73|          mov   v58, [v1+8] :8b
+  74|  cast_number   v60 (u64), v58 (*u8)
+  75|         copy   v57 = v60
+  76|          mov   v62, [v1+8] :8b
+  77|  cast_number   v64 (u64), v62 (*u8)
+  78|          mov   v65, [v1] :8b
+  79|  cast_number   v66 (u64), v65 (s64)
+  80|        binop   v61, v64 + v66
+  81|          lea   v67, stack+30
+  82|     constant   v68 = 0x20
+  83|       memset   v67, v2 {count v68}
+  84|         copy   v69 = v67
+  85|          lea   v71, stack+50
+  86|         copy   v70 = v71
+  87|      add_int   v72 = v61 + -31
+  88|      asm_x86   (contents not shown)
+
+-------- Basic Block 17 -------- defines v77-86 --------
+
+           ... dominating: block 16 instruction 89
+
+  89|         jump   18 if v57 >= v72
+  90|      asm_x86   (contents not shown)
+  91|          mov   v84, [v71] :4b
+  92|  cast_number   v85 (s64), v84 (u32)
+  93|        binop   v83, v18 + v85
+  94|         copy   v18 = v83
+  95|      add_int   v86 = v57 + 32
+  96|         copy   v57 = v86
+  97|         jump   17
+
+-------- Basic Block 18 -------- defines v87-91 --------
+
+           ... dominating: block 17 instruction 89
+
+  98|         copy   v87 = v57
+  99|      add_int   v90 = v57 + 31
+ 100|      add_int   v91 = v61 + -1
+ 101|         call   min (v90, v91) -> v89
+ 102|         jump   21 if v87 > v89
+
+-------- Basic Block 19 -------- defines v92-97 --------
+
+           ... dominating: block 18 instruction 102
+
+ 103|          mov   v93, [stack+18] :8b
+ 104|  cast_number   v95 (*u8), v87 (u64)
+ 105|          mov   v96, [v95] :1b
+ 106|         call   v93 (v96, v2) -> v92
+ 107|         jump   20 if v92 == 0
+ 108|      add_int   v97 = v18 + 1
+ 109|         copy   v18 = v97
+
+-------- Basic Block 20 -------- defines v98 --------
+
+           ... dominating: block 19 instruction 103
+
+ 110|      compare   v98 = (v87 >= v89)
+ 111|      add_int   v87 = v87 + 1
+ 112|         jump   19 if v98 == 0
+
+-------- Basic Block 21 --------
+
+           ... dominating: block 18 instruction 102
+
+ 113| return_value   v18 -> 1
+ 114|       return   
+
+-------- Basic Block 22 --------
+
+           ... dominating: block 8 instruction 37
+
+ 115|         jump   40
+
+-------- Basic Block 23 --------
+
+           ... dominating: block 6 instruction 30
+
+ 116|         jump   40 if v19 != v9
+
+-------- Basic Block 24 -------- defines v99-104 --------
+
+           ... dominating: block 23 instruction 116
+
+ 117|          lea   v99, data+8048
+ 118|          mov   v100, [v0] :4b
+ 119|         imul   v101 = v100 * 8
+ 120|   add_extend   v103 = v99 + v101
+ 121|          mov   v104, [v103] :8b
+
+-------- Basic Block 25 -------- defines v105 --------
+
+           ... dominating: block 24 instruction 122
+
+ 122|     constant   v105 = 0
+ 123|         jump   32 if v104 != v105
+
+-------- Basic Block 26 -------- defines v106-128 --------
+
+           ... dominating: block 25 instruction 123
+
+ 124|          mov   v107, [v1+8] :8b
+ 125|  cast_number   v109 (u64), v107 (*u8)
+ 126|         copy   v106 = v109
+ 127|          mov   v111, [v1+8] :8b
+ 128|  cast_number   v113 (u64), v111 (*u8)
+ 129|          mov   v114, [v1] :8b
+ 130|  cast_number   v115 (u64), v114 (s64)
+ 131|        binop   v110, v113 + v115
+ 132|          lea   v116, stack+54
+ 133|     constant   v117 = 0x10
+ 134|       memset   v116, v2 {count v117}
+ 135|         copy   v118 = v116
+ 136|          lea   v119, stack+64
+ 137|         call   to_lower (v2) -> v120
+ 138|       memset   v119, v120 {count v117}
+ 139|         copy   v121 = v119
+ 140|          lea   v123, stack+74
+ 141|         copy   v122 = v123
+ 142|      add_int   v124 = v110 + -15
+ 143|      asm_x86   (contents not shown)
+
+-------- Basic Block 27 -------- defines v129-138 --------
+
+           ... dominating: block 26 instruction 144
+
+ 144|         jump   28 if v106 >= v124
+ 145|      asm_x86   (contents not shown)
+ 146|          mov   v136, [v123] :2b
+ 147|  cast_number   v137 (s64), v136 (u16)
+ 148|        binop   v135, v18 + v137
+ 149|         copy   v18 = v135
+ 150|      add_int   v138 = v106 + 16
+ 151|         copy   v106 = v138
+ 152|         jump   27
+
+-------- Basic Block 28 -------- defines v139-143 --------
+
+           ... dominating: block 27 instruction 144
+
+ 153|         copy   v139 = v106
+ 154|      add_int   v142 = v106 + 15
+ 155|      add_int   v143 = v110 + -1
+ 156|         call   min (v142, v143) -> v141
+ 157|         jump   31 if v139 > v141
+
+-------- Basic Block 29 -------- defines v144-149 --------
+
+           ... dominating: block 28 instruction 157
+
+ 158|          mov   v145, [stack+18] :8b
+ 159|  cast_number   v147 (*u8), v139 (u64)
+ 160|          mov   v148, [v147] :1b
+ 161|         call   v145 (v148, v2) -> v144
+ 162|         jump   30 if v144 == 0
+ 163|      add_int   v149 = v18 + 1
+ 164|         copy   v18 = v149
+
+-------- Basic Block 30 -------- defines v150 --------
+
+           ... dominating: block 29 instruction 158
+
+ 165|      compare   v150 = (v139 >= v141)
+ 166|      add_int   v139 = v139 + 1
+ 167|         jump   29 if v150 == 0
+
+-------- Basic Block 31 --------
+
+           ... dominating: block 28 instruction 157
+
+ 168| return_value   v18 -> 1
+ 169|       return   
+
+-------- Basic Block 32 -------- defines v151 --------
+
+           ... dominating: block 24 instruction 122
+
+ 170|     constant   v151 = 3
+ 171|         jump   39 if v104 != v151
+
+-------- Basic Block 33 -------- defines v152-178 --------
+
+           ... dominating: block 32 instruction 171
+
+ 172|          mov   v153, [v1+8] :8b
+ 173|  cast_number   v155 (u64), v153 (*u8)
+ 174|         copy   v152 = v155
+ 175|          mov   v157, [v1+8] :8b
+ 176|  cast_number   v159 (u64), v157 (*u8)
+ 177|          mov   v160, [v1] :8b
+ 178|  cast_number   v161 (u64), v160 (s64)
+ 179|        binop   v156, v159 + v161
+ 180|          lea   v162, stack+76
+ 181|     constant   v163 = 0x20
+ 182|       memset   v162, v2 {count v163}
+ 183|         copy   v164 = v162
+ 184|          lea   v165, stack+96
+ 185|         call   to_lower (v2) -> v166
+ 186|       memset   v165, v166 {count v163}
+ 187|         copy   v167 = v165
+ 188|          lea   v169, stack+b8
+ 189|         copy   v168 = v169
+ 190|      add_int   v170 = v156 + -31
+ 191|      asm_x86   (contents not shown)
+
+-------- Basic Block 34 -------- defines v179-196 --------
+
+           ... dominating: block 33 instruction 192
+
+ 192|         jump   35 if v152 >= v170
+ 193|      asm_x86   (contents not shown)
+ 194|          mov   v194, [v169] :4b
+ 195|  cast_number   v195 (s64), v194 (u32)
+ 196|        binop   v193, v18 + v195
+ 197|         copy   v18 = v193
+ 198|      add_int   v196 = v152 + 32
+ 199|         copy   v152 = v196
+ 200|         jump   34
+
+-------- Basic Block 35 -------- defines v197-201 --------
+
+           ... dominating: block 34 instruction 192
+
+ 201|         copy   v197 = v152
+ 202|      add_int   v200 = v152 + 31
+ 203|      add_int   v201 = v156 + -1
+ 204|         call   min (v200, v201) -> v199
+ 205|         jump   38 if v197 > v199
+
+-------- Basic Block 36 -------- defines v202-207 --------
+
+           ... dominating: block 35 instruction 205
+
+ 206|          mov   v203, [stack+18] :8b
+ 207|  cast_number   v205 (*u8), v197 (u64)
+ 208|          mov   v206, [v205] :1b
+ 209|         call   v203 (v206, v2) -> v202
+ 210|         jump   37 if v202 == 0
+ 211|      add_int   v207 = v18 + 1
+ 212|         copy   v18 = v207
+
+-------- Basic Block 37 -------- defines v208 --------
+
+           ... dominating: block 36 instruction 206
+
+ 213|      compare   v208 = (v197 >= v199)
+ 214|      add_int   v197 = v197 + 1
+ 215|         jump   36 if v208 == 0
+
+-------- Basic Block 38 --------
+
+           ... dominating: block 35 instruction 205
+
+ 216| return_value   v18 -> 1
+ 217|       return   
+
+-------- Basic Block 39 --------
+
+           ... dominating: block 24 instruction 122
+
+ 218|         jump   40
+
+-------- Basic Block 40 -------- defines v209-213 --------
+
+           ... dominating: block 6 instruction 30
+
+ 219|     constant   v209 = 0
+ 220|         copy   v210 = v209
+ 221|          mov   v212, [v1] :8b
+ 222|      add_int   v213 = v212 + -1
+ 223|         jump   43 if v210 > v213
+
+-------- Basic Block 41 -------- defines v214-219 --------
+
+           ... dominating: block 40 instruction 223
+
+ 224|          mov   v215, [stack+18] :8b
+ 225|          mov   v216, [v1+8] :8b
+ 226|   add_extend   v217 = v216 + v210
+ 227|          mov   v218, [v217] :1b
+ 228|         call   v215 (v218, v2) -> v214
+ 229|         jump   42 if v214 == 0
+ 230|      add_int   v219 = v18 + 1
+ 231|         copy   v18 = v219
+
+-------- Basic Block 42 --------
+
+           ... dominating: block 41 instruction 224
+
+ 232|      add_int   v210 = v210 + 1
+ 233|         jump   41 if v210 <= v213
+
+-------- Basic Block 43 --------
+
+           ... dominating: block 40 instruction 223
+
+ 234| return_value   v18 -> 1
+ 235|       return   
+   Creating library C:/Repos/jai-modules/Strings_Modules/tests/.build/test9.lib and object C:/Repos/jai-modules/Strings_Modules/tests/.build/test9.exp
+Running linker: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\bin\Hostx64\x64\link.exe" /nologo C:/Repos/jai-modules/Strings_Modules/tests/.build/test9_2_0.obj /OUT:test9.exe /MACHINE:AMD64 /INCREMENTAL:NO /DEBUG /IMPLIB:C:/Repos/jai-modules/Strings_Modules/tests/.build/test9.lib /libpath:"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\lib\x64" /libpath:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64" /libpath:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64" -nodefaultlib libcmt.lib vcruntime.lib ucrt.lib kernel32.lib comdlg32.lib shlwapi.lib Advapi32.lib DbgHelp.lib Dwmapi.lib opengl32.lib Gdi32.lib msvcrt.lib shell32.lib user32.lib winmm.lib kernel32.lib Ntdll.lib c:/jai/modules/stb_sprintf/win/stb_sprintf.lib
+
+Stats for Workspace 2 ("Target Program"):
+Lexer lines processed: 135047 (141800 including blank lines, comments.)
+Front-end time: 0.068047 seconds.
+llvm      time: 0.905029 seconds.
+
+Compiler  time: 0.973076 seconds.
+Link      time: 0.467812 seconds.
+Total     time: 1.440889 seconds.
+------- 
+
+Disassembly of 'count' at c:/jai/modules/Strings_Shared/Strings_Shared.jai:1009
+- Stack size 188
+
+-------- Basic Block 0 -------- defines v5-7 --------
+
+           (no dominating)
+
+   0|          lea   v6, stack+0
+   1|        clear   v6 {size 16}
+   2|     string==   v5, v1 == v6
+   3|         jump   1 if v5 == 0
+   4|     constant   v7 = 0
+   5| return_value   v7 -> 1
+   6|       return   
+
+-------- Basic Block 1 -------- defines v8-11 --------
+
+           ... dominating: block 0 instruction 3
+
+   7|          mov   v8, [v3] :1b
+   8|     constant   v9 = 1
+   9|         jump   5 if v8 != v9
+  10|         call   is_upper (v2) -> v10
+  11|         jump   2 if v10 == 0
+  12|          lea   v11, stack+10
+  13|       memcpy   v11, v3 {size 16}
+  14|         jump   4
+
+-------- Basic Block 2 -------- defines v12-14 --------
+
+           ... dominating: block 1 instruction 11
+
+  15|         call   is_lower (v2) -> v12
+  16|         jump   3 if v12 == 0
+  17|         call   to_upper (v2) -> v13
+  18|         copy   v2 = v13
+  19|          lea   v14, stack+10
+  20|       memcpy   v14, v3 {size 16}
+  21|         jump   4
+
+-------- Basic Block 3 -------- defines v15-16 --------
+
+           ... dominating: block 2 instruction 16
+
+  22|          lea   v15, bss+40
+  23|          lea   v16, stack+10
+  24|       memcpy   v16, v15 {size 16}
+
+-------- Basic Block 4 --------
+
+           ... dominating: block 1 instruction 11
+
+  25|         jump   6
+
+-------- Basic Block 5 -------- defines v17 --------
+
+           ... dominating: block 1 instruction 9
+
+  26|          lea   v17, stack+10
+  27|       memcpy   v17, v3 {size 16}
+
+-------- Basic Block 6 -------- defines v18-19 --------
+
+           ... dominating: block 1 instruction 9
+
+  28|     constant   v18 = 0
+  29|          mov   v19, [stack+10] :1b
+
+-------- Basic Block 7 -------- defines v20 --------
+
+           ... dominating: block 6 instruction 30
+
+  30|     constant   v20 = 0
+  31|         jump   23 if v19 != v20
+
+-------- Basic Block 8 -------- defines v21-26 --------
+
+           ... dominating: block 7 instruction 31
+
+  32|          lea   v21, data+8048
+  33|          mov   v22, [v0] :4b
+  34|         imul   v23 = v22 * 8
+  35|   add_extend   v25 = v21 + v23
+  36|          mov   v26, [v25] :8b
+
+-------- Basic Block 9 -------- defines v27 --------
+
+           ... dominating: block 8 instruction 37
+
+  37|     constant   v27 = 0
+  38|         jump   15 if v26 != v27
+
+-------- Basic Block 10 -------- defines v28-42 --------
+
+           ... dominating: block 9 instruction 38
+
+  39|          mov   v29, [v1+8] :8b
+  40|  cast_number   v31 (u64), v29 (*u8)
+  41|         copy   v28 = v31
+  42|          mov   v33, [v1+8] :8b
+  43|  cast_number   v35 (u64), v33 (*u8)
+  44|          mov   v36, [v1] :8b
+  45|  cast_number   v37 (u64), v36 (s64)
+  46|        binop   v32, v35 + v37
+  47|          lea   v38, stack+20
+  48|     constant   v39 = 0x10
+  49|       memset   v38, v2 {count v39}
+  50|         copy   v40 = v38
+  51|      add_int   v41 = v32 + -15
+  52|         call   is_debugger_present () -> v42
+  53|         jump   11 if v42 == 0
+  54|         call   debug_break ()
+
+-------- Basic Block 11 -------- defines v43-50 --------
+
+           ... dominating: block 10 instruction 53
+
+  55|      asm_x86   (contents not shown)
+  56|      asm_x86   (contents not shown)
+  57|         copy   v46 = v28
+  58|      add_int   v49 = v28 + 15
+  59|      add_int   v50 = v32 + -1
+  60|         call   min (v49, v50) -> v48
+  61|         jump   14 if v46 > v48
+
+-------- Basic Block 12 -------- defines v51-54 --------
+
+           ... dominating: block 11 instruction 61
+
+  62|  cast_number   v52 (*u8), v46 (u64)
+  63|          mov   v53, [v52] :1b
+  64|         jump   13 if v53 != v2
+  65|      add_int   v54 = v18 + 1
+  66|         copy   v18 = v54
+
+-------- Basic Block 13 -------- defines v55 --------
+
+           ... dominating: block 12 instruction 62
+
+  67|      compare   v55 = (v46 >= v48)
+  68|      add_int   v46 = v46 + 1
+  69|         jump   12 if v55 == 0
+
+-------- Basic Block 14 --------
+
+           ... dominating: block 11 instruction 61
+
+  70| return_value   v18 -> 1
+  71|       return   
+
+-------- Basic Block 15 -------- defines v56 --------
+
+           ... dominating: block 8 instruction 37
+
+  72|     constant   v56 = 3
+  73|         jump   22 if v26 != v56
+
+-------- Basic Block 16 -------- defines v57-76 --------
+
+           ... dominating: block 15 instruction 73
+
+  74|          mov   v58, [v1+8] :8b
+  75|  cast_number   v60 (u64), v58 (*u8)
+  76|         copy   v57 = v60
+  77|          mov   v62, [v1+8] :8b
+  78|  cast_number   v64 (u64), v62 (*u8)
+  79|          mov   v65, [v1] :8b
+  80|  cast_number   v66 (u64), v65 (s64)
+  81|        binop   v61, v64 + v66
+  82|          lea   v67, stack+30
+  83|     constant   v68 = 0x20
+  84|       memset   v67, v2 {count v68}
+  85|         copy   v69 = v67
+  86|          lea   v71, stack+50
+  87|         copy   v70 = v71
+  88|      add_int   v72 = v61 + -31
+  89|      asm_x86   (contents not shown)
+
+-------- Basic Block 17 -------- defines v77-86 --------
+
+           ... dominating: block 16 instruction 90
+
+  90|         jump   18 if v57 >= v72
+  91|      asm_x86   (contents not shown)
+  92|          mov   v84, [v71] :4b
+  93|  cast_number   v85 (s64), v84 (u32)
+  94|        binop   v83, v18 + v85
+  95|         copy   v18 = v83
+  96|      add_int   v86 = v57 + 32
+  97|         copy   v57 = v86
+  98|         jump   17
+
+-------- Basic Block 18 -------- defines v87-91 --------
+
+           ... dominating: block 17 instruction 90
+
+  99|         copy   v87 = v57
+ 100|      add_int   v90 = v57 + 31
+ 101|      add_int   v91 = v61 + -1
+ 102|         call   min (v90, v91) -> v89
+ 103|         jump   21 if v87 > v89
+
+-------- Basic Block 19 -------- defines v92-97 --------
+
+           ... dominating: block 18 instruction 103
+
+ 104|          mov   v93, [stack+18] :8b
+ 105|  cast_number   v95 (*u8), v87 (u64)
+ 106|          mov   v96, [v95] :1b
+ 107|         call   v93 (v96, v2) -> v92
+ 108|         jump   20 if v92 == 0
+ 109|      add_int   v97 = v18 + 1
+ 110|         copy   v18 = v97
+
+-------- Basic Block 20 -------- defines v98 --------
+
+           ... dominating: block 19 instruction 104
+
+ 111|      compare   v98 = (v87 >= v89)
+ 112|      add_int   v87 = v87 + 1
+ 113|         jump   19 if v98 == 0
+
+-------- Basic Block 21 --------
+
+           ... dominating: block 18 instruction 103
+
+ 114| return_value   v18 -> 1
+ 115|       return   
+
+-------- Basic Block 22 --------
+
+           ... dominating: block 8 instruction 37
+
+ 116|         jump   40
+
+-------- Basic Block 23 --------
+
+           ... dominating: block 6 instruction 30
+
+ 117|         jump   40 if v19 != v9
+
+-------- Basic Block 24 -------- defines v99-104 --------
+
+           ... dominating: block 23 instruction 117
+
+ 118|          lea   v99, data+8048
+ 119|          mov   v100, [v0] :4b
+ 120|         imul   v101 = v100 * 8
+ 121|   add_extend   v103 = v99 + v101
+ 122|          mov   v104, [v103] :8b
+
+-------- Basic Block 25 -------- defines v105 --------
+
+           ... dominating: block 24 instruction 123
+
+ 123|     constant   v105 = 0
+ 124|         jump   32 if v104 != v105
+
+-------- Basic Block 26 -------- defines v106-128 --------
+
+           ... dominating: block 25 instruction 124
+
+ 125|          mov   v107, [v1+8] :8b
+ 126|  cast_number   v109 (u64), v107 (*u8)
+ 127|         copy   v106 = v109
+ 128|          mov   v111, [v1+8] :8b
+ 129|  cast_number   v113 (u64), v111 (*u8)
+ 130|          mov   v114, [v1] :8b
+ 131|  cast_number   v115 (u64), v114 (s64)
+ 132|        binop   v110, v113 + v115
+ 133|          lea   v116, stack+54
+ 134|     constant   v117 = 0x10
+ 135|       memset   v116, v2 {count v117}
+ 136|         copy   v118 = v116
+ 137|          lea   v119, stack+64
+ 138|         call   to_lower (v2) -> v120
+ 139|       memset   v119, v120 {count v117}
+ 140|         copy   v121 = v119
+ 141|          lea   v123, stack+74
+ 142|         copy   v122 = v123
+ 143|      add_int   v124 = v110 + -15
+ 144|      asm_x86   (contents not shown)
+
+-------- Basic Block 27 -------- defines v129-138 --------
+
+           ... dominating: block 26 instruction 145
+
+ 145|         jump   28 if v106 >= v124
+ 146|      asm_x86   (contents not shown)
+ 147|          mov   v136, [v123] :2b
+ 148|  cast_number   v137 (s64), v136 (u16)
+ 149|        binop   v135, v18 + v137
+ 150|         copy   v18 = v135
+ 151|      add_int   v138 = v106 + 16
+ 152|         copy   v106 = v138
+ 153|         jump   27
+
+-------- Basic Block 28 -------- defines v139-143 --------
+
+           ... dominating: block 27 instruction 145
+
+ 154|         copy   v139 = v106
+ 155|      add_int   v142 = v106 + 15
+ 156|      add_int   v143 = v110 + -1
+ 157|         call   min (v142, v143) -> v141
+ 158|         jump   31 if v139 > v141
+
+-------- Basic Block 29 -------- defines v144-149 --------
+
+           ... dominating: block 28 instruction 158
+
+ 159|          mov   v145, [stack+18] :8b
+ 160|  cast_number   v147 (*u8), v139 (u64)
+ 161|          mov   v148, [v147] :1b
+ 162|         call   v145 (v148, v2) -> v144
+ 163|         jump   30 if v144 == 0
+ 164|      add_int   v149 = v18 + 1
+ 165|         copy   v18 = v149
+
+-------- Basic Block 30 -------- defines v150 --------
+
+           ... dominating: block 29 instruction 159
+
+ 166|      compare   v150 = (v139 >= v141)
+ 167|      add_int   v139 = v139 + 1
+ 168|         jump   29 if v150 == 0
+
+-------- Basic Block 31 --------
+
+           ... dominating: block 28 instruction 158
+
+ 169| return_value   v18 -> 1
+ 170|       return   
+
+-------- Basic Block 32 -------- defines v151 --------
+
+           ... dominating: block 24 instruction 123
+
+ 171|     constant   v151 = 3
+ 172|         jump   39 if v104 != v151
+
+-------- Basic Block 33 -------- defines v152-178 --------
+
+           ... dominating: block 32 instruction 172
+
+ 173|          mov   v153, [v1+8] :8b
+ 174|  cast_number   v155 (u64), v153 (*u8)
+ 175|         copy   v152 = v155
+ 176|          mov   v157, [v1+8] :8b
+ 177|  cast_number   v159 (u64), v157 (*u8)
+ 178|          mov   v160, [v1] :8b
+ 179|  cast_number   v161 (u64), v160 (s64)
+ 180|        binop   v156, v159 + v161
+ 181|          lea   v162, stack+76
+ 182|     constant   v163 = 0x20
+ 183|       memset   v162, v2 {count v163}
+ 184|         copy   v164 = v162
+ 185|          lea   v165, stack+96
+ 186|         call   to_lower (v2) -> v166
+ 187|       memset   v165, v166 {count v163}
+ 188|         copy   v167 = v165
+ 189|          lea   v169, stack+b8
+ 190|         copy   v168 = v169
+ 191|      add_int   v170 = v156 + -31
+ 192|      asm_x86   (contents not shown)
+
+-------- Basic Block 34 -------- defines v179-196 --------
+
+           ... dominating: block 33 instruction 193
+
+ 193|         jump   35 if v152 >= v170
+ 194|      asm_x86   (contents not shown)
+ 195|          mov   v194, [v169] :4b
+ 196|  cast_number   v195 (s64), v194 (u32)
+ 197|        binop   v193, v18 + v195
+ 198|         copy   v18 = v193
+ 199|      add_int   v196 = v152 + 32
+ 200|         copy   v152 = v196
+ 201|         jump   34
+
+-------- Basic Block 35 -------- defines v197-201 --------
+
+           ... dominating: block 34 instruction 193
+
+ 202|         copy   v197 = v152
+ 203|      add_int   v200 = v152 + 31
+ 204|      add_int   v201 = v156 + -1
+ 205|         call   min (v200, v201) -> v199
+ 206|         jump   38 if v197 > v199
+
+-------- Basic Block 36 -------- defines v202-207 --------
+
+           ... dominating: block 35 instruction 206
+
+ 207|          mov   v203, [stack+18] :8b
+ 208|  cast_number   v205 (*u8), v197 (u64)
+ 209|          mov   v206, [v205] :1b
+ 210|         call   v203 (v206, v2) -> v202
+ 211|         jump   37 if v202 == 0
+ 212|      add_int   v207 = v18 + 1
+ 213|         copy   v18 = v207
+
+-------- Basic Block 37 -------- defines v208 --------
+
+           ... dominating: block 36 instruction 207
+
+ 214|      compare   v208 = (v197 >= v199)
+ 215|      add_int   v197 = v197 + 1
+ 216|         jump   36 if v208 == 0
+
+-------- Basic Block 38 --------
+
+           ... dominating: block 35 instruction 206
+
+ 217| return_value   v18 -> 1
+ 218|       return   
+
+-------- Basic Block 39 --------
+
+           ... dominating: block 24 instruction 123
+
+ 219|         jump   40
+
+-------- Basic Block 40 -------- defines v209-213 --------
+
+           ... dominating: block 6 instruction 30
+
+ 220|     constant   v209 = 0
+ 221|         copy   v210 = v209
+ 222|          mov   v212, [v1] :8b
+ 223|      add_int   v213 = v212 + -1
+ 224|         jump   43 if v210 > v213
+
+-------- Basic Block 41 -------- defines v214-219 --------
+
+           ... dominating: block 40 instruction 224
+
+ 225|          mov   v215, [stack+18] :8b
+ 226|          mov   v216, [v1+8] :8b
+ 227|   add_extend   v217 = v216 + v210
+ 228|          mov   v218, [v217] :1b
+ 229|         call   v215 (v218, v2) -> v214
+ 230|         jump   42 if v214 == 0
+ 231|      add_int   v219 = v18 + 1
+ 232|         copy   v18 = v219
+
+-------- Basic Block 42 --------
+
+           ... dominating: block 41 instruction 225
+
+ 233|      add_int   v210 = v210 + 1
+ 234|         jump   41 if v210 <= v213
+
+-------- Basic Block 43 --------
+
+           ... dominating: block 40 instruction 224
+
+ 235| return_value   v18 -> 1
+ 236|       return   
+   Creating library C:/Repos/jai-modules/Strings_Modules/tests/.build/test9.lib and object C:/Repos/jai-modules/Strings_Modules/tests/.build/test9.exp
+Running linker: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\bin\Hostx64\x64\link.exe" /nologo C:/Repos/jai-modules/Strings_Modules/tests/.build/test9_2_0.obj /OUT:test9.exe /MACHINE:AMD64 /INCREMENTAL:NO /DEBUG /IMPLIB:C:/Repos/jai-modules/Strings_Modules/tests/.build/test9.lib /libpath:"C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.26.28801\lib\x64" /libpath:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64" /libpath:"C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\ucrt\x64" -nodefaultlib libcmt.lib vcruntime.lib ucrt.lib kernel32.lib comdlg32.lib shlwapi.lib Advapi32.lib DbgHelp.lib Dwmapi.lib opengl32.lib Gdi32.lib msvcrt.lib shell32.lib user32.lib winmm.lib kernel32.lib Ntdll.lib c:/jai/modules/stb_sprintf/win/stb_sprintf.lib
+
+Stats for Workspace 2 ("Target Program"):
+Lexer lines processed: 135050 (141800 including blank lines, comments.)
+Front-end time: 0.070711 seconds.
+llvm      time: 0.933580 seconds.
+
+Compiler  time: 1.004290 seconds.
+Link      time: 0.602430 seconds.
+Total     time: 1.606720 seconds.

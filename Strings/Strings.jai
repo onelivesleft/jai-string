@@ -506,23 +506,6 @@ trim_end_from :: inline (str: string, needle: string) -> string, found: bool  {
 }
 
 
-
-
-replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {
-    change_count := 0;
-    index, found := first_index(haystack, needle);
-
-    while found {
-        haystack[index] = replacement;
-        change_count += 1;
-        if max_replacements > 0 && change_count >= max_replacements  break;
-        index, found = first_index(haystack, needle, index + 1);
-    }
-
-    return change_count;
-}
-
-
 replace :: (haystack: string, needle: [] u8, replacement: u8, max_replacements := 0) -> change_count: int {
     change_count := 0;
     for 0 .. haystack.count - 1 {

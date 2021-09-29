@@ -1039,34 +1039,45 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     memset(needles.data, needle, 16);
                     needle_ptr := needles.data;
 
-                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
-
-                    result : u16 = ---;
-                    result_data := *result;
-
                     loop_until := end - 15;
+
+                    {
+                        debug :: #import "Debug";
+                        if debug.is_debugger_present()
+                            debug_break();
+                    }
+
+                    #asm {
+                        movdqu.x   needle_vec:, [needle_ptr];
+                        xor.q      total_gpr:, total_gpr;
+                    }
+/*
 
                     while data < loop_until {
                         #asm {
                             /* check for equality */
-                            movdqu.x   needle_vec:, [needle_ptr];
                             movdqu.x   results_vec:, [data];
                             pcmpeqb.x  results_vec, needle_vec;
 
                             /* coalesce and count bits */
                             pmovmskb.x found_gpr:, results_vec;
-                            popcnt.w   total_gpr:, found_gpr;
+                            popcnt.w   found_gpr, found_gpr;
 
-                            /* export */
-                            mov.w      [result_data], total_gpr;
+                            /* add */
+                            add.w      total_gpr, found_gpr;
                         }
 
-                        total += result;
                         data += 16;
                     }
 
+*/
+                    // commenting this out will avert the crash
+                    #asm {
+                        mov.q total, total_gpr;
+                    }
+
                     for data .. min(data + 15, end - 1)
-                        if compare.compare(<<cast(*u8)it, needle)
+                        if <<cast(*u8)it == needle
                             total += 1;
 
                     return total;
@@ -1080,17 +1091,18 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     memset(needles.data, needle, 32);
                     needle_ptr := needles.data;
 
-                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
-
                     result : u32 = ---;
                     result_data := *result;
 
                     loop_until := end - 31;
 
+                    #asm AVX,AVX2 {
+                        movdqu.y   needle_vec:, [needle_ptr];
+                    }
+
                     while data < loop_until {
                         #asm AVX,AVX2 {
                             /* check for equality */
-                            movdqu.y   needle_vec:, [needle_ptr];
                             movdqu.y   results_vec:, [data];
                             pcmpeqb.y  results_vec, results_vec, needle_vec;
 
@@ -1135,11 +1147,14 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
 
                     loop_until := end - 15;
 
+                    #asm {
+                        movdqu.x   needles_upper_vec:, [needles_upper_data];
+                        movdqu.x   needles_lower_vec:, [needles_lower_data];
+                    }
+
                     while data < loop_until {
                         #asm {
                             /* load data */
-                            movdqu.x   needles_upper_vec:, [needles_upper_data];
-                            movdqu.x   needles_lower_vec:, [needles_lower_data];
                             movdqu.x   results_lower_vec:, [data];
 
                             /* check for equality */
@@ -1180,18 +1195,19 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     memset(needles_lower.data, to_lower(needle), 32);
                     needles_lower_data := needles_lower.data;
 
-                    // @TODO Update to use two asm blocks - setup + loop - when compiler supports it
-
                     result : u32 = ---;
                     result_data := *result;
 
                     loop_until := end - 31;
 
+                    #asm AVX,AVX2 {
+                        movdqu.y   needles_upper_vec:, [needles_upper_data];
+                        movdqu.y   needles_lower_vec:, [needles_lower_data];
+                    }
+
                     while data < loop_until {
                         #asm AVX,AVX2 {
                             /* load data */
-                            movdqu.y   needles_upper_vec:, [needles_upper_data];
-                            movdqu.y   needles_lower_vec:, [needles_lower_data];
                             movdqu.y   haystack_vec:, [data];
 
                             /* check for equality */
@@ -1226,6 +1242,22 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
     }
 
     return total;
+}
+
+
+
+replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {
+    change_count := 0;
+    index, found := first_index(haystack, needle);
+
+    while found {
+        haystack[index] = replacement;
+        change_count += 1;
+        if max_replacements > 0 && change_count >= max_replacements  break;
+        index, found = first_index(haystack, needle, index + 1);
+    }
+
+    return change_count;
 }
 
 
@@ -1379,7 +1411,6 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                         movdqu.x needle_vec:, [needle_ptr];
                         movdqu.x nocase_needle_vec:, needle_vec;
                         por.x nocase_needle_vec, case_vec;
-                        pcmpeqb.x full_vec:, full_vec;
                     }
 
                     while haystack_ptr < loop_until {
@@ -1407,11 +1438,12 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                             pand.x result_cased_vec, mask_vec;
 
                             /* invert mask then apply it to keep ignore-case bits */
-                            pxor.x mask_vec, reg.full_vec;
-                            pand.x result_nocase_vec, mask_vec;
+                            /* we have to write to mask_vec and use it below because
+                            it's the 2nd op that's negated */
+                            pandn.x mask_vec, result_nocase_vec;
 
                             /* combine results */
-                            por.x result_cased_vec, result_nocase_vec;
+                            por.x result_cased_vec, mask_vec;
 
                             /* calculate index of first equal character */
                             pmovmskb.x found_gpr:, result_cased_vec;

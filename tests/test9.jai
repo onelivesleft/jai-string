@@ -5,10 +5,54 @@
 #load "data/shakespeare.jai";
 //#load "data/dna.jai";
 
+/* Timings as one asm block
+CASE SENSITIVE:
+scalar: (24427000)  0.705
+sse2:   (24427000)  0.044
+avx2:   (24427000)  0.032
+
+SSE2 > Scalar: 15.983x
+AVX2 > Scalar: 22.271x
+AVX2 > SSE2:    1.393x
+
+
+IGNORE CASE:
+scalar: (28859400)  2.564
+sse2:   (28859400)  0.057
+avx2:   (28859400)  0.033
+
+SSE2 > Scalar: 45.147x
+AVX2 > Scalar: 78.874x
+AVX2 > SSE2:    1.747x
+
+
+After 2xASM
+
+CASE SENSITIVE:
+scalar: (24427000)  0.706
+sse2:   (24427000)  0.059
+avx2:   (24427000)  0.023
+
+SSE2 > Scalar: 12.044x
+AVX2 > Scalar: 30.381x
+AVX2 > SSE2:    2.522x
+
+
+IGNORE CASE:
+scalar: (28859400)  2.565
+sse2:   (28859400)  0.053
+avx2:   (28859400)  0.029
+
+SSE2 > Scalar: 48.216x
+AVX2 > Scalar: 87.188x
+AVX2 > SSE2:    1.808x
+
+*/
+
 main :: () {
     haystack := shakespeare;
     needle : u8 = #char "a";
-    times :: 1;
+    times :: 100;
 
     t : float64;
 
