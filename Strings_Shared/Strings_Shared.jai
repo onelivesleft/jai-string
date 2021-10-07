@@ -1,4 +1,10 @@
 // @Todo
+// [ ] `count` simd - is #asm working?
+// [ ] first_index simd - has the stashing of xmm registers been relaxed, granting performance?
+// [ ] error in index_profile when needle is `" "`
+// [ ] schpeeeed https://web.archive.org/web/20201107074620/http://effbot.org/zone/stringlib.htm
+
+// [ ] Metaprogram option to run equivalent of index_profile on program data and select algorithm accordingly
 // [ ] Add SIMD_mode to Comparator?
 // [ ] SIMD first_index/last_index chars
 // [ ] SIMD replace char   // wait until we can split asm blocks
@@ -11,12 +17,12 @@
 #import "Machine_X64";
 
 
-Index_Proc :: #type(haystack: string, needle: string, boundary_index: int, reverse: bool) -> from_index: int, to_index: int, found: bool;
-String_Index_Proc :: #type(haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool;
+Index_Proc :: #type (haystack: string, needle: string, boundary_index: int, reverse: bool) -> from_index: int, to_index: int, found: bool;
+String_Index_Proc :: #type (haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool;
 
 Character_Compare :: struct {
     kind : enum u8 { CASE_SENSITIVE; IGNORE_CASE; CUSTOM; };
-    compare : #type(a: u8, b: u8) -> bool;
+    compare : #type (a: u8, b: u8) -> bool;
 }
 
 operator== :: (a: Character_Compare, b: Character_Compare) -> bool {
@@ -123,7 +129,7 @@ char_as_string :: inline (char: *u8) -> string {
 unsafe_slice :: inline (str: string, from_index: int, to_index: int) -> string {
     // @Note Handles positive indexes only!
     assert(from_index >= 0 && from_index <= str.count, "Cannot slice; from_index falls outwith range of string.");
-    assert(to_index >= from_index, "Cannot slice; to_index is lower than from_index.");
+    assert(to_index >= from_index, "Cannot slice; to_index is not higher than from_index.");
     assert(to_index <= str.count, "Cannot slice; to_index falls outwith range of string.");
 
     result : string = ---;
@@ -624,7 +630,7 @@ trim :: (str: string, string_to_remove: string, $$index: Index_Proc) -> string {
 }
 
 
-trim_to :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
+trim_into :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
     low_index, high_index : int = ---;
     found : bool = ---;
 
@@ -636,7 +642,7 @@ trim_to :: (str: string, needle: u8, compare: Character_Compare) -> string, foun
     return unsafe_slice(str, low_index, high_index + 1), true;
 }
 
-trim_to :: (str: string, needle : [] u8, compare: Character_Compare) -> string, found: bool {
+trim_into :: (str: string, needle : [] u8, compare: Character_Compare) -> string, found: bool {
     low_index, high_index : int = ---;
     found : bool = ---;
 
@@ -648,7 +654,7 @@ trim_to :: (str: string, needle : [] u8, compare: Character_Compare) -> string, 
     return unsafe_slice(str, low_index, high_index + 1), true;
 }
 
-trim_to :: (str: string, needle: string, compare : Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc) -> string, found: bool {
+trim_into :: (str: string, needle: string, compare : Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc) -> string, found: bool {
     low_index, high_index : int = ---;
     found : bool = ---;
 
@@ -660,7 +666,7 @@ trim_to :: (str: string, needle: string, compare : Character_Compare, first_inde
     return unsafe_slice(str, low_index, high_index + needle.count), true;
 }
 
-trim_to :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
+trim_into :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
     low_index, high_index, _ : int = ---;
     found : bool = ---;
 
@@ -674,7 +680,7 @@ trim_to :: (str: string, needle: string, $$index: Index_Proc) -> string, found: 
 }
 
 
-trim_past :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
+trim_through :: (str: string, needle: u8, compare: Character_Compare) -> string, found: bool {
     low_index, high_index : int = ---;
     found : bool = ---;
 
@@ -683,10 +689,13 @@ trim_past :: (str: string, needle: u8, compare: Character_Compare) -> string, fo
 
     high_index = last_index(str, needle, compare);
 
-    return unsafe_slice(str, low_index + 1, high_index), true;
+    if low_index == high_index
+        return "", true;
+    else
+        return unsafe_slice(str, low_index + 1, high_index), true;
 }
 
-trim_past :: (str: string, needle : [] u8, compare: Character_Compare) -> string, found: bool {
+trim_through :: (str: string, needle : [] u8, compare: Character_Compare) -> string, found: bool {
     low_index, high_index : int = ---;
     found : bool = ---;
 
@@ -695,10 +704,13 @@ trim_past :: (str: string, needle : [] u8, compare: Character_Compare) -> string
 
     high_index = last_index(str, needle, compare);
 
-    return unsafe_slice(str, low_index + 1, high_index), true;
+    if low_index == high_index
+        return "", true;
+    else
+        return unsafe_slice(str, low_index + 1, high_index), true;
 }
 
-trim_past :: (str: string, needle: string, compare : Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc) -> string, found: bool {
+trim_through :: (str: string, needle: string, compare : Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc) -> string, found: bool {
     low_index, high_index : int = ---;
     found : bool = ---;
 
@@ -707,10 +719,13 @@ trim_past :: (str: string, needle: string, compare : Character_Compare, first_in
 
     high_index = last_index(str, needle, compare, last_index_proc);
 
-    return unsafe_slice(str, low_index + needle.count, high_index), true;
+    if low_index == high_index
+        return "", true;
+    else
+        return unsafe_slice(str, low_index + needle.count, high_index), true;
 }
 
-trim_past :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
+trim_through :: (str: string, needle: string, $$index: Index_Proc) -> string, found: bool {
     low_index, high_index, _ : int = ---;
     found : bool = ---;
 
@@ -720,7 +735,10 @@ trim_past :: (str: string, needle: string, $$index: Index_Proc) -> string, found
     high_index, _, found = index(str, needle, str.count, true);
     if !found  return str, false;
 
-    return unsafe_slice(str, low_index, high_index), true;
+    if low_index == high_index
+        return "", true;
+    else
+        return unsafe_slice(str, low_index, high_index), true;
 }
 
 
@@ -1041,37 +1059,29 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
 
                     loop_until := end - 15;
 
-                    {
-                        debug :: #import "Debug";
-                        if debug.is_debugger_present()
-                            debug_break();
-                    }
-
                     #asm {
                         movdqu.x   needle_vec:, [needle_ptr];
+                        int3;
                         xor.q      total_gpr:, total_gpr;
                     }
-/*
 
                     while data < loop_until {
                         #asm {
                             /* check for equality */
                             movdqu.x   results_vec:, [data];
-                            pcmpeqb.x  results_vec, needle_vec;
+                            pcmpeqb.x  results_vec, needle_vec:;
 
                             /* coalesce and count bits */
                             pmovmskb.x found_gpr:, results_vec;
                             popcnt.w   found_gpr, found_gpr;
 
                             /* add */
-                            add.w      total_gpr, found_gpr;
+                            add.w      total_gpr:, found_gpr;
                         }
 
                         data += 16;
                     }
 
-*/
-                    // commenting this out will avert the crash
                     #asm {
                         mov.q total, total_gpr;
                     }
@@ -1246,22 +1256,6 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
 
 
 
-replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {
-    change_count := 0;
-    index, found := first_index(haystack, needle);
-
-    while found {
-        haystack[index] = replacement;
-        change_count += 1;
-        if max_replacements > 0 && change_count >= max_replacements  break;
-        index, found = first_index(haystack, needle, index + 1);
-    }
-
-    return change_count;
-}
-
-
-
 #scope_file
 
 make_16 :: (value: u8) -> string {
@@ -1404,7 +1398,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
 
                     loop_until := end - 15;
 
-                    reg :: #asm {
+                    #asm {
                         movdqu.x case_vec: vec, [case_ptr];
                         movdqu.x a_vec:, [a_ptr];
                         movdqu.x z_vec:, [z_ptr];
@@ -1418,19 +1412,19 @@ first_index :: (haystack: string, needle: u8, from_index: int, compare: Characte
                             movdqu.x haystack_vec:, [haystack_ptr];
 
                             /* check for case-sensitive equality */
-                            movdqu.x result_cased_vec:, reg.needle_vec;
+                            movdqu.x result_cased_vec:, needle_vec;
                             pcmpeqb.x result_cased_vec, haystack_vec;
 
                             /* check for ignore-case equality */
-                            por.x haystack_vec, reg.case_vec;
-                            movdqu.x result_nocase_vec:, reg.nocase_needle_vec;
+                            por.x haystack_vec, case_vec;
+                            movdqu.x result_nocase_vec:, nocase_needle_vec;
                             pcmpeqb.x result_nocase_vec, haystack_vec;
 
                             /* generate mask for which bits should be case-sensitive */
                             movdqa.x mask_vec:, haystack_vec;
-                            pcmpgtb.x mask_vec, reg.z_vec;
+                            pcmpgtb.x mask_vec, z_vec;
 
-                            movdqa.x bounds_vec:, reg.a_vec;
+                            movdqa.x bounds_vec:, a_vec;
                             pcmpgtb.x bounds_vec, haystack_vec;
                             por.x mask_vec, bounds_vec;
 

@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.3] - 2021-10-
+* Renamed `trim_to`, `trim_past` -> `trim_into`, `trim_through`.
+* Fixed `trim_through` behaviour when only one needle present.
+
 ## [1.0.2] - 2021-09-22
 * Fixed SIMD `last_index` procs.
 

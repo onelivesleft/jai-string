@@ -69,7 +69,7 @@ The two comparators built-in to the module are `case_sensitive`, `ignore_case`.
 
 ### Tool types: u8 / [] u8 / string / Index_Proc
 
-In a string library it is often the case that you have a string which you are applying an operation to using a *tool* parameter.  In this library there will generally be four version of such procedures, a version each for when the tool is: `u8`, `[] u8`, `string`, and `Index_Proc`.  As tools these types behave consistently across the library.  The first three are simple, built-in types, and work like this:
+In a string library it is often the case that you have a string which you are applying an operation to using a *tool* parameter.  In this library there will generally be four version of such procedures, a version each for when the tool is: `u8`, `[] u8`, `string`.  As tools these types behave consistently across the library.  The first three are simple, built-in types, and work like this:
 
 * `u8`<br>
 The single character specified will be used.
@@ -88,12 +88,11 @@ For example:
     assert( trim( "banana pear", "ban"            )  == "ana pear" );
 ```
 
-
-An `Index_Proc` is a procedure with the signature:
+Additionally, any time the tool is a `string` you may specify an `Index_Proc`.  An `Index_Proc` is a procedure with the signature:
 
 `(haystack: string, needle: string, boundary_index: int, reverse: bool) -> from_index: int, to_index: int, found: bool`
 
-This allows you to feed an arbitrarily complex pattern match into the procedure you are using.  When using an `Index_Proc` tool, a character comparator is not used (as your own code is instead).
+This allows you to feed an arbitrarily complex pattern match into the procedure you are using.  When using an `Index_Proc`, a character comparator is not used (as your own code is instead).
 
 For example:
 ```jai
@@ -125,7 +124,7 @@ For example:
 
 Notice the use of `reverse_index_proc` to handle when the `reverse` parameter is set.  This is a library procedure that you can use if you don't want to write out the reverse algorithm yourself, but note that it is extremely inefficient!
 
-In the docs below, any time a type of `%Tool` is specified, it means there are four versions of the procedure, each corresponding to the behaviour described above.
+In the docs below, any time a type of `%Tool` is specified, it means there are four versions of the procedure, each corresponding to the behaviour described above (the fourth being `string`+`Index_Proc`).
 
 
 ### Threading

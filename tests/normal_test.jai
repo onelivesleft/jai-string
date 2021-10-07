@@ -4,6 +4,7 @@
 heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
+jai_string :: #import "String";
 
 errors_only :: true;
 
@@ -280,6 +281,15 @@ main :: () {
         index += 1;
     }
     test(871, index, 5);
+
+
+    jai_string.index_of_string("Foo", "f");
+    jai_string.find_character_from_left("FoO", #char "f");
+
+    // For potential overload error
+    //Fooble :: struct {}
+    //splitter : Fooble;
+    //blahblah := heap.split(splitter);
 
     parts := heap.split(" aa bb cc ", " ");
     test(88, parts, string.["", "aa", "bb", "cc", ""]);
@@ -981,10 +991,10 @@ __;
     test(381, trim_end_after(banana_sandwiches, "sandwiches"), "banana sandwiches are nice but banana & pear sandwiches");
     test(382, trim_end_from(banana_sandwiches, " banana"), "banana sandwiches are nice but");
 
-    test(383, trim_to(banana_sandwiches, #char "a"), "anana sandwiches are nice but banana & pear sandwiches a");
-    test(384, trim_to(banana_sandwiches, "sandwiches"), "sandwiches are nice but banana & pear sandwiches");
-    test(385, trim_past(banana_sandwiches, #char "a"), "nana sandwiches are nice but banana & pear sandwiches ");
-    test(386, trim_past(banana_sandwiches, "sandwiches"), " are nice but banana & pear ");
+    test(383, trim_into(banana_sandwiches, #char "a"), "anana sandwiches are nice but banana & pear sandwiches a");
+    test(384, trim_into(banana_sandwiches, "sandwiches"), "sandwiches are nice but banana & pear sandwiches");
+    test(385, trim_through(banana_sandwiches, #char "a"), "nana sandwiches are nice but banana & pear sandwiches ");
+    test(386, trim_through(banana_sandwiches, "sandwiches"), " are nice but banana & pear ");
 
 
     // Ho**Abou***-nic***Am******hess?
@@ -1180,4 +1190,12 @@ __;
 
     temp_parts = temp.count_split(some_text, 3, true);
     test(481, temp_parts, string.["ere", "t\th", "tex", "me ", "so"]);
+
+    test(482, trim_into("blah blah blah .. blah blah blah", #char "."), "..");
+    test(483, trim_into("blah blah blah . blah blah blah", #char "."), ".");
+    test(484, trim_into("blah blah blah blah blah blah", #char "."), "blah blah blah blah blah blah");
+
+    test(485, trim_through("blah blah blah .. blah blah blah", #char "."), "");
+    test(486, trim_through("blah blah blah . blah blah blah", #char "."), "");
+    test(487, trim_through("blah blah blah blah blah blah", #char "."), "blah blah blah blah blah blah");
 }

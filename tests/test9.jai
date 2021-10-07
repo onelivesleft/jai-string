@@ -52,7 +52,7 @@ AVX2 > SSE2:    1.808x
 main :: () {
     haystack := shakespeare;
     needle : u8 = #char "a";
-    times :: 100;
+    times :: 1;
 
     t : float64;
 

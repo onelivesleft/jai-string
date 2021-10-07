@@ -108,7 +108,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                 results : struct { index, found : u16; };
                 results_data := *results;
 
-                reg :: #asm {
+                #asm {
                     movdqu.x   needle_vec:, [needle_ptr];
                 }
 
@@ -117,7 +117,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                         movdqu.x   results_vec:, [haystack_ptr];
 
                         /* check for equality */
-                        pcmpeqb.x  results_vec, reg.needle_vec;
+                        pcmpeqb.x  results_vec, needle_vec;
                         pmovmskb.x found_gpr:, results_vec;
 
                         /* calculate index of first equal character */
@@ -182,7 +182,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                 results : struct { index, found : u16; };
                 results_data := *results;
 
-                reg :: #asm {
+                #asm {
                     movdqu.x case_vec: vec, [case_ptr];
                     movdqu.x a_vec:, [a_ptr];
                     movdqu.x z_vec:, [z_ptr];
@@ -197,19 +197,19 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                         movdqu.x haystack_vec:, [haystack_ptr];
 
                         /* check for case-sensitive equality */
-                        movdqu.x result_cased_vec:, reg.needle_vec;
+                        movdqu.x result_cased_vec:, needle_vec;
                         pcmpeqb.x result_cased_vec, haystack_vec;
 
                         /* check for ignore-case equality */
-                        por.x haystack_vec, reg.case_vec;
-                        movdqu.x result_nocase_vec:, reg.nocase_needle_vec;
+                        por.x haystack_vec, case_vec;
+                        movdqu.x result_nocase_vec:, nocase_needle_vec;
                         pcmpeqb.x result_nocase_vec, haystack_vec;
 
                         /* generate mask for which bits should be case-sensitive */
                         movdqa.x mask_vec:, haystack_vec;
-                        pcmpgtb.x mask_vec, reg.z_vec;
+                        pcmpgtb.x mask_vec, z_vec;
 
-                        movdqa.x bounds_vec:, reg.a_vec;
+                        movdqa.x bounds_vec:, a_vec;
                         pcmpgtb.x bounds_vec, haystack_vec;
                         por.x mask_vec, bounds_vec;
 
@@ -217,7 +217,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
                         pand.x result_cased_vec, mask_vec;
 
                         /* invert mask then apply it to keep ignore-case bits */
-                        pxor.x mask_vec, reg.full_vec;
+                        pxor.x mask_vec, full_vec;
                         pand.x result_nocase_vec, mask_vec;
 
                         /* combine results */

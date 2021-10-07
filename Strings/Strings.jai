@@ -301,46 +301,46 @@ trim :: inline (str: string, string_to_remove: string) -> string {
 }
 
 
-trim_to :: inline (str: string, needle: u8) -> string, found: bool {
-    result, found := trim_to(str, needle, current_compare[context.thread_index]);
+trim_into :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_into(str, needle, current_compare[context.thread_index]);
     return result, found;
 }
 
-trim_to :: inline (str: string, needle: [] u8) -> string, found: bool {
+trim_into :: inline (str: string, needle: [] u8) -> string, found: bool {
     #if strict {
         assert(needle.count, "You cannot trim nothing!");
     }
-    result, found := trim_to(str, needle, current_compare[context.thread_index]);
+    result, found := trim_into(str, needle, current_compare[context.thread_index]);
     return result, found;
 }
 
-trim_to :: inline (str: string, needle: string) -> string, found: bool  {
+trim_into :: inline (str: string, needle: string) -> string, found: bool  {
     #if strict {
         assert(needle.count, "You cannot trim nothing!");
     }
-    result, found := trim_to(str, needle, current_compare[context.thread_index], current_first_index[context.thread_index], current_last_index[context.thread_index]);
+    result, found := trim_into(str, needle, current_compare[context.thread_index], current_first_index[context.thread_index], current_last_index[context.thread_index]);
     return result, found;
 }
 
 
-trim_past :: inline (str: string, needle: u8) -> string, found: bool {
-    result, found := trim_past(str, needle, current_compare[context.thread_index]);
+trim_through :: inline (str: string, needle: u8) -> string, found: bool {
+    result, found := trim_through(str, needle, current_compare[context.thread_index]);
     return result, found;
 }
 
-trim_past :: inline (str: string, needle: [] u8) -> string, found: bool {
+trim_through :: inline (str: string, needle: [] u8) -> string, found: bool {
     #if strict {
         assert(needle.count, "You cannot trim nothing!");
     }
-    result, found := trim_past(str, needle, current_compare[context.thread_index]);
+    result, found := trim_through(str, needle, current_compare[context.thread_index]);
     return result, found;
 }
 
-trim_past :: inline (str: string, needle: string) -> string, found: bool  {
+trim_through :: inline (str: string, needle: string) -> string, found: bool  {
     #if strict {
         assert(needle.count, "You cannot trim nothing!");
     }
-    result, found := trim_past(str, needle, current_compare[context.thread_index], current_first_index[context.thread_index], current_last_index[context.thread_index]);
+    result, found := trim_through(str, needle, current_compare[context.thread_index], current_first_index[context.thread_index], current_last_index[context.thread_index]);
     return result, found;
 }
 
@@ -506,6 +506,21 @@ trim_end_from :: inline (str: string, needle: string) -> string, found: bool  {
 }
 
 
+replace :: (haystack: string, needle: u8, replacement: u8, max_replacements := 0) -> change_count: int {
+    change_count := 0;
+    index, found := first_index(haystack, needle);
+
+    while found {
+        haystack[index] = replacement;
+        change_count += 1;
+        if max_replacements > 0 && change_count >= max_replacements  break;
+        index, found = first_index(haystack, needle, index + 1);
+    }
+
+    return change_count;
+}
+
+
 replace :: (haystack: string, needle: [] u8, replacement: u8, max_replacements := 0) -> change_count: int {
     change_count := 0;
     for 0 .. haystack.count - 1 {
@@ -632,8 +647,8 @@ split_into_two :: inline (text: string, separator: string) -> string, string {
     return unsafe_slice(text, 0, index), unsafe_slice(text, index + separator.count);
 }
 
-split_into_two :: inline (text: string, $$separator: Index_Proc) -> string, string {
-    from_index, found, to_index := first_index(text, separator);
+split_into_two :: inline (text: string, separator: string, $$separator_proc: Index_Proc) -> string, string {
+    from_index, found, to_index := first_index(text, separator, separator_proc);
     if !found  return text, "";
     return unsafe_slice(text, 0, from_index), unsafe_slice(text, to_index);
 }
