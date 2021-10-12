@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.4] - 2021-10-12
+* Fixed indexing algorithms erroneously allocating with context.allocator
+* Fixed `null_terminate` in `join`.
+
 ## [1.0.3] - 2021-10-12
 * Renamed `trim_to`, `trim_past` -> `trim_into`, `trim_through`.
 * Fixed `trim_through` behaviour when only one needle present.
