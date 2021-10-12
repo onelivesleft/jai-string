@@ -1,3 +1,5 @@
+// @Note this file must be saved as LF only!
+
 #import "Basic";
 
 #import "Strings"(index_algorithm=.SIMPLE_SSE2);
@@ -283,8 +285,8 @@ main :: () {
     test(871, index, 5);
 
 
-    jai_string.index_of_string("Foo", "f");
-    jai_string.find_character_from_left("FoO", #char "f");
+    jai_string.find_index_from_left("Foo", "f");
+    jai_string.find_index_from_left("FoO", #char "f");
 
     // For potential overload error
     //Fooble :: struct {}
