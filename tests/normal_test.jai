@@ -2,7 +2,7 @@
 
 #import "Basic";
 
-#import "Strings";
+#import "Strings"(index_algorithm=.SIMPLE);
 heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
