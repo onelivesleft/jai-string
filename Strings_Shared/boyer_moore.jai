@@ -5,7 +5,7 @@
 
 boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return start_index, true;
-    if start_index >= haystack.count - needle.count  return -1, false;
+    if start_index > haystack.count - needle.count  return -1, false;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;

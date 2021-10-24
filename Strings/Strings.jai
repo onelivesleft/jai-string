@@ -672,7 +672,7 @@ split_into_two :: inline (text: string, separator: $T, keep_separator : Keep_Sep
 
 
 split :: (array: *[$N] string, text: string, separator: $T, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> count: int #expand {
-    count : int;
+    count := -1;
     mr := ifx max_results <= 0 || max_results > N then N else max_results;
     for split(text, separator, max_results = mr, skip_empty = skip_empty, keep_separator = keep_separator, compare = compare) {
         (<<array)[it_index] = it;

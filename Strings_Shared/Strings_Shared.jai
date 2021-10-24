@@ -1,4 +1,5 @@
 // @Todo
+// [ ] in-place replace string->string
 // [ ] `count` simd - is #asm working?
 // [ ] first_index simd - has the stashing of xmm registers been relaxed, granting performance?
 // [ ] error in index_profile when needle is `" "`

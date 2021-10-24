@@ -1,6 +1,6 @@
 #import "Basic";
 
-#import "Strings"(index_algorithm=.SIMPLE_SSE2);
+#import "Strings";
 heap :: #import "Strings_Alloc"(null);
 temp :: #import "Strings_Alloc"(__temporary_allocator);
 
@@ -283,8 +283,8 @@ main :: () {
     test(871, index, 5);
 
 
-    jai_string.index_of_string("Foo", "f");
-    jai_string.find_character_from_left("FoO", #char "f");
+    jai_string.find_index_from_left("Foo", "f");
+    jai_string.find_index_from_left("FoO", #char "f");
 
     // For potential overload error
     //Fooble :: struct {}
@@ -1198,4 +1198,6 @@ __;
     test(485, trim_through("blah blah blah .. blah blah blah", #char "."), "");
     test(486, trim_through("blah blah blah . blah blah blah", #char "."), "");
     test(487, trim_through("blah blah blah blah blah blah", #char "."), "blah blah blah blah blah blah");
+
+    test(488, boyer_moore_first_index("<<", "<<", 0, case_sensitive), 0);
 }
