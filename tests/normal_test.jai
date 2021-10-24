@@ -1,3 +1,5 @@
+// @Note this file must be saved as LF only!
+
 #import "Basic";
 
 #import "Strings";

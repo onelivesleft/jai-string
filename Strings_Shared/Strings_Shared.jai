@@ -1,5 +1,6 @@
 // @Todo
 // [ ] in-place replace string->string
+// [ ] Bug in `index_profile` when needle is one char! @Urgent
 // [ ] `count` simd - is #asm working?
 // [ ] first_index simd - has the stashing of xmm registers been relaxed, granting performance?
 // [ ] error in index_profile when needle is `" "`
@@ -1046,7 +1047,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
     }
 
     total := 0;
-
+/*
     if compare.kind == {
         case .CASE_SENSITIVE;
             if simd_mode[context.thread_index] == {
@@ -1245,7 +1246,7 @@ count :: (haystack: string, needle: u8, user_compare: Character_Compare) -> tota
                     return total;
             }
     }
-
+*/
     for 0 .. haystack.count - 1 {
         if compare.compare(haystack[it], needle) {
             total += 1;
@@ -2610,6 +2611,15 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
         else
             return `it == "";
     }
+}
+
+
+copy_string :: (s: string, allocator: Allocator, allocator_data: *void = null) -> string {
+    if !s.count return "";
+
+    copy := alloc_string(s.count, allocator, allocator_data);
+    memcpy(copy.data, s.data, s.count);
+    return copy;
 }
 
 

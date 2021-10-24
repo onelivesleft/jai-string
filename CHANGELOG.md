@@ -1,10 +1,17 @@
 # Change Log
 
-## [1.0.3] - 2021-10-24
-* Renamed `trim_to`, `trim_past` -> `trim_into`, `trim_through`.
-* Fixed `trim_through` behaviour when only one needle present.
+## [1.0.5] - 2021-10-24
 * Fixed array-write version of `split` when used on empty strings.
 * Fixed boyer-moore first index returning false for equal haystack/needle.
+
+## [1.0.4] - 2021-10-12
+* Fixed indexing algorithms erroneously allocating with context.allocator
+* Fixed `null_terminate` in `join`.
+
+## [1.0.3] - 2021-10-12
+* Renamed `trim_to`, `trim_past` -> `trim_into`, `trim_through`.
+* Fixed `trim_through` behaviour when only one needle present.
+* Updated to work with compiler v86.
 
 ## [1.0.2] - 2021-09-22
 * Fixed SIMD `last_index` procs.

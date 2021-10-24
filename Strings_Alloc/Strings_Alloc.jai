@@ -170,15 +170,15 @@ join :: (strings: .. string, allocator: Allocator = null, allocator_data: *void 
     }
 
     terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
+    extra_byte := ifx terminating then 1 else 0;
 
     count := 0;
     for strings  count += it.count;
-    if terminating  count += 1;
 
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    joined := alloc_string(count, result.allocator, result.allocator_data);
+    joined := alloc_string(count + extra_byte, result.allocator, result.allocator_data);
     memcpy(joined.data, strings[0].data, strings[0].count);
     position := joined.data + strings[0].count;
     for 1 .. strings.count - 1 {
@@ -202,15 +202,15 @@ join :: (strings: [] string, separator: string, allocator: Allocator = null, all
     }
 
     terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
+    extra_byte := ifx terminating then 1 else 0;
 
     count := separator.count * (strings.count - 1);
     for strings  count += it.count;
-    if terminating  count += 1;
 
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    joined := alloc_string(count, result.allocator, result.allocator_data);
+    joined := alloc_string(count + extra_byte, result.allocator, result.allocator_data);
     memcpy(joined.data, strings[0].data, strings[0].count);
     position := joined.data + strings[0].count;
     for 1 .. strings.count - 1 {
@@ -391,14 +391,14 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, all
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
+    extra_byte := ifx terminating then 1 else 0;
 
     count := desired_count;
-    if terminating  count += 1;
 
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    padded := alloc_string(count, result.allocator, result.allocator_data);
+    padded := alloc_string(count + extra_byte, result.allocator, result.allocator_data);
     padded_index := 0;
     padding_chars_required := desired_count - str.count;
     while padded_index <= padding_chars_required - pad_with.count {
@@ -435,14 +435,14 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, alloc
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
+    extra_byte := ifx terminating then 1 else 0;
 
     count := desired_count;
-    if terminating  count += 1;
 
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    padded := alloc_string(count, result.allocator, result.allocator_data);
+    padded := alloc_string(count + extra_byte, result.allocator, result.allocator_data);
     padded_index := desired_count - pad_with.count;
     while padded_index >= str.count {
         memcpy(padded.data + padded_index, pad_with.data, pad_with.count);
@@ -481,14 +481,14 @@ pad_center :: (str: string, desired_count: int, pad_with := default_pad_with, al
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
+    extra_byte := ifx terminating then 1 else 0;
 
     count := desired_count;
-    if terminating  count += 1;
 
     result : Allocator_Wrapper;
     set_result_allocator();
 
-    padded := alloc_string(count, result.allocator, result.allocator_data);
+    padded := alloc_string(count + extra_byte, result.allocator, result.allocator_data);
     center_index := (desired_count - str.count) / 2;
 
     // left
@@ -544,9 +544,9 @@ repeat :: (str: string, times: int, allocator: Allocator = null, allocator_data:
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
+    extra_byte := ifx terminating then 1 else 0;
 
     count := str.count * times;
-    extra_byte := ifx terminating then 1 else 0;
 
     result : Allocator_Wrapper;
     set_result_allocator();
