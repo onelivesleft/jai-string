@@ -1,15 +1,14 @@
-// All functions return allocated data, and take `allocator` + `allocator_data` optional parameters,
+// All functions return allocated data, and take an `allocator` optional parameters,
 // (defaulting to using the allocator specified in the module parameters).
 
 // Recommended use is to import this module into a namespace, named after the allocator used. i.e.
-// heap :: #import "Strings_Alloc";
-// temp :: #import "Strings_Alloc"(__temporary_allocator);
+// heap_strings :: #import "Strings_Alloc";
+// temp_strings :: #import "Strings_Alloc"(temp);
 
 
 #module_parameters (
-    // Default allocator: null will use `context.allocator`
-    default_allocator : Allocator = null,
-    default_allocator_data : *void = null,
+    // Default allocator: empty will use `context.allocator`
+    default_allocator : Allocator = .{},
 
     // Adds `print` and `builder_to_string`set to behave the
     // same as every other allocated proc (i.e. if null use module allocator, which

@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.6] - 2021-11-27
+* Updated to work with new `Allocator` style.
+* Added some thread-unsafe indexing procs.
+
 ## [1.0.5] - 2021-10-24
 * Fixed array-write version of `split` when used on empty strings.
 * Fixed boyer-moore first index returning false for equal haystack/needle.

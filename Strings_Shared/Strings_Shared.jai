@@ -2614,10 +2614,10 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
 }
 
 
-copy_string :: (s: string, allocator: Allocator, allocator_data: *void = null) -> string {
+copy_string :: (s: string, allocator: Allocator) -> string {
     if !s.count return "";
 
-    copy := alloc_string(s.count, allocator, allocator_data);
+    copy := alloc_string(s.count, allocator);
     memcpy(copy.data, s.data, s.count);
     return copy;
 }

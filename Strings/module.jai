@@ -10,7 +10,7 @@
     // Index algorithm used to find instance of string in other string.
     // Can be overriden with `set_index_algorithm`
     index_algorithm : enum {
-        SIMPLE; SIMPLE_SSE2; SIMPLE_AVX2;
+        SIMPLE; SIMPLE_SSE2; SIMPLE_AVX2; SIMPLE_UNSAFE;
         BOYER_MOORE; BOYER_MOORE_SSE2; BOYER_MOORE_AVX2;
         KNUTH_MORRIS_PRATT; } = .BOYER_MOORE,
 
@@ -37,6 +37,10 @@ else #if index_algorithm == .SIMPLE_SSE2 {
 else #if index_algorithm == .SIMPLE_AVX2 {
     default_first_index :: simple_avx2_first_index;
     default_last_index  :: simple_avx2_last_index;
+}
+else #if index_algorithm == .SIMPLE_UNSAFE {
+    default_first_index :: unsafe_simple_first_index;
+    default_last_index  :: unsafe_simple_last_index;
 }
 else #if index_algorithm == .BOYER_MOORE {
     //#load "../Strings_Shared/boyer_moore.jai";

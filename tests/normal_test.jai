@@ -2,9 +2,9 @@
 
 #import "Basic";
 
-#import "Strings"(index_algorithm=.SIMPLE);
-heap :: #import "Strings_Alloc"(null);
-temp :: #import "Strings_Alloc"(__temporary_allocator);
+#import "Strings"(index_algorithm=.SIMPLE_UNSAFE);
+heap :: #import "Strings_Alloc";
+temp_strings :: #import "Strings_Alloc"(temp);
 
 jai_string :: #import "String";
 
@@ -297,43 +297,43 @@ main :: () {
     test(88, parts, string.["", "aa", "bb", "cc", ""]);
 
     // @TODO compiler error : check if update fixes / report bug
-    //backwards := heap.split(" aa bb cc ", " ", reversed = true, allocator = __temporary_allocator);
-    backwards := heap.split(" aa bb cc ", " ", true, 0, false, .NO, __temporary_allocator);
+    //backwards := heap.split(" aa bb cc ", " ", reversed = true, allocator = temp);
+    backwards := heap.split(" aa bb cc ", " ", true, 0, false, .NO, temp);
     test(89, backwards, string.["", "cc", "bb", "aa", ""]);
 
     some_text := "some text\there";
 
-    temp_parts := temp.split(some_text, .[#char " ", #char "\t"]);
+    temp_parts := temp_strings.split(some_text, .[#char " ", #char "\t"]);
     test(90, temp_parts, string.["some", "text", "here"]);
 
-    temp_parts = temp.split(some_text, cast([] u8)" \t");
+    temp_parts = temp_strings.split(some_text, cast([] u8)" \t");
     test(91, temp_parts, string.["some", "text", "here"]);
 
-    joined := temp.join(temp_parts, " ");
+    joined := temp_strings.join(temp_parts, " ");
     i := last_index(joined, " ");
     joined[i] = #char "\t";
     test(92, joined, some_text);
 
-    joined = temp.join(temp_parts, #char "\t");
+    joined = temp_strings.join(temp_parts, #char "\t");
     replace(joined, #char "\t", #char " ", 1);
     test(93, joined, some_text);
 
-    test(94, temp.split(some_text, cast([] u8) " \t", false, 1), .["some text\there"]);
-    test(95, temp.split(some_text, cast([] u8) " \t", false, 2), .["some", "text\there"]);
+    test(94, temp_strings.split(some_text, cast([] u8) " \t", false, 1), string.["some text\there"]);
+    test(95, temp_strings.split(some_text, cast([] u8) " \t", false, 2), string.["some", "text\there"]);
 
-    test( 97, temp.replace(some_text, "ae", "e"),    "some text\there");
-    test( 98, temp.replace(some_text, "s",  "e"),    "eome text\there");
-    test( 96, temp.replace(some_text, "e",  "ae"),   "somae taext\thaerae");
-    test( 99, temp.replace(some_text, "e",  "a", 2), "soma taxt\there");
-    test(100, temp.replace(some_text, "e",  "a", 1), "soma text\there");
-    test(101, temp.replace(some_text, "e",  "a", 0), "soma taxt\thara");
+    test( 97, temp_strings.replace(some_text, "ae", "e"),    "some text\there");
+    test( 98, temp_strings.replace(some_text, "s",  "e"),    "eome text\there");
+    test( 96, temp_strings.replace(some_text, "e",  "ae"),   "somae taext\thaerae");
+    test( 99, temp_strings.replace(some_text, "e",  "a", 2), "soma taxt\there");
+    test(100, temp_strings.replace(some_text, "e",  "a", 1), "soma text\there");
+    test(101, temp_strings.replace(some_text, "e",  "a", 0), "soma taxt\thara");
 
-    temp0 := temp.replace(some_text, "E",  "ae",   compare=ignore_case);
-    temp1 := temp.replace(some_text, "AE", "e",    compare=ignore_case);
-    temp2 := temp.replace(some_text, "S",  "e",    compare=ignore_case);
-    temp3 := temp.replace(some_text, "E",  "a", 2, ignore_case);
-    temp4 := temp.replace(some_text, "E",  "a", 1, ignore_case);
-    temp5 := temp.replace(some_text, "E",  "a", 0, ignore_case);
+    temp0 := temp_strings.replace(some_text, "E",  "ae",   compare=ignore_case);
+    temp1 := temp_strings.replace(some_text, "AE", "e",    compare=ignore_case);
+    temp2 := temp_strings.replace(some_text, "S",  "e",    compare=ignore_case);
+    temp3 := temp_strings.replace(some_text, "E",  "a", 2, ignore_case);
+    temp4 := temp_strings.replace(some_text, "E",  "a", 1, ignore_case);
+    temp5 := temp_strings.replace(some_text, "E",  "a", 0, ignore_case);
     test(102, temp0, "somae taext\thaerae");
     test(103, temp1, "some text\there");
     test(104, temp2, "eome text\there");
@@ -384,16 +384,16 @@ main :: () {
     }
     test(1181, index, 3);
 
-    temp_parts = temp.split("  aa    bb \t cc ", cast([]u8) " \t", skip_empty = true);
+    temp_parts = temp_strings.split("  aa    bb \t cc ", cast([]u8) " \t", skip_empty = true);
     test(119, temp_parts, string.["aa", "bb", "cc"]);
 
     test(120, contains(some_text, "some"), true);
     test(121, contains(some_text, "soma"), false);
     test(122, contains(some_text, "text"), true);
     test(123, contains(some_text, "here"), true);
-    test(124, contains(some_text, "her"), true);
+    test(124, contains(some_text, "her"),  true);
 
-    rls_parts := temp.split(really_long_string, "\n");
+    rls_parts := temp_strings.split(really_long_string, "\n");
     test(125, trim_end(rls_parts[0], #char "\r"), rls_0);
     test(126, trim_end(rls_parts[1], "\r"), rls_1);
     test(127, trim_end(rls_parts[2], cast([]u8)"\r"), rls_2);
@@ -450,7 +450,7 @@ main :: () {
     parts = heap.split(split(" aa bb cc ", " "));
     test(156, parts, string.["", "aa", "bb", "cc", ""]);
 
-    parts = temp.split(line_split(" aa\nbb\r\ncc "));
+    parts = temp_strings.split(line_split(" aa\nbb\r\ncc "));
     test(157, parts, string.[" aa", "bb", "cc "]);
 
     test(158, heap.join("Hello ", "to ", "the ", "world."), "Hello to the world.");
@@ -492,15 +492,15 @@ main :: () {
     test(183, heap.camel_from_snake("HELLO_hello_hello", true), "HELLOHelloHello");
     test(184, heap.camel_from_snake("Hello_Hello_Hello"), "HelloHelloHello");
 
-    test(185, temp.capitalized("blAh"), "BlAh");
-    test(186, temp.capitalized("blAh", false), "Blah");
+    test(185, temp_strings.capitalized("blAh"), "BlAh");
+    test(186, temp_strings.capitalized("blAh", false), "Blah");
 
-    rev := temp.reverse("gnat");
+    rev := temp_strings.reverse("gnat");
     test(187, rev, "tang");
     reverse(rev);
     test(188, rev, "gnat");
 
-    rev = temp.reverse("ognat");
+    rev = temp_strings.reverse("ognat");
     test(189, rev, "tango");
     reverse(rev);
     test(190, rev, "ognat");
@@ -549,7 +549,7 @@ main :: () {
     }
     test(2161, index, 12);
 
-    temp_parts = temp.index_split("  aa    bb \t cc ", 2, 4, 8, 10, 13, 15);
+    temp_parts = temp_strings.index_split("  aa    bb \t cc ", 2, 4, 8, 10, 13, 15);
     test(217, temp_parts, string.["  ", "aa", "    ", "bb", " \t ", "cc", " "]);
 
     valid : bool;
@@ -703,19 +703,19 @@ main :: () {
     }
     test(2751, index, 9);
 
-    test(276, temp.replace(map, "*?", question_mark_index, "-"),   "Ho-Abou--nic--m---hess?");
-    test(277, temp.replace(map, "?o?", question_mark_index, "---"),   "---*A---***-nic***Am******hess?");
+    test(276, temp_strings.replace(map, "*?", question_mark_index, "-"),   "Ho-Abou--nic--m---hess?");
+    test(277, temp_strings.replace(map, "?o?", question_mark_index, "---"),   "---*A---***-nic***Am******hess?");
 
-    bah := temp.copy(some_text);
+    bah := temp_strings.copy(some_text);
     replace(bah, #char "\t", #char " ");
-    temp_parts = temp.split(bah, "? ?", question_mark_index);
+    temp_parts = temp_strings.split(bah, "? ?", question_mark_index);
     test(278, temp_parts, string.["som", "ex", "ere"]);
 
-    temp_parts = temp.split(bah, "? ?", question_mark_index, true);
+    temp_parts = temp_strings.split(bah, "? ?", question_mark_index, true);
     test(279, temp_parts, string.["ere", "ex", "som"]);
 
-    test(280, temp.lower("What Goes On Here"), "what goes on here");
-    test(281, temp.upper("What Goes On Here"), "WHAT GOES ON HERE");
+    test(280, temp_strings.lower("What Goes On Here"), "what goes on here");
+    test(281, temp_strings.upper("What Goes On Here"), "WHAT GOES ON HERE");
 
     test(282, equal("What Goes On Here", "what goes on here"), false);
     test(283, equal("What Goes On Here", "what goes on here", ignore_case), true);
@@ -749,9 +749,9 @@ main :: () {
     advance_past(*bah2, #char "e");
     test(296, bah2, "");
 
-    more_than_16_one   := temp.repeat("What Goes On Here", 11);
-    more_than_16_two   := temp.repeat("What Goes On Here", 11);
-    more_than_16_three := temp.repeat("what goes on here", 11);
+    more_than_16_one   := temp_strings.repeat("What Goes On Here", 11);
+    more_than_16_two   := temp_strings.repeat("What Goes On Here", 11);
+    more_than_16_three := temp_strings.repeat("what goes on here", 11);
     test(297, equal(more_than_16_one, more_than_16_two), true);
     test(298, equal(more_than_16_one, more_than_16_two, ignore_case), true);
     test(299, equal(more_than_16_one, more_than_16_three), false);
@@ -968,18 +968,18 @@ main :: () {
     escaped := #string __
 \e\\\n\r\t\"\0\xAB\d123\uABCD\UABCDEF12
 __;
-    test(343, temp.apply_backslash(escaped), "\e\\\n\r\t\"\0\xAB\d123\uABCD\UABCDEF12\n");
+    test(343, temp_strings.apply_backslash(escaped), "\e\\\n\r\t\"\0\xAB\d123\uABCD\UABCDEF12\n");
 */
 
     escaped := #string __
 \\\n\r\t\"\0\x08\d123\eX
 __;
-    test(343, cast([]u8)temp.apply_backslash(slice(escaped, 0, -1)), cast([]u8)"\\\n\r\t\"\0\x08\d123\eX");
+    test(343, cast([]u8)temp_strings.apply_backslash(slice(escaped, 0, -1)), cast([]u8)"\\\n\r\t\"\0\x08\d123\eX");
 
     unescaped := #string __
 \e\\\n\r\t\"\0\x08
 __;
-    test(344, cast([]u8)temp.escape("\e\\\n\r\t\"\0\x08"), cast([]u8)slice(unescaped, 0, -1));
+    test(344, cast([]u8)temp_strings.escape("\e\\\n\r\t\"\0\x08"), cast([]u8)slice(unescaped, 0, -1));
 
 
     banana_sandwiches := "banana sandwiches are nice but banana & pear sandwiches are nicer";
@@ -1125,18 +1125,18 @@ __;
 
     split_into_parts : [5] string = ---;
     split(*split_into_parts, " aa bb cc ", #char " ");
-    test(453, split_into_parts, .["", "aa", "bb", "cc", ""]);
+    test(453, split_into_parts, string.["", "aa", "bb", "cc", ""]);
 
     result_count := split(*split_into_parts, " aa bb cc ", "bb");
-    test(454, split_into_parts, .[" aa ", " cc ", "", "", ""]);
+    test(454, split_into_parts, string.[" aa ", " cc ", "", "", ""]);
     test(455, result_count, 2);
 
     result_count = split(*split_into_parts, " aa bb cc ", "bb", keep_separator = .AS_PREFIX);
-    test(456, split_into_parts, .[" aa ", "bb cc ", "", "", ""]);
+    test(456, split_into_parts, string.[" aa ", "bb cc ", "", "", ""]);
     test(457, result_count, 2);
 
     result_count = split(*split_into_parts, " aa bb cc ", "BB", keep_separator = .AS_PREFIX, compare = ignore_case);
-    test(458, split_into_parts, .[" aa ", "bb cc ", "", "", ""]);
+    test(458, split_into_parts, string.[" aa ", "bb cc ", "", "", ""]);
     test(459, result_count, 2);
 
     index = 0;
@@ -1187,10 +1187,10 @@ __;
     }
     test(479, index, 4);
 
-    temp_parts = temp.count_split(some_text, 2);
+    temp_parts = temp_strings.count_split(some_text, 2);
     test(480, temp_parts, string.["so", "me", " t", "ex", "t\t", "he", "re"]);
 
-    temp_parts = temp.count_split(some_text, 3, true);
+    temp_parts = temp_strings.count_split(some_text, 3, true);
     test(481, temp_parts, string.["ere", "t\th", "tex", "me ", "so"]);
 
     test(482, trim_into("blah blah blah .. blah blah blah", #char "."), "..");

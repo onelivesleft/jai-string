@@ -37,6 +37,125 @@ simple_last_index :: (haystack: string, needle: string, start_index: int, compar
     return -1, false;
 }
 
+
+unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if needle.count == 0  return start_index, true;
+    if needle.count == 1 {
+        index, found := first_index(haystack, needle[0], start_index, compare);
+        return index, found;
+    }
+    if start_index > haystack.count - needle.count  return -1, false;
+
+    last_possible_start_index := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
+    haystack_end_ptr := haystack.data + cast(u64)(haystack.count - 1);
+    needle_end := cast(u64)needle.count - 1;
+
+    character_in_sentinel_slot := <<haystack_end_ptr;
+    <<haystack_end_ptr = <<needle.data;
+    defer <<haystack_end_ptr = character_in_sentinel_slot;
+
+    ever : struct {};
+    for_expansion :: (_: *type_of(ever), body: Code, flags: For_Flags) #expand {
+        `it, `it_index := null;
+        while true  #insert body;
+    }
+
+    haystack_ptr := cast(u64)haystack.data + cast(u64)start_index;
+    for outer: ever {
+        defer haystack_ptr += 1;
+
+        if !compare.compare(<<cast(*u8)haystack_ptr, <<needle.data)  continue;
+
+        if haystack_ptr >= last_possible_start_index {
+            if haystack_ptr > last_possible_start_index
+                return -1, false;
+
+            <<haystack_end_ptr = character_in_sentinel_slot;
+            needle_ptr := needle.data + 1;
+            for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
+                if !compare.compare(<<cast(*u8)character, <<needle_ptr)
+                    return -1, false;
+
+                needle_ptr += 1;
+            }
+
+            return cast(int)(haystack_ptr - cast(u64)haystack.data), true;
+        }
+
+        needle_ptr := needle.data + 1;
+        for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
+            if !compare.compare(<<cast(*u8)character, <<needle_ptr)
+                continue outer;
+
+            needle_ptr += 1;
+        }
+
+        return cast(int)(haystack_ptr - cast(u64)haystack.data), true;
+    }
+
+    assert(false, "This can't happen!");
+    return -1, false; // can't happen
+}
+
+
+
+unsafe_simple_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if needle.count == 0  return start_index, true;
+    if needle.count == 1 {
+        index, found := last_index(haystack, needle[0], start_index, compare);
+        return index, found;
+    }
+    if start_index < needle.count  return -1, false;
+
+    character_in_sentinel_slot := <<haystack.data;
+    <<haystack.data = <<needle.data;
+    defer <<haystack.data = character_in_sentinel_slot;
+
+    ever : struct {};
+    for_expansion :: (_: *type_of(ever), body: Code, flags: For_Flags) #expand {
+        `it, `it_index := null;
+        while true  #insert body;
+    }
+
+    haystack_ptr := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
+    needle_end := cast(u64)needle.count - 1;
+
+    for outer: ever {
+        defer haystack_ptr -= 1;
+
+        if !compare.compare(<<cast(*u8)haystack_ptr, <<needle.data)  continue;
+
+        if haystack_ptr == cast(u64)haystack.data {
+            if <<haystack.data != character_in_sentinel_slot
+                return -1, false;
+
+            needle_ptr := needle.data + 1;
+            for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
+                if !compare.compare(<<cast(*u8)character, <<needle_ptr)
+                    return -1, false;
+
+                needle_ptr += 1;
+            }
+
+            return 0, true;
+        }
+
+        needle_ptr := needle.data + 1;
+        for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
+            if !compare.compare(<<cast(*u8)character, <<needle_ptr)
+                continue outer;
+
+            needle_ptr += 1;
+        }
+
+        return cast(int)(haystack_ptr - cast(u64)haystack.data), true;
+    }
+
+    assert(false, "This can't happen!");
+    return -1, false; // can't happen
+}
+
+
 asm_sse2_case_sensitive_first_index_setup :: #code { #asm {
     movdqu.x   needle_vec:, [needle_ptr];
 }};

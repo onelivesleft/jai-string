@@ -3,6 +3,7 @@
 //       so... code it directly!
 
 
+
 knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return from_index, true;
     if from_index >= haystack.count - needle.count  return -1, false;

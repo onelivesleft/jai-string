@@ -3,6 +3,7 @@
 //       so... code it directly!
 
 
+
 boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
     if needle == ""  return start_index, true;
     if start_index > haystack.count - needle.count  return -1, false;
@@ -17,8 +18,10 @@ boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, 
 
     haystack_ptr := haystack.data + cast(u64)(needle.count - 1 + start_index);
     haystack_end := haystack.data + cast(u64)haystack.count;
+    needle_end := needle.count - 1;
+
     while haystack_ptr < haystack_end {
-        needle_index := needle.count - 1;
+        needle_index := needle_end;
         while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
             haystack_ptr -= 1;
             needle_index -= 1;
