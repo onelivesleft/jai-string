@@ -12,8 +12,8 @@ heap :: #import "Strings_Alloc";
 main :: () {
     t : float64;
 
-    serial_haystack := heap.copy(degenerate);
-    simd_haystack := heap.copy(degenerate);
+    serial_haystack := heap.copy_string(degenerate);
+    simd_haystack := heap.copy_string(degenerate);
     table : [] Character_Translation = .[Character_Translation.{#char "f", #char "F"}];
 
     format_float := *context.print_style.default_format_float;

@@ -1,5 +1,10 @@
 # Change Log
 
+## [1.0.7] - 2021-12-09
+* Updated all built-in index algorithms so that they use a character index when the needle has length 1.
+* Renamed `copy` to `copy_string`
+* Added `char_split`
+
 ## [1.0.6] - 2021-11-27
 * Updated to work with new `Allocator` style.
 * Added some thread-unsafe indexing procs.

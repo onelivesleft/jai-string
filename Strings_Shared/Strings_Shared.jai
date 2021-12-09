@@ -1,14 +1,18 @@
 // @Todo
+// [ ] add pointer versions of for_expansions
+// [ ] split asm blocks into setup and loop
+// [x] update readme for allocator change
+// [ ] investigate boyer-moore avx/sse first_index speed - why is last_index so much faster?
 // [ ] in-place replace string->string
-// [ ] Bug in `index_profile` when needle is one char! @Urgent
+// [x] Bug in `index_profile` when needle is one char!
 // [ ] `count` simd - is #asm working?
 // [ ] first_index simd - has the stashing of xmm registers been relaxed, granting performance?
-// [ ] error in index_profile when needle is `" "`
+// [x] error in index_profile when needle is `" "`
 // [ ] schpeeeed https://web.archive.org/web/20201107074620/http://effbot.org/zone/stringlib.htm
 
 // [ ] Metaprogram option to run equivalent of index_profile on program data and select algorithm accordingly
 // [ ] Add SIMD_mode to Comparator?
-// [ ] SIMD first_index/last_index chars
+// [x] SIMD first_index/last_index chars
 // [ ] SIMD replace char   // wait until we can split asm blocks
 // [ ] SIMD replace chars  // wait until we can split asm blocks
 // [ ] SIMD is_any?
@@ -148,6 +152,19 @@ unsafe_slice :: inline (str: string, from_index: int) -> string {
     result : string = ---;
     result.data = str.data + from_index;
     result.count = str.count - from_index;
+    return result;
+}
+
+
+unsafe_substring :: inline (str: string, from_index: int, count: int) -> string {
+    // @Note Handles positive indexes only!
+    assert(from_index >= 0, "Cannot slice; from_index falls outwith range of string.");
+    assert(count > 0, "Cannot slice; count is not >= 0.");
+    assert(from_index + count <= str.count, "Cannot slice; count falls outwith range of string.");
+
+    result : string = ---;
+    result.data = str.data + from_index;
+    result.count = count;
     return result;
 }
 
@@ -1639,7 +1656,23 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                         while haystack_ptr >= end {
                             next_haystack_ptr := haystack_ptr - 16;
 
-                            #insert_internal asm_sse2_case_sensitive_last_index_inner;
+                            #asm {
+                                movdqu.x   needle_vec:, [needle_ptr];
+                                movdqu.x   haystack_vec:, [haystack_ptr];
+
+                                /* check for equality */
+                                movdqu.x   results_vec:, haystack_vec;
+                                pcmpeqb.x  results_vec, needle_vec;
+                                pmovmskb.x found_gpr:, results_vec;
+
+                                /* calculate index of last equal character */
+                                lzcnt.w    index_gpr:, found_gpr;
+
+                                /* pack found:index and export */
+                                shl.d      found_gpr, 16;
+                                or.w       found_gpr, index_gpr;
+                                mov.d      [results_data], found_gpr;
+                            }
 
                             if results.found
                                 return cast(int)(haystack_ptr - cast(u64)haystack.data + 15 - results.index), true;
@@ -1669,7 +1702,23 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                         while haystack_ptr >= end {
                             next_haystack_ptr := haystack_ptr - 32;
 
-                            #insert_internal asm_avx2_case_sensitive_last_index_inner;
+                            #asm AVX,AVX2 {
+                                movdqu.y   needle_vec:, [needle_ptr];
+                                movdqu.y   haystack_vec:, [haystack_ptr];
+
+                                /* check for equality */
+                                pcmpeqb.y  results_vec:, haystack_vec, needle_vec;
+
+                                /* calculate index of last equal character */
+                                pmovmskb.y found_gpr:, results_vec;
+                                xor.q      index_gpr:, index_gpr;
+                                lzcnt.d    index_gpr, found_gpr;
+
+                                /* pack found:index and export */
+                                shl.q      found_gpr, 32;
+                                or.q       found_gpr, index_gpr;
+                                mov.q      [results_data], found_gpr;
+                            }
 
                             if results.found
                                 return cast(int)(haystack_ptr - cast(u64)haystack.data + 31 - results.index), true;
@@ -1711,8 +1760,52 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                         while haystack_ptr >= end {
                             next_haystack_ptr := haystack_ptr - 16;
 
-                            #insert_internal asm_sse2_ignore_case_last_index_inner;
+                            #asm {
+                                movdqu.x case_vec:, [case_ptr];
+                                movdqu.x a_vec:, [a_ptr];
+                                movdqu.x z_vec:, [z_ptr];
 
+                                movdqu.x needle_vec:, [needle_ptr];
+                                movdqu.x haystack_vec:, [haystack_ptr];
+
+                                /* check for case-sensitive equality */
+                                movdqu.x result_cased_vec:, needle_vec;
+                                pcmpeqb.x result_cased_vec, haystack_vec;
+
+                                /* check for ignore-case equality */
+                                por.x haystack_vec, case_vec;
+                                por.x needle_vec, case_vec;
+                                movdqu.x result_nocase_vec:, needle_vec;
+                                pcmpeqb.x result_nocase_vec, haystack_vec;
+
+                                /* generate mask for which bits should be case-sensitive */
+                                movdqa.x mask_vec:, haystack_vec;
+                                pcmpgtb.x mask_vec, z_vec;
+
+                                movdqa.x bounds_vec:, a_vec;
+                                pcmpgtb.x bounds_vec, haystack_vec;
+                                por.x mask_vec, bounds_vec;
+
+                                /* apply mask to keep case-sensitive bits */
+                                pand.x result_cased_vec, mask_vec;
+
+                                /* invert mask then apply it to keep ignore-case bits */
+                                /* we have to write to mask_vec and use it below because
+                                it's the 2nd op that's negated */
+                                pandn.x mask_vec, result_nocase_vec;
+
+                                /* combine results */
+                                por.x result_cased_vec, mask_vec;
+
+                                /* calculate index of last equal character */
+                                pmovmskb.x found_gpr:, result_cased_vec;
+                                lzcnt.w index_gpr:, found_gpr;
+
+                                /* pack found:index and export */
+                                shl.d found_gpr, 16;
+                                or.w found_gpr, index_gpr;
+                                mov.d [results_data], found_gpr;
+                            }
                             if results.found
                                 return cast(int)(haystack_ptr - cast(u64)haystack.data + 15 - results.index), true;
                             else
@@ -1750,7 +1843,46 @@ last_index :: (haystack: string, needle: u8, from_index: int, compare: Character
                         while haystack_ptr >= end {
                             next_haystack_ptr := haystack_ptr - 32;
 
-                            #insert_internal asm_avx2_ignore_case_last_index_inner;
+                            #asm AVX,AVX2 {
+                                movdqu.y case_vec:, [case_ptr];
+                                movdqu.y a_vec:, [a_ptr];
+                                movdqu.y z_vec:, [z_ptr];
+
+                                movdqu.y needle_vec:, [needle_ptr];
+                                movdqu.y haystack_vec:, [haystack_ptr];
+
+                                /* check for case-sensitive equality */
+                                pcmpeqb.y result_cased_vec:, needle_vec, haystack_vec;
+
+                                /* check for ignore-case equality */
+                                por.y haystack_vec, haystack_vec, case_vec;
+                                por.y needle_vec, needle_vec, case_vec;
+                                pcmpeqb.y result_nocase_vec:, needle_vec, haystack_vec;
+
+                                /* generate mask for which bits should be case-sensitive */
+                                pcmpgtb.y mask_vec:, haystack_vec, z_vec;
+                                pcmpgtb.y bounds_vec:, a_vec, haystack_vec;
+                                por.y mask_vec, mask_vec, bounds_vec;
+
+                                /* apply mask to keep case-sensitive bits */
+                                pand.y result_cased_vec, result_cased_vec, mask_vec;
+
+                                /* invert mask then apply it to keep ignore-case bits */
+                                pandn.y result_nocase_vec, mask_vec, result_nocase_vec;
+
+                                /* combine results */
+                                por.y result_cased_vec, result_cased_vec, result_nocase_vec;
+
+                                /* calculate index of first equal character */
+                                pmovmskb.y found_gpr:, result_cased_vec;
+                                xor.q index_gpr:, index_gpr;
+                                lzcnt.d index_gpr, found_gpr;
+
+                                /* pack found:index and export */
+                                shl.q found_gpr, 32;
+                                or.q found_gpr, index_gpr;
+                                mov.q [results_data], found_gpr;
+                            }
 
                             if results.found
                                 return cast(int)(haystack_ptr - cast(u64)haystack.data + 31 - results.index), true;
@@ -1885,6 +2017,11 @@ Split_By_Proc :: struct {
 }
 
 
+Split_Into_Chars :: struct {
+    text : string;
+}
+
+
 #scope_file
 
 fill_split_struct :: () #expand {
@@ -1952,6 +2089,13 @@ make_split :: (text: string, separator: string, index_proc: Index_Proc, max_resu
     fill_split_struct();
     split_struct.separator = separator;
     split_struct.index_proc = index_proc;
+    return split_struct;
+}
+
+
+make_char_split :: (text: string) -> Split_Into_Chars {
+    split_struct : Split_Into_Chars = ---;
+    split_struct.text = text;
     return split_struct;
 }
 
@@ -2420,6 +2564,34 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
     }
 }
 
+
+for_expansion :: (splitter: *Split_Into_Chars, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : u8 = ---;
+    `it_index : int = -1;
+
+    if reverse {
+        ptr := splitter.text.data + splitter.text.count - 1;
+        while ptr >= splitter.text.data {
+            it = <<ptr;
+            it_index += 1;
+            #insert body;
+            ptr -= 1;
+        }
+    }
+    else {
+        ptr := splitter.text.data;
+        end := splitter.text.data + splitter.text.count;
+        while ptr < end {
+            it = <<ptr;
+            it_index += 1;
+            #insert body;
+            ptr += 1;
+        }
+    }
+}
 
 
 for_expansion :: (splitter: *Split_By_Count, body: Code, flags: For_Flags) #expand {

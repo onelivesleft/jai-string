@@ -2,7 +2,7 @@
 
 #import "Basic";
 
-#import "Strings"(index_algorithm=.SIMPLE_UNSAFE);
+#import "Strings"(index_algorithm=.BOYER_MOORE);
 heap :: #import "Strings_Alloc";
 temp_strings :: #import "Strings_Alloc"(temp);
 
@@ -104,18 +104,34 @@ rls_4 :: "Our immortal souls are trapped here in this purgatory, and I know what
 
 
 main :: () {
+    print("SIMD OFF\n");
+    set_simd_mode(.OFF);
+    run_tests();
+
+    if errors.count == 0 {
+        print("\nSIMD SSE2\n");
+        set_simd_mode(.SSE2);
+        run_tests();
+    }
+
+    if errors.count == 0 {
+        print("\nSIMD AVX2\n");
+        set_simd_mode(.AVX2);
+        run_tests();
+    }
+}
+
+run_tests :: () {
     defer {
         if !errors_only
             for word: split("How about a nice game of chess?", #char " ")
                 print("%\n", word);
 
         if errors.count != 0
-            print("\nErrors:\n%\n", errors);
+            print("Errors:\n%\n", errors);
         else
-            print("\nAll OK!\n");
+            print("All OK!\n");
     }
-
-    set_simd_mode(.OFF);
 
     //set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
     //set_index_algorithm(knuth_morris_pratt_first_index, knuth_morris_pratt_last_index);
@@ -185,22 +201,22 @@ main :: () {
     test(522, trim(short_string, " This "), "is wrong, empirically, and we should stop teaching it.\n");
     test(523, trim(short_string, " it.\n"), " This is wrong, empirically, and we should stop teaching");
 
-    trimmed := heap.copy(trim(short_string));
+    trimmed := heap.copy_string(trim(short_string));
 
     to_upper(trimmed);
     test(53, trimmed, "THIS IS WRONG, EMPIRICALLY, AND WE SHOULD STOP TEACHING IT.");
     to_lower(trimmed);
     test(54, trimmed, "this is wrong, empirically, and we should stop teaching it.");
 
-    simple := heap.copy("foo bar bar qux quux");
+    simple := heap.copy_string("foo bar bar qux quux");
     replace(simple, #char "a", #char "u");
     test(55, simple, "foo bur bur qux quux");
 
-    simple = heap.copy("foo bar bar qux quux");
+    simple = heap.copy_string("foo bar bar qux quux");
     replace(simple, cast([]u8) "aeiou", #char "y");
     test(555, simple, "fyy byr byr qyx qyyx");
 
-    passwords := heap.copy("type in the password to enter the password then push enter");
+    passwords := heap.copy_string("type in the password to enter the password then push enter");
     changes := replace(passwords, "password", #char "*");
     test(56, changes, 16);
     test(57, passwords, "type in the ******** to enter the ******** then push enter");
@@ -481,7 +497,7 @@ main :: () {
     test(177, heap.snake_from_camel("HELLOHelloHello"), "hello_hello_hello");
     test(178, heap.snake_from_camel("HELLOHelloHello", true), "Hello_Hello_Hello");
 
-    blah := heap.copy("blAh");
+    blah := heap.copy_string("blAh");
     to_capitalized(blah);
     test(179, blah, "BlAh");
     to_capitalized(blah, false);
@@ -613,7 +629,7 @@ main :: () {
     }
     test(2385, index, 5);
 
-    map := heap.copy("How about a nice game of chess?");
+    map := heap.copy_string("How about a nice game of chess?");
     replace(map, #char " ", #char "-");
     replace(map, #char "a", #char "A");
     test(239, map, "How-About-A-nice-gAme-of-chess?");
@@ -706,7 +722,7 @@ main :: () {
     test(276, temp_strings.replace(map, "*?", question_mark_index, "-"),   "Ho-Abou--nic--m---hess?");
     test(277, temp_strings.replace(map, "?o?", question_mark_index, "---"),   "---*A---***-nic***Am******hess?");
 
-    bah := temp_strings.copy(some_text);
+    bah := temp_strings.copy_string(some_text);
     replace(bah, #char "\t", #char " ");
     temp_parts = temp_strings.split(bah, "? ?", question_mark_index);
     test(278, temp_parts, string.["som", "ex", "ere"]);
@@ -720,7 +736,7 @@ main :: () {
     test(282, equal("What Goes On Here", "what goes on here"), false);
     test(283, equal("What Goes On Here", "what goes on here", ignore_case), true);
 
-    bah2 := heap.copy(bah);
+    bah2 := heap.copy_string(bah);
     advance_to(*bah, #char "s");
     test(284, bah, "some text here");
     advance_to(*bah, "ex");
@@ -1202,4 +1218,10 @@ __;
     test(487, trim_through("blah blah blah blah blah blah", #char "."), "blah blah blah blah blah blah");
 
     test(488, boyer_moore_first_index("<<", "<<", 0, case_sensitive), 0);
+
+
+    last_index_test :: "ooma loompa dooopidee doo hell yeah hell yeweeeeeeeeah";
+    last_index_of_a := jai_string.find_index_from_right(last_index_test, "a");
+    test(489, last_index(last_index_test, "a"), last_index_of_a);
+    test(490, last_index(last_index_test, "A", ignore_case), last_index_of_a);
 }

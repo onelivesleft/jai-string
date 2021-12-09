@@ -53,7 +53,7 @@ set_index_algorithm :: (first_index_proc := default_first_index, last_index_proc
 }
 
 
-copy :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
+copy_string :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
     if !str  return empty();
 
     result : string = ---;
@@ -76,7 +76,7 @@ copy :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> s
 reverse :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
     if !str  return empty();
 
-    result := copy(str, allocator, null_terminate);
+    result := copy_string(str, allocator, null_terminate);
     if null_terminate  result.count -= 1;
     _reverse(result);
     if null_terminate  result.count += 1;
@@ -99,7 +99,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
         if needle == "" {
             result : Allocator = ---;
             set_result_allocator();
-            return copy(haystack, result, null_terminate);
+            return copy_string(haystack, result, null_terminate);
         }
     }
 
@@ -165,7 +165,7 @@ join :: (strings: .. string, allocator := Allocator.{}, $$null_terminate := fals
     if strings.count == 1 {
         result : Allocator = ---;
         set_result_allocator();
-        return copy(strings[0], result, null_terminate);
+        return copy_string(strings[0], result, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
@@ -197,7 +197,7 @@ join :: (strings: [] string, separator: string, allocator := Allocator.{}, $$nul
     if strings.count == 1 {
         result : Allocator = ---;
         set_result_allocator();
-        return copy(strings[0], result, null_terminate);
+        return copy_string(strings[0], result, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(strings[strings.count - 1], #char "\0", case_sensitive);
@@ -386,7 +386,7 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, all
     if str.count >= desired_count {
         result : Allocator = ---;
         set_result_allocator();
-        return copy(str, result, null_terminate);
+        return copy_string(str, result, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
@@ -430,7 +430,7 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, alloc
     if str.count >= desired_count {
         result : Allocator = ---;
         set_result_allocator();
-        return copy(str, result, null_terminate);
+        return copy_string(str, result, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
@@ -476,7 +476,7 @@ pad_center :: (str: string, desired_count: int, pad_with := default_pad_with, al
     if str.count >= desired_count {
         result : Allocator = ---;
         set_result_allocator();
-        return copy(str, result, null_terminate);
+        return copy_string(str, result, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
@@ -539,7 +539,7 @@ repeat :: (str: string, times: int, allocator := Allocator.{}, $$null_terminate 
     if times == 1 {
         result : Allocator = ---;
         set_result_allocator();
-        return copy(str, result, null_terminate);
+        return copy_string(str, result, null_terminate);
     }
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
@@ -572,7 +572,7 @@ repeat :: (str: string, times: int, allocator := Allocator.{}, $$null_terminate 
 
 lower :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
     a := get_allocator(allocator);
-    result := copy(str, a, null_terminate);
+    result := copy_string(str, a, null_terminate);
     to_lower(result);
     return result;
 }
@@ -580,7 +580,7 @@ lower :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> 
 
 upper :: (str: string, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
     a := get_allocator(allocator);
-    result := copy(str, a, null_terminate);
+    result := copy_string(str, a, null_terminate);
     to_upper(result);
     return result;
 }
@@ -590,7 +590,7 @@ capitalized :: (str: string, preserve_caps: = true, allocator := Allocator.{}, $
     if !str  return empty();
 
     a := get_allocator(allocator);
-    result := copy(str, a, null_terminate);
+    result := copy_string(str, a, null_terminate);
     to_capitalized(result, preserve_caps);
 
     return result;

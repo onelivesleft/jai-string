@@ -48,7 +48,7 @@ main :: () {
         sse2_valid := true;
         {
             for 1..times {
-                s := scratch.copy(data);
+                s := scratch.copy_string(data);
                 warm(s);
                 t = get_time();
                 reverse(s);
@@ -65,7 +65,7 @@ main :: () {
         avx2_valid := true;
         {
             for 1..times {
-                s := scratch.copy(data);
+                s := scratch.copy_string(data);
                 warm(s);
                 t = get_time();
                 reverse(s);
@@ -82,7 +82,7 @@ main :: () {
         scalar_valid := true;
         {
             for 1..times {
-                s := scratch.copy(data);
+                s := scratch.copy_string(data);
                 warm(s);
                 t = get_time();
                 reverse(s);

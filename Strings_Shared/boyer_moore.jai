@@ -5,11 +5,11 @@
 
 
 boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return start_index, true;
-    if start_index > haystack.count - needle.count  return -1, false;
+    #insert_internal first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
+        // @TODO we should reuse this string buffer until we need to replace it for a larger needle
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
         thread_data[context.thread_index].last_used_needle = copy_string(needle, __default_allocator);
         make_bad_character_delta(needle, compare, false);
@@ -36,8 +36,7 @@ boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, 
 
 
 boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return start_index - 1, true;
-    if start_index < needle.count  return -1, false;
+    #insert_internal last_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -47,24 +46,26 @@ boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, c
         make_good_suffix_delta(needle, compare, true);
     }
 
+    haystack_ptr := haystack.data + cast(u64)(start_index - needle.count);
+    haystack_end := haystack.data;
     needle_end := needle.count - 1;
 
-    /*  see @TODO up top
-    haystack_ptr := cast(u64)haystack.data + cast(u64)start_index - cast(u64)(needle.count);
-    end := cast(u64)haystack.data;
-
-    while haystack_ptr >= end {
+desired_version :: false;
+#if desired_version {
+    while haystack_ptr > haystack_end {
         needle_index := 0;
-        while needle_index <= needle_end && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
+        while needle_index < needle.count && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
             haystack_ptr += 1;
             needle_index += 1;
         }
-        if needle_index > needle_end  return cast(int)(haystack_ptr - cast(u64)needle.count - cast(u64)haystack.data), true;
+        if needle_index >= needle.count  return haystack_ptr - needle.count - haystack.data, true;
 
-        haystack_ptr -= cast(u64)max(bad_character_delta[<<cast(*u8)haystack_ptr], thread_data[context.thread_index].good_suffix_delta[needle_index]);
+        haystack_ptr -= max(thread_data[context.thread_index].bad_character_delta[<<cast(*u8)haystack_ptr], thread_data[context.thread_index].good_suffix_delta[needle_index]);
     }
-    */
 
+    return -1, false;
+}
+else {
     start_index = haystack.count - start_index;
     haystack_index := needle.count - 1 + start_index;
     while haystack_index < haystack.count {
@@ -81,11 +82,80 @@ boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, c
 
     return -1, false;
 }
+}
+
+
+/* @TODO look at this again in the future? it is very slightly faster than the normal version,
+         but we'd need to make the last_index version...
+
+unsafe_boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    if needle.count == 0  return start_index, true;
+    if needle.count == 1  {
+        index, found := first_index(haystack, needle[0], start_index, compare);
+        return index, found;
+    }
+    if start_index > haystack.count - needle.count  return -1, false;
+
+    if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
+        thread_data[context.thread_index].last_search_was_reversed = false;
+        if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle, __default_allocator);
+        make_bad_character_delta(needle, compare, false);
+        make_good_suffix_delta(needle, compare, false);
+    }
+
+    haystack_ptr := haystack.data + cast(u64)(start_index + needle.count - 1);
+    haystack_end := haystack.data + cast(u64)haystack.count;
+    needle_end := needle.count - 1;
+
+    if needle.count > unsafe_sentinel_string.count {
+        free(unsafe_sentinel_string);
+        unsafe_sentinel_string = alloc_string(needle.count, __default_allocator);
+    }
+    memcpy(unsafe_sentinel_string.data, haystack_end - needle.count, needle.count);
+    unsafe_sentinel_string.count = needle.count;
+
+    last_potential_end_character_ptr := haystack_end - needle.count;
+    memset(last_potential_end_character_ptr, needle[needle_end], needle.count);
+
+    {
+        defer memcpy(last_potential_end_character_ptr, unsafe_sentinel_string.data, needle.count);
+
+        needle_index := needle_end;
+        needle_end_minus_one := needle_end - 1;
+
+        while true {
+            if compare.compare(<<cast(*u8)haystack_ptr, needle[needle_end]) {
+                if haystack_ptr >= last_potential_end_character_ptr  break;
+                needle_index = needle_end_minus_one;
+                haystack_ptr -= 1;
+                while needle_index >= 0 && compare.compare(<<cast(*u8)haystack_ptr, needle[needle_index]) {
+                    haystack_ptr -= 1;
+                    needle_index -= 1;
+                }
+                if needle_index < 0  return haystack_ptr + 1 - haystack.data, true;
+            }
+
+            haystack_ptr += max(thread_data[context.thread_index].bad_character_delta[<<cast(*u8)haystack_ptr], thread_data[context.thread_index].good_suffix_delta[needle_index]);
+        }
+    }
+
+    // we've reached the sentinel; check remainder of string
+    s : string = ---;
+    s.data = haystack_ptr - needle_end;
+    s.count = needle.count;
+    last_start_ptr := haystack_end - needle.count;
+    while s.data <= last_start_ptr {
+        if s == needle  return cast(int)(s.data - haystack.data), true;
+        s.data += 1;
+    }
+    return -1, false;
+}
+*/
 
 
 boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return start_index, true;
-    if start_index > haystack.count - needle.count  return -1, false;
+    #insert_internal first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
@@ -286,8 +356,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
 
 
 boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return start_index - 1, true;
-    if start_index < needle.count  return -1, false;
+    #insert_internal last_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -432,8 +501,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
 
 
 boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return start_index, true;
-    if start_index > haystack.count - needle.count  return -1, false;
+    #insert_internal first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
@@ -568,8 +636,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
 
 
 boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return start_index - 1, true;
-    if start_index < needle.count  return -1, false;
+    #insert_internal last_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -728,6 +795,9 @@ thread_data : [max_thread_count] struct {
     last_search_was_reversed : bool;
 };
 
+unsafe_sentinel_string : string;
+
+
 
 get :: inline (str: string, index: int, $reversed: bool) -> u8 {
     #if reversed  return str[str.count - 1 - index];
@@ -786,6 +856,100 @@ make_good_suffix_delta :: (needle: string, compare: Character_Compare, $reversed
     }
 }
 
+/*
+get :: inline (str: string, index: int, $reversed: bool) -> u8 {
+    #if reversed  return str[str.count - 1 - index];
+    else          return str[index];
+}
+
+
+make_bad_character_delta :: (needle: string, compare: Character_Compare, $reversed: bool) {
+    for i: 0 .. alphabet_count - 1
+        thread_data[context.thread_index].bad_character_delta[i] = needle.count;
+    #if !reversed {
+        for i: 0 .. needle.count - 1 {
+            needle_char := needle[i];
+            for alphabet_char: 0 .. cast(u8)(alphabet_count - 1)
+                if compare.compare(needle_char, alphabet_char)
+                    thread_data[context.thread_index].bad_character_delta[alphabet_char] = max(1, needle.count - 1 - i);
+        }
+    }
+    else {
+        for < i: needle.count - 1 .. 0 {
+            needle_char := needle[i];
+            for alphabet_char: 0 .. cast(u8)(alphabet_count - 1)
+                if compare.compare(needle_char, alphabet_char)
+                    thread_data[context.thread_index].bad_character_delta[alphabet_char] = max(1, i);
+        }
+    }
+}
+
+
+is_prefix :: (word: string, index: int, compare: Character_Compare) -> bool {
+    for word_index: 0 .. word.count - index - 1
+        if !compare.compare(word[word_index], word[index + word_index])
+            return false;
+
+    return true;
+}
+
+
+is_postfix :: (word: string, index: int, compare: Character_Compare) -> bool {
+    for word_index: 0 .. word.count - index - 1
+        if !compare.compare(get(word, word_index, true), get(word, index + word_index, true))
+            return false;
+
+    return true;
+}
+
+get_suffix_count :: (word: string, index: int, compare: Character_Compare, $reversed: bool) -> int {
+    word_index := 0;
+    while compare.compare(get(word, index - word_index, reversed), get(word, word.count - 1 - word_index, reversed)) && word_index < index
+        word_index += 1;
+
+    return word_index;
+}
+
+
+make_good_suffix_delta :: (needle: string, compare: Character_Compare, $reversed: bool) {
+    push_allocator(__default_allocator);
+
+    if thread_data[context.thread_index].good_suffix_delta.count < needle.count
+        array_resize(*thread_data[context.thread_index].good_suffix_delta, needle.count, false);
+
+    #if !reversed {
+        last_prefix_index := needle.count - 1;
+
+        for < index: needle.count - 1 .. 0 {
+            if is_prefix(needle, index + 1, compare)
+                last_prefix_index = index + 1;
+            thread_data[context.thread_index].good_suffix_delta.data[index] = last_prefix_index + needle.count - 1 - index;
+        }
+
+        for index: 0 .. needle.count - 2 {
+            suffix_count := get_suffix_count(needle, index, compare, reversed);
+            if !compare.compare(get(needle, index - suffix_count, reversed), get(needle, needle.count - 1 - suffix_count, reversed))
+                thread_data[context.thread_index].good_suffix_delta.data[needle.count - 1 - suffix_count] = needle.count - 1 - index + suffix_count;
+        }
+    }
+    else {
+        first_postfix_index := 0;
+
+        for index: 0 .. needle.count - 1 {
+            if is_postfix(needle, index - 1, compare)
+                first_postfix_index = index - 1;
+            thread_data[context.thread_index].good_suffix_delta.data[index] = first_postfix_index - index;
+        }
+
+        for index: 0 .. needle.count - 2 {
+            suffix_count := get_suffix_count(needle, index, compare, reversed);
+            if !compare.compare(get(needle, index - suffix_count, reversed), get(needle, needle.count - 1 - suffix_count, reversed))
+                thread_data[context.thread_index].good_suffix_delta.data[needle.count - 1 - suffix_count] = needle.count - 1 - index + suffix_count;
+        }
+    }
+}
+
+*/
 
 make_16 :: (value: u8) -> string {
     return sprint("u8.[%1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1, %1];", value);

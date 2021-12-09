@@ -70,8 +70,9 @@ main :: () {
 
     haystack := read_entire_file(haystack_file);
 
-    simple            :: true;
     jai               :: true;
+    simple            :: true;
+    super_simple      :: false;
     simple_sse2       :: true;
     simple_avx2       :: true;
     simple_unsafe     :: true;
@@ -88,7 +89,6 @@ main :: () {
     format_float.zero_removal = .NO;
     format_float.width = 6;
     format_float.trailing_width = 3;
-
 
     find_index_from_left := jai_find_index_from_left;
     find_index_from_right := jai_find_index_from_right;
@@ -163,6 +163,7 @@ main :: () {
     #if simple_unsafe     simple_unsafe_entry    := entry("SIMPLE_UNSAFE", "Simple Unsafe", "unsafe_simple");
     #if simple_sse2       simple_sse2_entry      := entry("SIMPLE_SSE2", "Simple SSE2", "simple_sse2");
     #if simple_avx2       simple_avx2_entry      := entry("SIMPLE_AVX2", "Simple AVX2", "simple_avx2");
+    #if super_simple      super_simple_entry     := entry("SUPER_SIMPLE", "Super Simple", "super_simple");
 
     prev_marker := -1;
 
@@ -250,6 +251,7 @@ main :: () {
         #if simple_unsafe     test(unsafe_simple_first_index, unsafe_simple_last_index, *simple_unsafe_entry);
         #if simple_sse2       test(simple_sse2_first_index, simple_sse2_last_index, *simple_sse2_entry);
         #if simple_avx2       test(simple_avx2_first_index, simple_avx2_last_index, *simple_avx2_entry);
+        #if super_simple      test(super_simple_first_index, super_simple_last_index, *super_simple_entry);
     }
 
     entries : [..] Entry;
@@ -263,6 +265,7 @@ main :: () {
     #if simple_unsafe     array_add(*entries, simple_unsafe_entry);
     #if simple_sse2       array_add(*entries, simple_sse2_entry);
     #if simple_avx2       array_add(*entries, simple_avx2_entry);
+    #if super_simple      array_add(*entries, super_simple_entry);
 
     quick_sort(entries, (a: Entry) -> float64 { return a.first_time; });
 

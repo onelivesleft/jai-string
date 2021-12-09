@@ -4,9 +4,8 @@
 
 
 
-knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return from_index, true;
-    if from_index >= haystack.count - needle.count  return -1, false;
+knuth_morris_pratt_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    #insert_internal first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || compare != thread_data[context.thread_index].last_used_compare || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
@@ -19,7 +18,7 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index:
     j := 0;
     needle_end := needle.count - 1;
     end := cast(u64)haystack.data + cast(u64)haystack.count - 1;
-    for i: cast(u64)haystack.data + cast(u64)from_index .. end {
+    for i: cast(u64)haystack.data + cast(u64)start_index .. end {
         while j >= 0 && !compare.compare(<<cast(*u8)i, needle[j])
             j = thread_data[context.thread_index].needle_table[j];
         if j == needle_end  return cast(s64)((i - cast(u64)j) - cast(u64)haystack.data), true;
@@ -30,10 +29,10 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, from_index:
 }
 
 
-knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: int, compare: Character_Compare) -> index: int, found: bool {
-    if needle == ""  return from_index - 1, true;
-    if from_index < needle.count  return -1, false;
-    from_index = haystack.count - from_index;
+knuth_morris_pratt_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
+    #insert_internal last_index_header;
+
+    start_index = haystack.count - start_index;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed || compare != thread_data[context.thread_index].last_used_compare {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -45,7 +44,7 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, from_index: 
 
     j := 0;
     needle_end := needle.count - 1;
-    for i: from_index .. haystack.count - 1 {
+    for i: start_index .. haystack.count - 1 {
         while j >= 0 && !compare.compare(get(haystack, i, true), get(needle, j, true))
             j = thread_data[context.thread_index].needle_table[j];
         if j == needle_end  return haystack.count - needle.count - (i - j), true;

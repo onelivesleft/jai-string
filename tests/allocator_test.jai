@@ -8,7 +8,7 @@ scratch :: #import "Strings_Alloc"(scratch_allocator);
 
 
 main :: () {
-    foo := scratch.copy(shakespeare);
+    foo := scratch.copy_string(shakespeare);
 
     for count: 1 .. 1000 {
         foo = scratch.replace(foo, "z", "#");

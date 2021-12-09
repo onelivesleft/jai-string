@@ -10,17 +10,17 @@ For example, you could import and use them like this:
 
 ```jai
 #import "Strings";
-heap :: #import "Strings_Alloc";
-scratch :: #import "Strings_Alloc"(scratch_allocator);
-temp :: #import "Strings_Alloc"(__temporary_allocator);
+heap_strings :: #import "Strings_Alloc";
+scratch_strings :: #import "Strings_Alloc"(scratch_allocator);
+temp_strings :: #import "Strings_Alloc"(temp);
 #import "Scratch";
 
 main :: () {
     trimmed := trim("  Some test string  ");  // in Strings, does not allocate
 
-    words := temp.split(trimmed, #char " "); // allocated in temporary storage
+    words := temp_strings.split(trimmed, #char " "); // allocated in temporary storage
 
-    banner := heap.join(words, #char "\n"); // allocated with default allocator
+    banner := heap_strings.join(words, #char "\n"); // allocated with default allocator
 }
 ```
 
@@ -141,7 +141,7 @@ strings_shared :: #import "Strings_Shared"()(max_thread_count=32);
 
 ## Strings
 
-This module provides procedures which predominantly interact with string views; i.e. the jai `string` type.  None of the procdures in this module allocate: to generate new strings from old ones see the `Strings_Alloc` module below.
+This module provides procedures which predominantly interact with string views; i.e. the jai `string` type.  None of the procedures in this module allocate: to generate new strings from old ones see the `Strings_Alloc` module below.
 
 
 ### `#module_parameters`
@@ -151,7 +151,7 @@ This module provides procedures which predominantly interact with string views; 
     * `.IGNORE_CASE`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
-    * `.SIMPLE`, `.SIMPLE_SSE2`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
+    * `.SIMPLE`, `.SIMPLE_SSE2`, `.SIMPLE_AVX2`, `.SIMPLE_UNSAFE`<br>Simplest algorithm, no memory overhead.
     * `.BOYER_MOORE`, `.BOYER_MOORE_SSE2`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
@@ -160,9 +160,11 @@ This module provides procedures which predominantly interact with string views; 
 
 #### A note on indexing algorithms
 
-Whereas other functions in the library will utilize SIMD features (SSE2 & AVX2) when told to with the `set_simd_mode` command, you must explicitly set an index algorithm to use them if that is what you wish:  the default indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
+Whereas other functions in the library will utilize SIMD features (SSE2 & AVX2) when told to with the `set_simd_mode` command, you must explicitly set an index algorithm to use them if that is what you wish`*`:  the default indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
 
 To help with this there is the `index_profile.exe` tool (in the `tools/` folder): provide it with a file and a typical search string from your data and it will show you how each available algorithm performs with the data you are manipulating.
+
+`*` *(Though all the built-in indexing algorithms will detect if the needle is a single character long, and if so will use the relevant built-in character index algorithm, which will obey `set_simd_mode`)*
 
 
 ### Procedures
@@ -353,7 +355,7 @@ For example:
 ```jai
 #import "Strings";
 heap :: #import "Strings_Alloc";
-temp :: #import "Strings_Alloc"(__temporary_allocator);
+temp :: #import "Strings_Alloc"(temp);
 ```
 
 
@@ -361,10 +363,7 @@ temp :: #import "Strings_Alloc"(__temporary_allocator);
 
 
 * `default_allocator : Allocator`<br>
-`Allocator` used to allocate all returned values.  If `null` (the default) then the `context.allocator` will be used.  This may be overridden in each individual call.
-
-* `default_allocator_data : *void`<br>
-Allocator data used when allocating returned values.  This may be overridden in each individual call.
+`Allocator` used to allocate all returned values.  If empty (the default) then the `context.allocator` will be used.  This may be overridden in each individual call.
 
 * `add_convenience_functions`<br>
 Set this to false to disable these procs (it defaults to true) - they provide version of these standard procedures whic behave as per every other proc in this module wrt allocators:
@@ -376,7 +375,7 @@ Set this to false to disable these procs (it defaults to true) - they provide ve
     * `.IGNORE_CASE`
 
 * `index_algorithm`<br>Determines the default string search algorithm to use, can be changed later using `set_index_algorithm`.  One of:
-    * `.SIMPLE`, `.SIMPLE_SSE2`, `.SIMPLE_AVX2`<br>Simplest algorithm, no memory overhead.
+    * `.SIMPLE`, `.SIMPLE_SSE2`, `.SIMPLE_AVX2`, `.SIMPLE_UNSAFE`<br>Simplest algorithm, no memory overhead.
     * `.BOYER_MOORE`, `.BOYER_MOORE_SSE2`, `.BOYER_MOORE_AVX2`<br>[Boyer-Moore algorithm](https://en.wikipedia.org/wiki/Boyer%E2%80%93Moore_string-search_algorithm).  Fastest tested scalar algorithm overall, has a small memory footprint that increases with needle size.
     * `.KNUTH_MORRIS_PRATT`<br>[Knuth-Morris-Pratt algorithm](https://en.wikipedia.org/wiki/Knuth%E2%80%93Morris%E2%80%93Pratt_algorithm). Another fast algorithm, with a similar memory footprint.
 
@@ -385,10 +384,9 @@ Set this to false to disable these procs (it defaults to true) - they provide ve
 
 ### Procedures
 
-Every procedure unique to this module can take these three parameters (in addition to their listed parameters):
+Every procedure unique to this module can take these two parameters (in addition to their listed parameters):
 
 * `allocator: Allocator` - sets the `allocator` to use, overriding the default specified in the `module_parameters`.
-* `allocator_data: *void` - sets the `allocator_data` to use, overriding the default specified in the `module_parameters`.
 * `null_terminate := false` - when enabled, the string returned will have a `#char "\0"` appended to it, if it does not already end with it.
 
 <hr>
@@ -409,7 +407,7 @@ Sets whether to use SIMD optimisations.  One of:
 Note that this will *not* alter the string index algorithm you are using: if you wish to enable or disable SIMD functionalty with string indexing you must do so by choosing the appropriate algorithms using `set_index_algorithm`, or the `index_algorithm` module parameter.
 
 
-* `copy (str: string) -> string`<br>
+* `copy_string (str: string) -> string`<br>
 Returns of a copy of `str`.
 
 

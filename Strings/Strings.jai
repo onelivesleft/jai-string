@@ -723,6 +723,11 @@ split :: inline (text: string, separator: u8, max_results := 0, skip_empty := fa
 }
 
 
+char_split :: inline (text: string) -> Split_Into_Chars {
+    return make_char_split(text);
+}
+
+
 count_split :: inline (text: string, count: int, max_results := 0) -> Split_By_Count {
     return make_split(text, count, max_results);
 }

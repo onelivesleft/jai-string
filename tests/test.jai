@@ -1,6 +1,7 @@
 #import "Basic";
 #import "Strings";
 heap :: #import "Strings_Alloc";
+jai_string :: #import "String";
 
 #load "data/shakespeare.jai";
 
@@ -14,9 +15,10 @@ main :: () {
             print("\nAll OK!\n");
     }
 
-
-    haystack :: "   Hello world in string form can you give me a hell yeah hell yeah";
-
+    haystack :: "hell yeah hell yeweeeeeeeeah";
+    set_simd_mode(.SSE2);
+    last_index_of_z := jai_string.find_index_from_right(haystack, "a");
+    test(1, last_index(haystack, "a"), last_index_of_z);
 }
 
 

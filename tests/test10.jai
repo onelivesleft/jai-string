@@ -34,7 +34,7 @@ main :: () {
         sse2_valid := true;
         {
             for 1..times {
-                s := heap.copy(data);
+                s := heap.copy_string(data);
                 warm(s);
                 t = get_time();
                 to_upper(s);
@@ -49,7 +49,7 @@ main :: () {
         avx2_valid := true;
         {
             for 1..times {
-                s := heap.copy(data);
+                s := heap.copy_string(data);
                 warm(s);
                 t = get_time();
                 to_upper(s);
@@ -64,7 +64,7 @@ main :: () {
         scalar_valid := true;
         {
             for 1..times {
-                s := heap.copy(data);
+                s := heap.copy_string(data);
                 warm(s);
                 t = get_time();
                 to_upper(s);

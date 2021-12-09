@@ -10,6 +10,7 @@
     // Index algorithm used to find instance of string in other string.
     // Can be overriden with `set_index_algorithm`
     index_algorithm : enum {
+        SUPER_SIMPLE;
         SIMPLE; SIMPLE_SSE2; SIMPLE_AVX2; SIMPLE_UNSAFE;
         BOYER_MOORE; BOYER_MOORE_SSE2; BOYER_MOORE_AVX2;
         KNUTH_MORRIS_PRATT; } = .BOYER_MOORE,
@@ -26,7 +27,11 @@ else #if compare == .IGNORE_CASE
     default_compare :: ignore_case;
 
 
-#if index_algorithm      == .SIMPLE {
+#if index_algorithm      == .SUPER_SIMPLE {
+    default_first_index :: super_simple_first_index;
+    default_last_index  :: super_simple_last_index;
+}
+else #if index_algorithm      == .SIMPLE {
     default_first_index :: simple_first_index;
     default_last_index  :: simple_last_index;
 }
