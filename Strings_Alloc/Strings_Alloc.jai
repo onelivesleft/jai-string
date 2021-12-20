@@ -118,7 +118,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
 
     if null_terminate {
         buffer := get_current_buffer(*result);
-        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(*result, #char "\0");
     }
 
@@ -146,7 +146,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 
     if null_terminate {
         buffer := get_current_buffer(*result);
-        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(*result, #char "\0");
     }
 
@@ -627,7 +627,7 @@ snake_from_camel :: (str: string, preserve_caps := false, allocator := Allocator
 
     if null_terminate {
         buffer := get_current_buffer(*result);
-        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(*result, #char "\0");
     }
 
@@ -650,7 +650,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator := Allocator
             append(*result, word);
             buffer := get_current_buffer(*result);
             in_place : string = ---;
-            in_place.data = buffer.data.data + buffer.occupied - word.count;
+            in_place.data = get_buffer_data(buffer) + buffer.count - word.count;
             in_place.count = word.count;
             to_capitalized(in_place, preserve_caps);
         }
@@ -658,7 +658,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator := Allocator
 
     if null_terminate {
         buffer := get_current_buffer(*result);
-        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(*result, #char "\0");
     }
 
@@ -754,7 +754,7 @@ apply_backslash :: (str: string, allocator := Allocator.{}, $$null_terminate := 
 
     if null_terminate {
         buffer := get_current_buffer(*result);
-        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(*result, #char "\0");
     }
 
@@ -828,7 +828,7 @@ escape :: (str: string, allocator := Allocator.{}, $$null_terminate := false) ->
 
     if null_terminate {
         buffer := get_current_buffer(*result);
-        if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(*result, #char "\0");
     }
 
@@ -860,7 +860,7 @@ escape :: (str: string, allocator := Allocator.{}, $$null_terminate := false) ->
 
         if null_terminate {
             buffer := get_current_buffer(builder);
-            if buffer.occupied == 0 || <<(buffer.data.data + buffer.occupied - 1) != #char "\0"
+            if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
                 append(builder, #char "\0");
         }
 
