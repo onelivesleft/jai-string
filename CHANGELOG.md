@@ -1,9 +1,10 @@
 # Change Log
 
-## [1.0.8] - 2021-
+## [1.0.8] - 2021-12-24
 * Renamed `char_split` to `split`
 * Updated references to `String_Builder.occupied` to `String_Builder.count`
 * Updated references to `String_Builder.data.data` to `get_buffer_data(String_Builder)`
+* Added `modules.lst`
 
 ## [1.0.7] - 2021-12-09
 * Updated all built-in index algorithms so that they use a character index when the needle has length 1.
