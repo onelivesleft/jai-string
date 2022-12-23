@@ -1,4 +1,30 @@
-scratch_allocator :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, old_memory_pointer: *void, allocator_data: *void) -> *void {
+#import "Basic";  // for assert
+
+
+scratch_allocator :: Allocator.{scratch_allocator_proc, null};
+
+
+free_scratch_allocator_buffers :: () {
+    // If you are done using the scratch allocator and want to release the buffer
+    // memory.
+    for i: 0 .. buffer_count - 1 {
+        if buffers[i]  free(buffers[i]);
+        sizes[i] = 0;
+    }
+}
+
+
+
+#scope_file
+
+
+
+current_buffer_index := 0;
+buffers : [buffer_count] *void;
+sizes   : [buffer_count] int;
+
+
+scratch_allocator_proc :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, old_memory_pointer: *void, allocator_data: *void) -> *void {
     if #complete mode == {
         case .FREE;
         return null;
@@ -21,25 +47,3 @@ scratch_allocator :: (mode: Allocator_Mode, requested_size: s64, old_size: s64, 
         return buffers[current_buffer_index];
     }
 }
-
-
-free_scratch_allocator_buffers :: () {
-    // If you are done using the scratch allocator and want to release the buffer
-    // memory.
-    for i: 0 .. buffer_count - 1 {
-        if buffers[i]  free(buffers[i]);
-        sizes[i] = 0;
-    }
-}
-
-
-
-#scope_file
-
-
-
-current_buffer_index := 0;
-buffers : [buffer_count] *void;
-sizes   : [buffer_count] int;
-
-#import "Basic"

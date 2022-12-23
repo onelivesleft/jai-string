@@ -19,7 +19,7 @@ last_index_header :: #code {
 
 
 super_simple_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     view := unsafe_substring(haystack, start_index, needle.count);
     last_viewpoint := haystack.data + haystack.count - needle.count;
@@ -34,7 +34,7 @@ super_simple_first_index :: (haystack: string, needle: string, start_index: int,
 
 
 super_simple_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     view := unsafe_substring(haystack, start_index - needle.count, needle.count);
 
@@ -49,7 +49,7 @@ super_simple_last_index :: (haystack: string, needle: string, start_index: int, 
 
 
 simple_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     end := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
     needle_end := cast(u64)needle.count - 1;
@@ -68,7 +68,7 @@ simple_first_index :: (haystack: string, needle: string, start_index: int, compa
 
 
 simple_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
     needle_end := cast(u64)needle.count - 1;
@@ -87,7 +87,7 @@ simple_last_index :: (haystack: string, needle: string, start_index: int, compar
 
 
 unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     last_possible_start_index := cast(u64)haystack.data + cast(u64)(haystack.count - needle.count);
     haystack_end_ptr := haystack.data + cast(u64)(haystack.count - 1);
@@ -143,7 +143,7 @@ unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int
 
 
 unsafe_simple_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     character_in_sentinel_slot := <<haystack.data;
     <<haystack.data = <<needle.data;
@@ -327,7 +327,7 @@ asm_sse2_ignore_case_last_index_inner :: #code { #asm {
 
 
 simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     if compare.kind == {
         case .CASE_SENSITIVE;
@@ -349,7 +349,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                 }
 
                 while haystack_ptr < end_simd {
-                    #insert_internal asm_sse2_case_sensitive_first_index_inner;
+                    #insert,scope() asm_sse2_case_sensitive_first_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr + results.index;
@@ -516,7 +516,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
 
 
 simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     if compare.kind == {
         case .CASE_SENSITIVE;
@@ -536,7 +536,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 16;
 
-                    #insert_internal asm_sse2_case_sensitive_last_index_inner;
+                    #insert,scope() asm_sse2_case_sensitive_last_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr - results.index - 1;
@@ -596,7 +596,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 16;
 
-                    #insert_internal asm_sse2_ignore_case_last_index_inner;
+                    #insert,scope() asm_sse2_ignore_case_last_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr - results.index - 1;
@@ -772,7 +772,7 @@ asm_avx2_ignore_case_last_index_inner :: #code { #asm AVX,AVX2 {
 
 
 simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     if compare.kind == {
         case .CASE_SENSITIVE;
@@ -790,7 +790,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #insert_internal asm_avx2_case_sensitive_first_index_inner;
+                    #insert,scope() asm_avx2_case_sensitive_first_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr + results.index;
@@ -849,7 +849,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #insert_internal asm_avx2_ignore_case_first_index_inner;
+                    #insert,scope() asm_avx2_ignore_case_first_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr + results.index;
@@ -903,7 +903,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
 
 
 simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     if compare.kind == {
         case .CASE_SENSITIVE;
@@ -923,7 +923,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 32;
 
-                    #insert_internal asm_avx2_case_sensitive_last_index_inner;
+                    #insert,scope() asm_avx2_case_sensitive_last_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr - results.index - 1;
@@ -983,7 +983,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 32;
 
-                    #insert_internal asm_avx2_ignore_case_last_index_inner;
+                    #insert,scope() asm_avx2_ignore_case_last_index_inner;
 
                     if results.found {
                         word_index := haystack_ptr - results.index - 1;

@@ -5,7 +5,7 @@
 
 
 boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
@@ -36,7 +36,7 @@ boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, 
 
 
 boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -155,7 +155,7 @@ unsafe_boyer_moore_first_index :: (haystack: string, needle: string, start_index
 
 
 boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
@@ -356,7 +356,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
 
 
 boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -385,7 +385,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 16;
 
-                    #insert_internal asm_sse2_case_sensitive_last_index_inner;
+                    #insert,scope() asm_sse2_case_sensitive_last_index_inner;
 
                     if results.found {
                         needle_index := needle_end;
@@ -445,7 +445,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
                 while haystack_ptr > end_simd && false {
                     next_haystack_ptr := haystack_ptr - 16;
 
-                    #insert_internal asm_sse2_ignore_case_last_index_inner;
+                    #insert,scope() asm_sse2_ignore_case_last_index_inner;
 
                      if results.found {
                         needle_index := needle_end;
@@ -501,7 +501,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
 
 
 boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
@@ -528,7 +528,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #insert_internal asm_avx2_case_sensitive_first_index_inner;
+                    #insert,scope() asm_avx2_case_sensitive_first_index_inner;
 
                     if results.found {
                         //print("% %", results.index, results.found);
@@ -584,7 +584,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
                 results_data := *results;
 
                 while haystack_ptr < end_simd {
-                    #insert_internal asm_avx2_ignore_case_first_index_inner;
+                    #insert,scope() asm_avx2_ignore_case_first_index_inner;
 
                     if results.found {
                         haystack_ptr += results.index;
@@ -636,7 +636,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
 
 
 boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
@@ -665,7 +665,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
                 while haystack_ptr > end_simd {
                     next_haystack_ptr := haystack_ptr - 32;
 
-                    #insert_internal asm_avx2_case_sensitive_last_index_inner;
+                    #insert,scope() asm_avx2_case_sensitive_last_index_inner;
 
                     if results.found {
                         needle_index := needle_end;
@@ -725,7 +725,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
                 while haystack_ptr > end_simd && false {
                     next_haystack_ptr := haystack_ptr - 32;
 
-                    #insert_internal asm_avx2_ignore_case_last_index_inner;
+                    #insert,scope() asm_avx2_ignore_case_last_index_inner;
 
                     if results.found {
                         needle_index := needle_end;

@@ -1,5 +1,9 @@
 # Change Log
 
+## [1.0.9] - 2022-12-23
+* Removed copy_string in Shared (Basic copy_string is now identical)
+* Updated for latest compiler version
+
 ## [1.0.8] - 2021-12-24
 * Renamed `char_split` to `split`
 * Updated references to `String_Builder.occupied` to `String_Builder.count`
