@@ -1,5 +1,4 @@
 #import "Basic";
-#import "Time";
 #import "Strings";
 
 #load "data/shakespeare.jai";
@@ -73,9 +72,9 @@ main :: () {
         sse_delta : float64;
         sse_total : int;
         {
-            t = get_time();
+            t = seconds_since_init();
             for 1..times  sse_total += count(haystack, needle);
-            sse_delta = get_time() - t;
+            sse_delta = seconds_since_init() - t;
         }
 
 
@@ -83,9 +82,9 @@ main :: () {
         avx2_delta : float64;
         avx2_total : int;
         {
-            t = get_time();
+            t = seconds_since_init();
             for 1..times  avx2_total += count(haystack, needle);
-            avx2_delta = get_time() - t;
+            avx2_delta = seconds_since_init() - t;
         }
 
 
@@ -93,9 +92,9 @@ main :: () {
         scalar_delta : float64;
         scalar_total : int;
         {
-            t = get_time();
+            t = seconds_since_init();
             for 1..times  scalar_total += count(haystack, needle);
-            scalar_delta = get_time() - t;
+            scalar_delta = seconds_since_init() - t;
         }
 
         print("CASE SENSITIVE:\n");
@@ -115,9 +114,9 @@ main :: () {
         sse_delta : float64;
         sse_total : int;
         {
-            t = get_time();
+            t = seconds_since_init();
             for 1..times  sse_total += count(haystack, needle);
-            sse_delta = get_time() - t;
+            sse_delta = seconds_since_init() - t;
         }
 
 
@@ -125,9 +124,9 @@ main :: () {
         avx2_delta : float64;
         avx2_total : int;
         {
-            t = get_time();
+            t = seconds_since_init();
             for 1..times  avx2_total += count(haystack, needle);
-            avx2_delta = get_time() - t;
+            avx2_delta = seconds_since_init() - t;
         }
 
 
@@ -135,9 +134,9 @@ main :: () {
         scalar_delta : float64;
         scalar_total : int;
         {
-            t = get_time();
+            t = seconds_since_init();
             for 1..times  scalar_total += count(haystack, needle);
-            scalar_delta = get_time() - t;
+            scalar_delta = seconds_since_init() - t;
         }
 
         print("\n\nIGNORE CASE:\n");

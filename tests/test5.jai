@@ -1,5 +1,4 @@
 #import "Basic";
-#import "Time";
 
 #load "data/shakespeare.jai";
 
@@ -22,25 +21,25 @@ main :: () {
 
     asm_delta : float64;
     {
-        t = get_time();
+        t = seconds_since_init();
         total = 0;
         for 0 .. cased.count - 1{
             if asm(<<cast(*u8)(cased.data + it), <<cast(*u8)(uncased.data + it))
                 total += 1;
         }
-        asm_delta = get_time() - t;
+        asm_delta = seconds_since_init() - t;
         print("asm: (%) %\n", total, asm_delta);
     }
 
     jai_delta : float64;
     {
-        t = get_time();
+        t = seconds_since_init();
         total = 0;
         for 0 .. cased.count - 1{
             if jai(<<cast(*u8)(cased.data + it), <<cast(*u8)(uncased.data + it))
                 total += 1;
         }
-        jai_delta = get_time() - t;
+        jai_delta = seconds_since_init() - t;
         print("jai: (%) %\n", total, jai_delta);
     }
 
@@ -48,9 +47,9 @@ main :: () {
 }
 
 
-asm :: (a: u8, b: u8) -> bool {
-    ptr_a := *a;
-    ptr_b := *b;
+asm :: (_a: u8, _b: u8) -> bool {
+    ptr_a := *_a;
+    ptr_b := *_b;
     result : u8 = 0; // true
     ptr_result := *result;
     #asm {

@@ -1,5 +1,4 @@
 #import "Basic";
-#import "Time";
 #import "Strings";
 heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
@@ -9,7 +8,7 @@ jai_string :: #import "String";
 
 main :: () {
     data := shakespeare;
-    times :: 1000;
+    times :: 10;
 
     t : float64;
 
@@ -19,7 +18,7 @@ main :: () {
     format_float.trailing_width = 3;
 
     valid := copy_string(data);
-    jai_string.to_upper(valid);
+    jai_string.to_upper_in_place(valid);
 
     warm :: (str: string) {
         total := 0;
@@ -36,9 +35,9 @@ main :: () {
             for 1..times {
                 s := heap.copy_string(data);
                 warm(s);
-                t = get_time();
+                t = seconds_since_init();
                 to_upper(s);
-                sse2_delta += get_time() - t;
+                sse2_delta += seconds_since_init() - t;
                 if s != valid  sse2_valid = false;
             }
         }
@@ -51,9 +50,9 @@ main :: () {
             for 1..times {
                 s := heap.copy_string(data);
                 warm(s);
-                t = get_time();
+                t = seconds_since_init();
                 to_upper(s);
-                avx2_delta += get_time() - t;
+                avx2_delta += seconds_since_init() - t;
                 if s != valid  avx2_valid = false;
             }
         }
@@ -66,9 +65,9 @@ main :: () {
             for 1..times {
                 s := heap.copy_string(data);
                 warm(s);
-                t = get_time();
+                t = seconds_since_init();
                 to_upper(s);
-                scalar_delta += get_time() - t;
+                scalar_delta += seconds_since_init() - t;
                 if s != valid  scalar_valid = false;
             }
         }

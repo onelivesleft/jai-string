@@ -1,5 +1,4 @@
 #import "Basic";
-#import "Time";
 #import "Strings";
 
 #load "data/shakespeare.jai";
@@ -21,26 +20,26 @@ main :: () {
     sse_delta : float64;
     sse_total : u64;
     {
-        t = get_time();
+        t = seconds_since_init();
         index, found := last_index(shakespeare, #char "z", compare);
         while found {
             sse_total = xor(sse_total, xx index);
             index, found = last_index(shakespeare, #char "z", index, compare);
         }
-        sse_delta = get_time() - t;
+        sse_delta = seconds_since_init() - t;
     }
 
     set_simd_mode(.AVX2);
     avx2_delta : float64;
     avx2_total : u64;
     {
-        t = get_time();
+        t = seconds_since_init();
         index, found := last_index(shakespeare, #char "z", compare);
         while found {
             avx2_total = xor(avx2_total, xx index);
             index, found = last_index(shakespeare, #char "z", index, compare);
         }
-        avx2_delta = get_time() - t;
+        avx2_delta = seconds_since_init() - t;
     }
 
 
@@ -48,13 +47,13 @@ main :: () {
     scalar_delta : float64;
     scalar_total : u64;
     {
-        t = get_time();
+        t = seconds_since_init();
         index, found := last_index(shakespeare, #char "z", compare);
         while found {
             scalar_total = xor(scalar_total, xx index);
             index, found = last_index(shakespeare, #char "z", index, compare);
         }
-        scalar_delta = get_time() - t;
+        scalar_delta = seconds_since_init() - t;
     }
 
     print("scalar: (%) %\n", scalar_total, scalar_delta);

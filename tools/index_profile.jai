@@ -2,7 +2,6 @@
 #import "File";
 #import "File_Utilities";
 #import "Sort";
-#import "Time";
 #import "Strings";
 heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
@@ -178,7 +177,7 @@ main :: () {
         }
 
         #if jai {{
-            t := get_time();
+            t := seconds_since_init();
             s := haystack;
             offset := 0;
             index := find_index_from_left(haystack, needle);
@@ -195,9 +194,9 @@ main :: () {
             }
             jai_entry.first_checksum += checksum;
             jai_entry.first_total += total;
-            jai_entry.first_time += get_time() - t;
+            jai_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             s = haystack;
             index = find_index_from_right(haystack, needle);
             checksum = 0;
@@ -210,13 +209,13 @@ main :: () {
             }
             jai_entry.last_checksum += checksum;
             jai_entry.last_total += total;
-            jai_entry.last_time += get_time() - t;
+            jai_entry.last_time += seconds_since_init() - t;
         }}
 
         test :: (first_index_proc: type_of(simple_first_index), last_index_proc: type_of(simple_last_index), entry: *Entry) #expand {
             set_index_algorithm(first_index_proc, last_index_proc);
 
-            t := get_time();
+            t := seconds_since_init();
             index, found := first_index(`haystack, `needle);
             checksum : u64 = 0;
             total := 0;
@@ -227,9 +226,9 @@ main :: () {
             }
             entry.first_checksum += checksum;
             entry.first_total += total;
-            entry.first_time += get_time() - t;
+            entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(`haystack, `needle);
             checksum = 0;
             total = 0;
@@ -240,7 +239,7 @@ main :: () {
             }
             entry.last_checksum += checksum;
             entry.last_total += total;
-            entry.last_time += get_time() - t;
+            entry.last_time += seconds_since_init() - t;
         }
 
         #if boyer_moore       test(boyer_moore_first_index, boyer_moore_last_index, *boyer_moore_entry);

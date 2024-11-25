@@ -1,8 +1,7 @@
 #import "Basic";
-#import "Time";
 #import "Strings";
 #import "Scratch";
-scratch :: #import "Strings_Alloc"(scratch_allocator);
+scratch_ :: #import "Strings_Alloc"(scratch);
 jai_string :: #import "String";
 
 #load "data/shakespeare.jai";
@@ -11,7 +10,7 @@ jai_string :: #import "String";
 main :: () {
     data := shakespeare;
     //data := "abcdefghijklm0123456789nopqrstuvwxyzABCDEFGHIJKLM0123456789NOPQRSTUVWXYZ";
-    times :: 1000;
+    times :: 10;//1000;
 
     print_output :: false;
 
@@ -48,11 +47,11 @@ main :: () {
         sse2_valid := true;
         {
             for 1..times {
-                s := scratch.copy_string(data);
+                s := scratch_.copy_string(data);
                 warm(s);
-                t = get_time();
+                t = seconds_since_init();
                 reverse(s);
-                sse2_delta += get_time() - t;
+                sse2_delta += seconds_since_init() - t;
                 #if print_output  print("sse2:   %\n", s);
                 if it == 1 && s != valid  sse2_valid = false;
                 reset_temporary_storage();
@@ -65,11 +64,11 @@ main :: () {
         avx2_valid := true;
         {
             for 1..times {
-                s := scratch.copy_string(data);
+                s := scratch_.copy_string(data);
                 warm(s);
-                t = get_time();
+                t = seconds_since_init();
                 reverse(s);
-                avx2_delta += get_time() - t;
+                avx2_delta += seconds_since_init() - t;
                 #if print_output  print("avx2:   %\n", s);
                 if it == 1 &&  s != valid  avx2_valid = false;
                 reset_temporary_storage();
@@ -82,11 +81,11 @@ main :: () {
         scalar_valid := true;
         {
             for 1..times {
-                s := scratch.copy_string(data);
+                s := scratch_.copy_string(data);
                 warm(s);
-                t = get_time();
+                t = seconds_since_init();
                 reverse(s);
-                scalar_delta += get_time() - t;
+                scalar_delta += seconds_since_init() - t;
                 #if print_output  print("scalar: %\n", s);
                 if it == 1 && s != valid  scalar_valid = false;
                 reset_temporary_storage();

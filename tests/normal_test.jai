@@ -1,4 +1,4 @@
-// @Note this file must be saved as LF only!
+// @Note this file must be saved as LF only! (Hmmm this probably isn't true any more)
 
 #import "Basic";
 
@@ -312,9 +312,7 @@ run_tests :: () {
     parts := heap.split(" aa bb cc ", " ");
     test(88, parts, string.["", "aa", "bb", "cc", ""]);
 
-    // @TODO compiler error : check if update fixes / report bug
-    //backwards := heap.split(" aa bb cc ", " ", reversed = true, allocator = temp);
-    backwards := heap.split(" aa bb cc ", " ", true, 0, false, .NO, temp);
+    backwards := heap.split(" aa bb cc ", " ", reversed = true, allocator = temp);
     test(89, backwards, string.["", "cc", "bb", "aa", ""]);
 
     some_text := "some text\there";
@@ -463,10 +461,10 @@ run_tests :: () {
     test(154, trim("xxxxxHelloxxxxx", "xx"), "xHellox");
     test(155, trim("xxxxxxHelloxxxxxx", "xx"), "Hello");
 
-    parts = heap.split(split(" aa bb cc ", " "));
+    parts = heap.split(" aa bb cc ", " ");
     test(156, parts, string.["", "aa", "bb", "cc", ""]);
 
-    parts = temp_strings.split(line_split(" aa\nbb\r\ncc "));
+    parts = temp_strings.line_split(" aa\nbb\r\ncc ");
     test(157, parts, string.[" aa", "bb", "cc "]);
 
     test(158, heap.join("Hello ", "to ", "the ", "world."), "Hello to the world.");

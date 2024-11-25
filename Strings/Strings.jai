@@ -628,6 +628,9 @@ count :: (haystack: string, needle: string, $$index: Index_Proc) -> total: int {
     return total;
 }
 
+split_at_index :: inline (text: string, index: int) -> string, string {
+    return slice(text, 0, index), slice(text, index);
+}
 
 split_into_two :: inline (text: string, separator: u8) -> string, string {
     index, found := first_index(text, separator);

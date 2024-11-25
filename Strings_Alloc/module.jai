@@ -10,11 +10,6 @@
     // Default allocator: empty will use `context.allocator`
     default_allocator : Allocator = .{},
 
-    // Adds `print` and `builder_to_string`set to behave the
-    // same as every other allocated proc (i.e. if null use module allocator, which
-    // if null uses the context allocator)
-    add_convenience_functions := true,
-
     // Default compare function used to check for character equality.
     // Can be overridden with `set_default_compare`.
     compare : enum { CASE_SENSITIVE; IGNORE_CASE; } = .CASE_SENSITIVE,

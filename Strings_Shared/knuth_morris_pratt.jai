@@ -5,13 +5,13 @@
 
 
 knuth_morris_pratt_first_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal first_index_header;
+    #insert,scope() first_index_header;
 
     if needle != thread_data[context.thread_index].last_used_needle || compare != thread_data[context.thread_index].last_used_compare || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
         thread_data[context.thread_index].last_used_compare = compare;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
         make_needle_table(needle, compare, false);
     }
 
@@ -30,7 +30,7 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, start_index
 
 
 knuth_morris_pratt_last_index :: (haystack: string, needle: string, start_index: int, compare: Character_Compare) -> index: int, found: bool {
-    #insert_internal last_index_header;
+    #insert,scope() last_index_header;
 
     start_index = haystack.count - start_index;
 
@@ -38,7 +38,7 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, start_index:
         thread_data[context.thread_index].last_search_was_reversed = true;
         thread_data[context.thread_index].last_used_compare = compare;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
         make_needle_table(needle, compare, true);
     }
 

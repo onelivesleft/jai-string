@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.0] - 2024-11-
+* Rework!
+
 ## [1.0.8] - 2021-12-24
 * Renamed `char_split` to `split`
 * Updated references to `String_Builder.occupied` to `String_Builder.count`

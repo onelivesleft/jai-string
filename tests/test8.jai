@@ -1,6 +1,5 @@
 #import "Basic";
 #import "Sort";
-#import "Time";
 #import "Strings"(index_algorithm=.SIMPLE);
 heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
@@ -13,15 +12,15 @@ jai_string :: #import "String";
 main :: () {
     haystack :: shakespeare;// degenerate;
     needle :: " and "; //"ffffffffffffffffffffffffffffffffffffffffn";
-    times :: 3000;
+    times :: 30;
     //needle :: "zealous";
 
-    jai         :: false;
-    boyer_moore :: false;
-    kmp         :: false;
-    simd_off    :: false;
+    jai         :: true;
+    boyer_moore :: true;
+    kmp         :: true;
+    simd_off    :: true;
     sse         :: true;
-    avx2        :: false;
+    avx2        :: true;
 
 
     format_float := *context.print_style.default_format_float;
@@ -66,7 +65,7 @@ main :: () {
         print("%", it % 10);
         #if jai
         {{
-            t = get_time();
+            t = seconds_since_init();
             s := haystack;
             offset := 0;
             index := jai_string.find_index_from_left(haystack, needle);
@@ -80,13 +79,13 @@ main :: () {
                 index = jai_string.find_index_from_left(s, needle);
             }
             jai_total += total;
-            jai_delta += get_time() - t;
+            jai_delta += seconds_since_init() - t;
         }}
 
         #if boyer_moore
         {{
             set_index_algorithm(boyer_moore_first_index);
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             total : u64 = 0;
             while found {
@@ -94,13 +93,13 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             boyer_moore_total += total;
-            boyer_moore_delta += get_time() - t;
+            boyer_moore_delta += seconds_since_init() - t;
         }}
 
         #if kmp
         {{
             set_index_algorithm(knuth_morris_pratt_first_index);
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             total : u64 = 0;
             while found {
@@ -108,14 +107,14 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             kmp_total += total;
-            kmp_delta += get_time() - t;
+            kmp_delta += seconds_since_init() - t;
         }}
 
         #if simd_off
         {{
-            set_index_algorithm(naive_with_simd_first_index);
+            set_index_algorithm(simple_first_index);
             set_simd_mode(.OFF);
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             total : u64 = 0;
             while found {
@@ -123,14 +122,14 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             simd_off_total += total;
-            simd_off_delta += get_time() - t;
+            simd_off_delta += seconds_since_init() - t;
         }}
 
         #if sse
         {{
-            set_index_algorithm(naive_with_simd_first_index);
+            set_index_algorithm(simple_sse2_first_index);
             set_simd_mode(.SSE2);
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             total : u64 = 0;
             while found {
@@ -138,14 +137,14 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             sse_total += total;
-            sse_delta += get_time() - t;
+            sse_delta += seconds_since_init() - t;
         }}
 
         #if avx2
         {{
-            set_index_algorithm(naive_with_simd_first_index);
+            set_index_algorithm(simple_avx2_first_index);
             set_simd_mode(.AVX2);
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             total : u64 = 0;
             while found {
@@ -153,7 +152,7 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             avx2_total += total;
-            avx2_delta += get_time() - t;
+            avx2_delta += seconds_since_init() - t;
         }}
     }
 

@@ -9,4 +9,4 @@ strings_shared_max_thread_count :: max_thread_count;
 
 
 // @TODO cleanup this
-__default_allocator :: Allocator.{__default_allocator_proc, null};
+__default_allocator :: Allocator.{runtime_support_default_allocator_proc, null};

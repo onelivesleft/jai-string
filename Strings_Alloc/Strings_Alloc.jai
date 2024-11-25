@@ -60,12 +60,12 @@ copy_string :: (str: string, allocator := Allocator.{}, $$null_terminate := fals
     a := get_allocator(allocator);
 
     if null_terminate && str[str.count - 1] != #char "\0" {
-        result = alloc_string(str.count + 1, allocator = a);
+        result = alloc_string(str.count + 1,, a);
         memcpy(result.data, str.data, str.count);
         result[result.count - 1] = #char "\0";
     }
     else {
-        result = alloc_string(str.count, allocator = a);
+        result = alloc_string(str.count,, a);
         memcpy(result.data, str.data, str.count);
     }
 
@@ -123,7 +123,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
     }
 
     a := get_allocator(allocator);
-    output := builder_to_string(*result, allocator = a);
+    output := builder_to_string(*result,, a);
     if a != temp
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
@@ -151,7 +151,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
     }
 
     a := get_allocator(allocator);
-    output := builder_to_string(*result, allocator = a);
+    output := builder_to_string(*result,, a);
     if a != temp
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
@@ -177,7 +177,7 @@ join :: (strings: .. string, allocator := Allocator.{}, $$null_terminate := fals
     result : Allocator = ---;
     set_result_allocator();
 
-    joined := alloc_string(count + extra_byte, result);
+    joined := alloc_string(count + extra_byte,, result);
     memcpy(joined.data, strings[0].data, strings[0].count);
     position := joined.data + strings[0].count;
     for 1 .. strings.count - 1 {
@@ -209,7 +209,7 @@ join :: (strings: [] string, separator: string, allocator := Allocator.{}, $$nul
     result : Allocator = ---;
     set_result_allocator();
 
-    joined := alloc_string(count + extra_byte, result);
+    joined := alloc_string(count + extra_byte,, result);
     memcpy(joined.data, strings[0].data, strings[0].count);
     position := joined.data + strings[0].count;
     for 1 .. strings.count - 1 {
@@ -397,7 +397,7 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, all
     result : Allocator = ---;
     set_result_allocator();
 
-    padded := alloc_string(count + extra_byte, result);
+    padded := alloc_string(count + extra_byte,, result);
     padded_index := 0;
     padding_chars_required := desired_count - str.count;
     while padded_index <= padding_chars_required - pad_with.count {
@@ -441,7 +441,7 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, alloc
     result : Allocator = ---;
     set_result_allocator();
 
-    padded := alloc_string(count + extra_byte, result);
+    padded := alloc_string(count + extra_byte,, result);
     padded_index := desired_count - pad_with.count;
     while padded_index >= str.count {
         memcpy(padded.data + padded_index, pad_with.data, pad_with.count);
@@ -487,7 +487,7 @@ pad_center :: (str: string, desired_count: int, pad_with := default_pad_with, al
     result : Allocator = ---;
     set_result_allocator();
 
-    padded := alloc_string(count + extra_byte, result);
+    padded := alloc_string(count + extra_byte,, result);
     center_index := (desired_count - str.count) / 2;
 
     // left
@@ -550,7 +550,7 @@ repeat :: (str: string, times: int, allocator := Allocator.{}, $$null_terminate 
     result : Allocator = ---;
     set_result_allocator();
 
-    repeated := alloc_string(count + extra_byte, result);
+    repeated := alloc_string(count + extra_byte,, result);
     memcpy(repeated.data, str.data, str.count);
 
     copied_count := str.count;
@@ -632,7 +632,7 @@ snake_from_camel :: (str: string, preserve_caps := false, allocator := Allocator
     }
 
     a := get_allocator(allocator);
-    output := builder_to_string(*result, allocator = a);
+    output := builder_to_string(*result,, a);
     if a != temp
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
@@ -663,7 +663,7 @@ camel_from_snake :: (str: string, preserve_caps := false, allocator := Allocator
     }
 
     a := get_allocator(allocator);
-    output := builder_to_string(*result, allocator = a);
+    output := builder_to_string(*result,, a);
     if a != temp
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
@@ -759,7 +759,7 @@ apply_backslash :: (str: string, allocator := Allocator.{}, $$null_terminate := 
     }
 
     a := get_allocator(allocator);
-    output := builder_to_string(*result, allocator = a);
+    output := builder_to_string(*result,, a);
     if a != temp
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output, well_formed;
@@ -833,39 +833,10 @@ escape :: (str: string, allocator := Allocator.{}, $$null_terminate := false) ->
     }
 
     a := get_allocator(allocator);
-    output := builder_to_string(*result, allocator = a);
+    output := builder_to_string(*result,, a);
     if a != temp
         set_temporary_storage_mark(result_temporary_storage_mark);
     return output;
-}
-
-
-#if add_convenience_functions {
-    print :: (format_string: string, args: .. Any, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
-        result : String_Builder;
-        set_result_allocator();
-
-        print_to_builder(*result, format_string, ..args);
-
-        a := get_allocator(allocator);
-        output := builder_to_string(*result, allocator = a);
-        if a != temp
-            set_temporary_storage_mark(result_temporary_storage_mark);
-        return output;
-    } @PrintLike
-
-
-    builder_to_string :: (builder: *String_Builder, extra_bytes_to_prepend := 0, allocator := Allocator.{}, $$null_terminate := false) -> string #must {
-        a := get_allocator(allocator);
-
-        if null_terminate {
-            buffer := get_current_buffer(builder);
-            if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
-                append(builder, #char "\0");
-        }
-
-        return builder_to_string(builder, allocator = a, extra_bytes_to_prepend);
-    }
 }
 
 
@@ -918,7 +889,7 @@ empty :: () -> string #expand {
     if `null_terminate {
         allocator := `allocator;
         a := get_allocator(allocator);
-        empty := alloc_string(1, allocator = a);
+        empty := alloc_string(1,, a);
         empty[0] = #char "\0";
         return empty;
     }
@@ -931,9 +902,6 @@ empty :: () -> string #expand {
 
 
 hex_char_value :: inline (c: u8) -> u8 {
-    if c >= hex_char_values.count  return 0;
-    return hex_char_values[c];
-
     hex_char_values :: u8.[0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                            0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                            0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -941,6 +909,9 @@ hex_char_value :: inline (c: u8) -> u8 {
                            0, 10, 11, 12, 13, 14, 15, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                            0,  0,  0,  0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                            0, 10, 11, 12, 13, 14, 15];
+
+    if c >= hex_char_values.count  return 0;
+    return hex_char_values[c];
 }
 
 
