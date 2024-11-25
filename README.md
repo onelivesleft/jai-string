@@ -196,7 +196,7 @@ Returns a string view inside `str`, between the specified indices.  You may use 
 * `slice_index (str: string, index: int) -> normalized_index: int, valid_when_strict: bool`<br>
 Returns the validated and normalized index which would be used with the provided string, as well as whether such an input would be valid in `strict` mode.
 
-* `unsafe_slice (str: string, from_index: int, to_index: int) -> string`<br>
+* `raw_slice (str: string, from_index: int, to_index: int) -> string`<br>
 Same thing as `slice`, but without any checking on the indices, and without being able to use negative indices (and thus faster).  If you do not specify a `to_index` then it will include all characters up to the end of the string.
 
 * `substring (str: string, from_index: int, count: int) -> string`<br>

@@ -1,7 +1,3 @@
-// No functions in this module allocate - strings returned are views on already
-// existing data.
-
-
 #module_parameters (
     // Default compare function used to check for character equality.
     // Can be overridden with `set_default_compare`.
@@ -13,11 +9,7 @@
         SUPER_SIMPLE;
         SIMPLE; SIMPLE_SSE2; SIMPLE_AVX2; SIMPLE_UNSAFE;
         BOYER_MOORE; BOYER_MOORE_SSE2; BOYER_MOORE_AVX2;
-        KNUTH_MORRIS_PRATT; } = .BOYER_MOORE,
-
-    // When strict mode is enabled asserts will fail when indices fall outside
-    // the range of the string.
-    strict := false
+        KNUTH_MORRIS_PRATT; } = .BOYER_MOORE
 );
 
 
@@ -27,11 +19,11 @@ else #if compare == .IGNORE_CASE
     default_compare :: ignore_case;
 
 
-#if index_algorithm      == .SUPER_SIMPLE {
+#if index_algorithm == .SUPER_SIMPLE {
     default_first_index :: super_simple_first_index;
     default_last_index  :: super_simple_last_index;
 }
-else #if index_algorithm      == .SIMPLE {
+else #if index_algorithm == .SIMPLE {
     default_first_index :: simple_first_index;
     default_last_index  :: simple_last_index;
 }
@@ -67,6 +59,5 @@ else #if index_algorithm == .KNUTH_MORRIS_PRATT {
     default_first_index :: knuth_morris_pratt_first_index;
     default_last_index  :: knuth_morris_pratt_last_index;
 }
-
 
 #load "Strings.jai";

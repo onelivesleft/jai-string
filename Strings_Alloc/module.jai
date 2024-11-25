@@ -7,9 +7,6 @@
 
 
 #module_parameters (
-    // Default allocator: empty will use `context.allocator`
-    default_allocator : Allocator = .{},
-
     // Default compare function used to check for character equality.
     // Can be overridden with `set_default_compare`.
     compare : enum { CASE_SENSITIVE; IGNORE_CASE; } = .CASE_SENSITIVE,
@@ -19,11 +16,7 @@
     index_algorithm : enum {
         SIMPLE; SIMPLE_SSE2; SIMPLE_AVX2;
         BOYER_MOORE; BOYER_MOORE_SSE2; BOYER_MOORE_AVX2;
-        KNUTH_MORRIS_PRATT; } = .BOYER_MOORE,
-
-    // When strict mode is enabled asserts will fail when indices fall outside
-    // the range of the string.
-    strict := false
+        KNUTH_MORRIS_PRATT; } = .BOYER_MOORE
 );
 
 

@@ -1,7 +1,14 @@
 # Change Log
 
 ## [2.0.0] - 2024-11-
-* Rework!
+# Renamed
+`unsafe_slice` -> `raw_slice`
+`unsafe_substring` -> `raw_substring`
+`trim_into` -> `trim_to`
+`trim_start_past` -> `trim_start_through`
+`trim_end_from` -> `trim_end_through`
+`trim_end_after` -> `trim_end_to`
+`pad_center` -> `pad_start_and_end`
 
 ## [1.0.9] - 2022-12-23
 * Removed copy_string in Shared (Basic copy_string is now identical)
