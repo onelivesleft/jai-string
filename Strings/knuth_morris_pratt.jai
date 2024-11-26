@@ -11,7 +11,7 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, start_index
         thread_data[context.thread_index].last_search_was_reversed = false;
         thread_data[context.thread_index].last_used_compare = compare;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_needle_table(needle, compare, false);
     }
 
@@ -38,7 +38,7 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, start_index:
         thread_data[context.thread_index].last_search_was_reversed = true;
         thread_data[context.thread_index].last_used_compare = compare;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_needle_table(needle, compare, true);
     }
 
@@ -58,8 +58,6 @@ knuth_morris_pratt_last_index :: (haystack: string, needle: string, start_index:
 #scope_file
 
 
-#import "Strings_Shared";
-
 thread_data : [2] struct {
     last_used_needle : string;
     last_used_compare : Character_Compare;
@@ -75,7 +73,7 @@ get :: inline (str: string, index: int, $reversed: bool) -> u8 {
 
 
 make_needle_table :: (needle: string, compare: Character_Compare, $reversed: bool) {
-    push_allocator(__default_allocator);
+    push_allocator(context.default_allocator);
 
     if thread_data[context.thread_index].needle_table.count <= needle.count
         array_resize(*thread_data[context.thread_index].needle_table, needle.count + 1, false);

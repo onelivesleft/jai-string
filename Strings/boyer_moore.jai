@@ -12,7 +12,7 @@ boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, 
         // @TODO we should reuse this string buffer until we need to replace it for a larger needle
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
 
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, false);
         make_good_suffix_delta(needle, compare, false);
     }
@@ -42,7 +42,7 @@ boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, c
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, true);
         make_good_suffix_delta(needle, compare, true);
     }
@@ -100,7 +100,7 @@ unsafe_boyer_moore_first_index :: (haystack: string, needle: string, start_index
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, false);
         make_good_suffix_delta(needle, compare, false);
     }
@@ -111,7 +111,7 @@ unsafe_boyer_moore_first_index :: (haystack: string, needle: string, start_index
 
     if needle.count > unsafe_sentinel_string.count {
         free(unsafe_sentinel_string);
-        unsafe_sentinel_string = alloc_string(needle.count,, __default_allocator);
+        unsafe_sentinel_string = alloc_string(needle.count,, context.default_allocator);
     }
     memcpy(unsafe_sentinel_string.data, haystack_end - needle.count, needle.count);
     unsafe_sentinel_string.count = needle.count;
@@ -161,7 +161,7 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, false);
         make_good_suffix_delta(needle, compare, false);
     }
@@ -362,7 +362,7 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, true);
         make_good_suffix_delta(needle, compare, true);
     }
@@ -507,7 +507,7 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
     if needle != thread_data[context.thread_index].last_used_needle || thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = false;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, false);
         make_good_suffix_delta(needle, compare, false);
     }
@@ -642,7 +642,7 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
     if needle != thread_data[context.thread_index].last_used_needle || !thread_data[context.thread_index].last_search_was_reversed {
         thread_data[context.thread_index].last_search_was_reversed = true;
         if thread_data[context.thread_index].last_used_needle  free(thread_data[context.thread_index].last_used_needle);
-        thread_data[context.thread_index].last_used_needle = copy_string(needle,, __default_allocator);
+        thread_data[context.thread_index].last_used_needle = copy_string(needle,, context.default_allocator);
         make_bad_character_delta(needle, compare, true);
         make_good_suffix_delta(needle, compare, true);
     }
@@ -784,8 +784,6 @@ boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: i
 
 #scope_file
 
-#import "Strings_Shared";
-
 alphabet_count :: 256;
 
 thread_data : [2] struct {
@@ -836,7 +834,7 @@ get_suffix_count :: (word: string, index: int, compare: Character_Compare, $reve
 
 
 make_good_suffix_delta :: (needle: string, compare: Character_Compare, $reversed: bool) {
-    push_allocator(__default_allocator);
+    push_allocator(context.default_allocator);
 
     if thread_data[context.thread_index].good_suffix_delta.count < needle.count
         array_resize(*thread_data[context.thread_index].good_suffix_delta, needle.count, false);
@@ -912,7 +910,7 @@ get_suffix_count :: (word: string, index: int, compare: Character_Compare, $reve
 
 
 make_good_suffix_delta :: (needle: string, compare: Character_Compare, $reversed: bool) {
-    push_allocator(__default_allocator);
+    push_allocator(context.default_allocator);
 
     if thread_data[context.thread_index].good_suffix_delta.count < needle.count
         array_resize(*thread_data[context.thread_index].good_suffix_delta, needle.count, false);
