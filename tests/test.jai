@@ -1,6 +1,5 @@
 #import "Basic";
 #import "Strings";
-heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
 
 #load "data/shakespeare.jai";
@@ -9,10 +8,13 @@ only_problems :: false;
 
 main :: () {
     defer {
-        if errors.count != 0
+        if errors.count != 0 {
             print("\nErrors:\n%\n", errors);
-        else
+            exit(1);
+        }
+        else {
             print("\nAll OK!\n");
+        }
     }
 
     haystack :: "hell yeah hell yeweeeeeeeeah";

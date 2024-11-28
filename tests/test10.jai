@@ -1,6 +1,5 @@
 #import "Basic";
 #import "Strings";
-heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
 
 #load "data/shakespeare.jai";
@@ -33,10 +32,10 @@ main :: () {
         sse2_valid := true;
         {
             for 1..times {
-                s := heap.copy_string(data);
+                s := copy_string(data);
                 warm(s);
                 t = seconds_since_init();
-                to_upper(s);
+                to_upper(*s);
                 sse2_delta += seconds_since_init() - t;
                 if s != valid  sse2_valid = false;
             }
@@ -48,10 +47,10 @@ main :: () {
         avx2_valid := true;
         {
             for 1..times {
-                s := heap.copy_string(data);
+                s := copy_string(data);
                 warm(s);
                 t = seconds_since_init();
-                to_upper(s);
+                to_upper(*s);
                 avx2_delta += seconds_since_init() - t;
                 if s != valid  avx2_valid = false;
             }
@@ -63,10 +62,10 @@ main :: () {
         scalar_valid := true;
         {
             for 1..times {
-                s := heap.copy_string(data);
+                s := copy_string(data);
                 warm(s);
                 t = seconds_since_init();
-                to_upper(s);
+                to_upper(*s);
                 scalar_delta += seconds_since_init() - t;
                 if s != valid  scalar_valid = false;
             }

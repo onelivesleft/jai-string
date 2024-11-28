@@ -1,7 +1,6 @@
 #import "Basic";
 #import "Strings";
 #import "Scratch";
-scratch_ :: #import "Strings_Alloc"(scratch);
 jai_string :: #import "String";
 
 #load "data/shakespeare.jai";
@@ -47,10 +46,10 @@ main :: () {
         sse2_valid := true;
         {
             for 1..times {
-                s := scratch_.copy_string(data);
+                s := copy_string(data,, scratch);
                 warm(s);
                 t = seconds_since_init();
-                reverse(s);
+                reverse(*s);
                 sse2_delta += seconds_since_init() - t;
                 #if print_output  print("sse2:   %\n", s);
                 if it == 1 && s != valid  sse2_valid = false;
@@ -64,10 +63,10 @@ main :: () {
         avx2_valid := true;
         {
             for 1..times {
-                s := scratch_.copy_string(data);
+                s := copy_string(data,, scratch);
                 warm(s);
                 t = seconds_since_init();
-                reverse(s);
+                reverse(*s);
                 avx2_delta += seconds_since_init() - t;
                 #if print_output  print("avx2:   %\n", s);
                 if it == 1 &&  s != valid  avx2_valid = false;
@@ -81,10 +80,10 @@ main :: () {
         scalar_valid := true;
         {
             for 1..times {
-                s := scratch_.copy_string(data);
+                s := copy_string(data,, scratch);
                 warm(s);
                 t = seconds_since_init();
-                reverse(s);
+                reverse(*s);
                 scalar_delta += seconds_since_init() - t;
                 #if print_output  print("scalar: %\n", s);
                 if it == 1 && s != valid  scalar_valid = false;

@@ -1,80 +1,86 @@
-Split_By :: struct {
-    text           : string;
-    max_results    : int;
-    skip_empty     : bool;
-    keep_separator : Keep_Separator;
-    compare        : Character_Compare;
+Splitter :: struct {
+    text              : string;
+    max_results       : int;
+    skip_empty        : bool;
+    keep_separator    : Keep_Separator;
+    character_compare : Character_Compare;
 }
 
-
 Split_By_String :: struct {
-    #as using base: Split_By;
+    #as using base: Splitter;
     separator : string;
     first_index : String_Index_Proc;
     last_index  : String_Index_Proc;
 }
 
-
 Split_By_Chars :: struct {
-    #as using base: Split_By;
+    #as using base: Splitter;
     separator : [] u8;
 }
 
-
 Split_By_Char :: struct {
-    #as using base: Split_By;
+    #as using base: Splitter;
     separator : u8;
 }
 
-
-Split_By_Index :: struct {
-    #as using base: Split_By;
-    indexes : [] int;
-}
-
-
-Split_By_Count :: struct {
-    #as using base: Split_By;
-    count : int;
-}
-
-
-Split_By_Line :: struct {
-    #as using base: Split_By;
-}
-
-
 Split_By_Proc :: struct {
-    #as using base: Split_By;
+    #as using base: Splitter;
     separator : string;
     index_proc : Index_Proc;
 }
 
-
-#scope_file
-
-fill_split_struct :: () #expand {
-    assert(`max_results >= 0, "max_results cannot be negative : %", `max_results);
-    `split_struct.text           = `text;
-    `split_struct.max_results    = `max_results;
-    `split_struct.skip_empty     = `skip_empty;
-    `split_struct.keep_separator = `keep_separator;
+Split_By_Index :: struct {
+    #as using base: Splitter;
+    indexes : [] int;
 }
 
-#scope_export
+Split_By_Count :: struct {
+    #as using base: Splitter;
+    count : int;
+}
+
+Split_By_Line :: struct {
+    #as using base: Splitter;
+}
 
 
-to_array :: (splitter: $T/Split_By, reversed := false) -> [..] string {
+to_array :: (splitter: $T/Splitter, reversed := false) -> [..] string {
     result : [..] string;
     if reversed  for < splitter  array_add(*result, it);
     else         for splitter    array_add(*result, it);
     return result;
 }
 
+into_array :: (array: *[] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string {
+    // @Note We set max_results so we don't overflow the destination array: the last entry in the array may
+    //       therefor contain further potential splits.
+
+    result : [] string = .{0, array.data};
+
+    _splitter := splitter;
+    if _splitter.max_results == 0 || _splitter.max_results > array.count
+        _splitter.max_results = array.count;
+
+    if reversed  for < _splitter  { result.count += 1; result[it_index] = it; }
+    else         for _splitter    { result.count += 1; result[it_index] = it; }
+
+    remainder := array.count - result.count;
+    if clear_unused && remainder > 0
+        memset(array.data + result.count, 0, remainder * size_of(string));
+
+    return result;
+}
+
+into_array :: inline (array: *[$N] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string {
+    array_view : [] string = array.*;
+    return into_array(*array_view, splitter, reversed, clear_unused);
+}
+
 
 split_at_index :: (text: string, index: int) -> string, string {
     return slice(text, 0, index), slice(text, index);
 }
+
 
 split_into_two :: (text: string, separator: u8) -> string, string {
     index, found := first_index(text, separator);
@@ -100,172 +106,16 @@ split_into_two :: (text: string, separator: string, $$separator_proc: Index_Proc
     return raw_slice(text, 0, from_index), raw_slice(text, to_index);
 }
 
-split_into_two :: (text: string, separator: $T, keep_separator: Keep_Separator) -> string, string {
-    first, second := split_into_two(text, separator, keep_separator, current_compare);
-    return first, second;
-}
-
-split_into_two :: (text: string, separator: $T, compare: Character_Compare) -> string, string {
-    first, second := split_into_two(text, separator, .NO, compare);
-    return first, second;
-}
-
-split_into_two :: (text: string, separator: $T, keep_separator: Keep_Separator, compare: Character_Compare) -> string, string {
+split_into_two :: (text: string, separator: $T, keep_separator := Keep_Separator.NO, character_compare := default_character_compare) -> string, string {
     parts : [2] string = ---;
-    split(*parts, text, separator, keep_separator = keep_separator, compare = compare);
+    split(*parts, text, separator, keep_separator = keep_separator, character_compare = character_compare);
     return parts[0], parts[1];
 }
 
 
-split_into :: (array: *[$N] string, text: string, separator: $T, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> count: int
-#modify {
-    if T == int  T = u8; // Feels like a kludge; sometimes when we get to here with a #char param it'll register as int and not match inside the split call below.
-    return T == u8 || T == [] u8 || T == string || T == Index_Proc;
-} {
-    count := -1;
-    _max_results := ifx max_results <= 0 || max_results > N then N else max_results;
-    if reversed {
-        for < split(text, separator, max_results = _max_results, skip_empty = skip_empty, keep_separator = keep_separator, compare = compare) {
-            array.*[it_index] = it;
-            count = it_index;
-        }
-    }
-    else {
-        for split(text, separator, max_results = _max_results, skip_empty = skip_empty, keep_separator = keep_separator, compare = compare) {
-            array.*[it_index] = it;
-            count = it_index;
-        }
-    }
-    count += 1;
-    remainder := (N - 1) - count;
-    if remainder > 0
-        memset(array.data + count, 0, remainder * size_of(string));
-    return count;
+split :: inline (text: string, separator: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, character_compare := default_character_compare) -> Split_By_String {
+    return Split_By_String.{.{text, max_results, skip_empty, keep_separator, character_compare}, separator, context.strings_thread_data.string_first_index, context.strings_thread_data.string_last_index};
 }
-
-split_into :: (array: *[$N] string, text: string, separator: $T, reversed := false, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> count: int
-#modify {
-    if T == int  T = u8;
-    return T == u8 || T == [] u8 || T == string || T == Index_Proc;
-} {
-    return split_into(array, text, separator, reversed, max_results, skip_empty, keep_separator, current_compare);
-}
-
-
-split :: inline (text: string, separator: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_String {
-    return make_split(text, separator, compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator);
-    //return Split_By_String.{.{text, max_results, skip_empty, keep_separator, compare}, separator, current_first_index, current_last_index};
-}
-
-split :: inline (text: string, separator: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_String {
-    return make_split(text, separator, current_compare, current_first_index, current_last_index, max_results, skip_empty, keep_separator);
-    //return Split_By_String.{.{text, max_results, skip_empty, keep_separator, current_compare}, separator, current_first_index, current_last_index};
-}
-
-
-split :: inline (text: string, separator: [] u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_Chars {
-    return make_split(text, separator, compare, max_results, skip_empty, keep_separator);
-}
-
-split :: inline (text: string, separator: [] u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Chars {
-    return make_split(text, separator, current_compare, max_results, skip_empty, keep_separator);
-}
-
-
-split :: inline (text: string, separator: u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, compare: Character_Compare) -> Split_By_Char {
-    return make_split(text, separator, compare, max_results, skip_empty, keep_separator);
-}
-
-split :: inline (text: string, separator: u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Char {
-    return make_split(text, separator, current_compare, max_results, skip_empty, keep_separator);
-}
-
-
-count_split :: inline (text: string, count: int, max_results := 0) -> Split_By_Count {
-    return make_split(text, count, max_results);
-}
-
-
-index_split :: inline (text: string, indexes: .. int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
-    return make_split(text, indexes, max_results, skip_empty);
-}
-
-
-split :: inline (text: string, separator: string, $$index: Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Proc {
-    return make_split(text, separator, index, max_results, skip_empty, keep_separator);
-}
-
-
-line_split :: inline (text: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Line {
-    return make_line_split(text,max_results, skip_empty, keep_separator);
-}
-
-
-make_split :: (text: string, separator: string, compare: Character_Compare, first_index_proc: String_Index_Proc, last_index_proc: String_Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_String {
-    split_struct : Split_By_String = ---;
-    fill_split_struct();
-    split_struct.separator = separator;
-    split_struct.compare = compare;
-    split_struct.first_index = first_index_proc;
-    split_struct.last_index = last_index_proc;
-    return split_struct;
-}
-
-
-make_split :: (text: string, separator: [] u8, compare: Character_Compare, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Chars {
-    split_struct : Split_By_Chars = ---;
-    fill_split_struct();
-    split_struct.compare = compare;
-    split_struct.separator = separator;
-    return split_struct;
-}
-
-
-make_split :: (text: string, separator: u8, compare: Character_Compare, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Char {
-    split_struct : Split_By_Char = ---;
-    fill_split_struct();
-    split_struct.compare = compare;
-    split_struct.separator = separator;
-    return split_struct;
-}
-
-
-make_split :: (text: string, indexes: [] int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
-    split_struct : Split_By_Index = ---;
-    fill_split_struct();
-    split_struct.indexes = indexes;
-    return split_struct;
-}
-
-
-make_split :: (text: string, count: int, max_results := 0) -> Split_By_Count {
-    split_struct : Split_By_Count = ---;
-    split_struct.text = text;
-    assert(max_results >= 0, "max_results cannot be negative : %", max_results);
-    split_struct.max_results = max_results;
-    assert(count > 0, "Count must be greater than 0 : %", count);
-    split_struct.count = count;
-    return split_struct;
-}
-
-
-make_split :: (text: string, separator: string, index_proc: Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Proc {
-    split_struct : Split_By_Proc = ---;
-    fill_split_struct();
-    split_struct.separator = separator;
-    split_struct.index_proc = index_proc;
-    return split_struct;
-}
-
-
-make_line_split :: (text: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Line {
-    split_struct : Split_By_Line = ---;
-    fill_split_struct();
-    split_struct.compare = case_sensitive;
-    return split_struct;
-}
-
-
 
 for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
@@ -287,7 +137,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
 
             if reverse {
                 end_index := splitter.text.count;
-                index, found := last_index(splitter.text, splitter.separator, splitter.compare, splitter.last_index);
+                index, found := last_index(splitter.text, splitter.separator, splitter.last_index, splitter.character_compare);
 
                 if splitter.keep_separator == {
                     case .NO;
@@ -307,7 +157,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 }
 
                 while found {
-                    defer index, found = last_index(splitter.text, splitter.separator, index, splitter.compare, splitter.last_index);
+                    defer index, found = last_index(splitter.text, splitter.separator, index, splitter.last_index, splitter.character_compare);
 
                     it = raw_slice(splitter.text, index + separator_offset_to_start, end_index);
                     end_index = index + separator_offset_to_end;
@@ -325,7 +175,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
             }
             else {
                 start_index := 0;
-                index, found := first_index(splitter.text, splitter.separator, splitter.compare, splitter.first_index);
+                index, found := first_index(splitter.text, splitter.separator, splitter.first_index, splitter.character_compare);
 
                 if splitter.keep_separator == {
                     case .NO;
@@ -345,7 +195,7 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
                 }
 
                 while found {
-                    defer index, found = first_index(splitter.text, splitter.separator, index + splitter.separator.count, splitter.compare, splitter.first_index);
+                    defer index, found = first_index(splitter.text, splitter.separator, index + splitter.separator.count, splitter.first_index, splitter.character_compare);
 
                     it = raw_slice(splitter.text, start_index, index + separator_offset_to_end);
                     start_index = index + separator_offset_to_start;
@@ -369,6 +219,219 @@ for_expansion :: (splitter: *Split_By_String, body: Code, flags: For_Flags) #exp
     }
 }
 
+
+split :: inline (text: string, separator: [] u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, character_compare := default_character_compare) -> Split_By_Chars {
+    return Split_By_Chars.{.{text, max_results, skip_empty, keep_separator, character_compare}, separator};
+}
+
+for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expand {
+    #assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    for escape: 1..1 { // so break avoids the cleanup #insert
+        if splitter.max_results == 1 {
+            it = splitter.text;
+            it_index = 0;
+
+            #insert body;
+        }
+        else {
+            max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+            separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
+
+            if reverse {
+                end_index := splitter.text.count;
+                index, found := last_index(splitter.text, splitter.separator, splitter.character_compare);
+                if splitter.keep_separator == {
+                    case .NO;
+                    empty_count = 0;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 0;
+
+                    case .AS_PREFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 0;
+                    separator_offset_to_end = 0;
+
+                    case .AS_POSTFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 1;
+                }
+
+                while found {
+                    defer index, found = last_index(splitter.text, splitter.separator, index, splitter.character_compare);
+
+                    it = raw_slice(splitter.text, index + separator_offset_to_start, end_index);
+                    end_index = index + separator_offset_to_end;
+
+                    if !splitter.skip_empty || it.count != empty_count {
+                        it_index += 1;
+                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
+
+                        #insert(break = break escape) body;
+                    }
+
+                }
+
+                it = raw_slice(splitter.text, 0, end_index);
+            }
+            else {
+                start_index := 0;
+                index, found := first_index(splitter.text, splitter.separator, splitter.character_compare);
+                if splitter.keep_separator == {
+                    case .NO;
+                    empty_count = 0;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 0;
+
+                    case .AS_PREFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 0;
+                    separator_offset_to_end = 0;
+
+                    case .AS_POSTFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 1;
+                }
+
+                while found {
+                    defer index, found = first_index(splitter.text, splitter.separator, index + 1, splitter.character_compare);
+
+                    it = raw_slice(splitter.text, start_index, index + separator_offset_to_end);
+                    start_index = index + separator_offset_to_start;
+
+                    if !splitter.skip_empty || it.count != empty_count {
+                        it_index += 1;
+                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
+
+                        #insert(break = break escape) body;
+                    }
+                }
+
+                it = raw_slice(splitter.text, start_index);
+            }
+
+            if !splitter.skip_empty || it.count != empty_count {
+                it_index += 1;
+                #insert body;
+            }
+        }
+    }
+}
+
+
+split :: inline (text: string, separator: u8, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO, character_compare := default_character_compare) -> Split_By_Char {
+    return Split_By_Char.{.{text, max_results, skip_empty, keep_separator, character_compare}, separator};
+}
+
+for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expand {
+	#assert(!(flags & .POINTER));
+    reverse := flags & .REVERSE;
+
+    `it : string = ---;
+    `it_index : int = -1;
+
+    for escape: 1..1 { // so break avoids the cleanup #insert
+        if splitter.max_results == 1 {
+            it = splitter.text;
+            it_index = 0;
+
+            #insert body;
+        }
+        else {
+            max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
+            separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
+
+            if reverse {
+                end_index := splitter.text.count;
+                index, found := last_index(splitter.text, splitter.separator, splitter.character_compare);
+                if splitter.keep_separator == {
+                    case .NO;
+                    empty_count = 0;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 0;
+
+                    case .AS_PREFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 0;
+                    separator_offset_to_end = 0;
+
+                    case .AS_POSTFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 1;
+                }
+
+                while found {
+                    defer index, found = last_index(splitter.text, splitter.separator, index, splitter.character_compare);
+
+                    it = raw_slice(splitter.text, index + separator_offset_to_start, end_index);
+                    end_index = index + separator_offset_to_end;
+
+                    if !splitter.skip_empty || it.count != empty_count {
+                        it_index += 1;
+                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
+
+                        #insert(break = break escape) body;
+                    }
+                }
+
+                it = raw_slice(splitter.text, 0, end_index);
+            }
+            else {
+                start_index := 0;
+                index, found := first_index(splitter.text, splitter.separator, splitter.character_compare);
+                if splitter.keep_separator == {
+                    case .NO;
+                    empty_count = 0;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 0;
+
+                    case .AS_PREFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 0;
+                    separator_offset_to_end = 0;
+
+                    case .AS_POSTFIX;
+                    empty_count = 1;
+                    separator_offset_to_start = 1;
+                    separator_offset_to_end = 1;
+                }
+
+                while found {
+                    defer index, found = first_index(splitter.text, splitter.separator, index + 1, splitter.character_compare);
+
+                    it = raw_slice(splitter.text, start_index, index + separator_offset_to_end);
+                    start_index = index + separator_offset_to_start;
+
+                    if !splitter.skip_empty || it.count != empty_count {
+                        it_index += 1;
+                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
+
+                        #insert(break = break escape) body;
+                    }
+                }
+
+                it = raw_slice(splitter.text, start_index);
+            }
+
+            if !splitter.skip_empty || it.count != empty_count {
+                it_index += 1;
+                #insert body;
+            }
+        }
+    }
+}
+
+
+split :: inline (text: string, separator: string, $$index: Index_Proc, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Proc {
+    return Split_By_Proc.{.{text, max_results, skip_empty, keep_separator, .{}}, separator, index};
+}
 
 for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
@@ -458,207 +521,9 @@ for_expansion :: (splitter: *Split_By_Proc, body: Code, flags: For_Flags) #expan
 }
 
 
-for_expansion :: (splitter: *Split_By_Chars, body: Code, flags: For_Flags) #expand {
-    #assert(!(flags & .POINTER));
-    reverse := flags & .REVERSE;
-
-    `it : string = ---;
-    `it_index : int = -1;
-
-    for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results == 1 {
-            it = splitter.text;
-            it_index = 0;
-
-            #insert body;
-        }
-        else {
-            max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-            separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
-
-            if reverse {
-                end_index := splitter.text.count;
-                index, found := last_index(splitter.text, splitter.separator, splitter.compare);
-                if splitter.keep_separator == {
-                    case .NO;
-                    empty_count = 0;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 0;
-
-                    case .AS_PREFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 0;
-                    separator_offset_to_end = 0;
-
-                    case .AS_POSTFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 1;
-                }
-
-                while found {
-                    defer index, found = last_index(splitter.text, splitter.separator, index, splitter.compare);
-
-                    it = raw_slice(splitter.text, index + separator_offset_to_start, end_index);
-                    end_index = index + separator_offset_to_end;
-
-                    if !splitter.skip_empty || it.count != empty_count {
-                        it_index += 1;
-                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
-
-                        #insert(break = break escape) body;
-                    }
-
-                }
-
-                it = raw_slice(splitter.text, 0, end_index);
-            }
-            else {
-                start_index := 0;
-                index, found := first_index(splitter.text, splitter.separator, splitter.compare);
-                if splitter.keep_separator == {
-                    case .NO;
-                    empty_count = 0;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 0;
-
-                    case .AS_PREFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 0;
-                    separator_offset_to_end = 0;
-
-                    case .AS_POSTFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 1;
-                }
-
-                while found {
-                    defer index, found = first_index(splitter.text, splitter.separator, index + 1, splitter.compare);
-
-                    it = raw_slice(splitter.text, start_index, index + separator_offset_to_end);
-                    start_index = index + separator_offset_to_start;
-
-                    if !splitter.skip_empty || it.count != empty_count {
-                        it_index += 1;
-                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
-
-                        #insert(break = break escape) body;
-                    }
-                }
-
-                it = raw_slice(splitter.text, start_index);
-            }
-
-            if !splitter.skip_empty || it.count != empty_count {
-                it_index += 1;
-                #insert body;
-            }
-        }
-    }
+index_split :: inline (text: string, indexes: .. int, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Index {
+    return Split_By_Index.{.{text, max_results, skip_empty, keep_separator, .{}}, indexes};
 }
-
-
-
-for_expansion :: (splitter: *Split_By_Char, body: Code, flags: For_Flags) #expand {
-	#assert(!(flags & .POINTER));
-    reverse := flags & .REVERSE;
-
-    `it : string = ---;
-    `it_index : int = -1;
-
-    for escape: 1..1 { // so break avoids the cleanup #insert
-        if splitter.max_results == 1 {
-            it = splitter.text;
-            it_index = 0;
-
-            #insert body;
-        }
-        else {
-            max_it_index := ifx splitter.max_results == 0 then 0 else splitter.max_results - 2;
-            separator_offset_to_start, separator_offset_to_end, empty_count : int = ---;
-
-            if reverse {
-                end_index := splitter.text.count;
-                index, found := last_index(splitter.text, splitter.separator, splitter.compare);
-                if splitter.keep_separator == {
-                    case .NO;
-                    empty_count = 0;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 0;
-
-                    case .AS_PREFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 0;
-                    separator_offset_to_end = 0;
-
-                    case .AS_POSTFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 1;
-                }
-
-                while found {
-                    defer index, found = last_index(splitter.text, splitter.separator, index, splitter.compare);
-
-                    it = raw_slice(splitter.text, index + separator_offset_to_start, end_index);
-                    end_index = index + separator_offset_to_end;
-
-                    if !splitter.skip_empty || it.count != empty_count {
-                        it_index += 1;
-                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
-
-                        #insert(break = break escape) body;
-                    }
-                }
-
-                it = raw_slice(splitter.text, 0, end_index);
-            }
-            else {
-                start_index := 0;
-                index, found := first_index(splitter.text, splitter.separator, splitter.compare);
-                if splitter.keep_separator == {
-                    case .NO;
-                    empty_count = 0;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 0;
-
-                    case .AS_PREFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 0;
-                    separator_offset_to_end = 0;
-
-                    case .AS_POSTFIX;
-                    empty_count = 1;
-                    separator_offset_to_start = 1;
-                    separator_offset_to_end = 1;
-                }
-
-                while found {
-                    defer index, found = first_index(splitter.text, splitter.separator, index + 1, splitter.compare);
-
-                    it = raw_slice(splitter.text, start_index, index + separator_offset_to_end);
-                    start_index = index + separator_offset_to_start;
-
-                    if !splitter.skip_empty || it.count != empty_count {
-                        it_index += 1;
-                        defer if splitter.max_results != 0 && it_index >= max_it_index  break;
-
-                        #insert(break = break escape) body;
-                    }
-                }
-
-                it = raw_slice(splitter.text, start_index);
-            }
-
-            if !splitter.skip_empty || it.count != empty_count {
-                it_index += 1;
-                #insert body;
-            }
-        }
-    }
-}
-
 
 for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
@@ -723,6 +588,10 @@ for_expansion :: (splitter: *Split_By_Index, body: Code, flags: For_Flags) #expa
 }
 
 
+count_split :: inline (text: string, count: int, max_results := 0) -> Split_By_Count {
+    return Split_By_Count.{.{text, max_results, false, .NO, .{}}, count};
+}
+
 for_expansion :: (splitter: *Split_By_Count, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
     reverse := flags & .REVERSE;
@@ -782,6 +651,13 @@ for_expansion :: (splitter: *Split_By_Count, body: Code, flags: For_Flags) #expa
 }
 
 
+
+
+
+line_split :: inline (text: string, max_results := 0, skip_empty := false, keep_separator := Keep_Separator.NO) -> Split_By_Line {
+    return .{.{text, max_results, skip_empty, keep_separator, case_sensitive}};
+}
+
 for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expand {
 	#assert(!(flags & .POINTER));
     reverse := flags & .REVERSE;
@@ -825,10 +701,10 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
                     end_index = index;
                 }
 
-                index, found = last_index(splitter.text, Chars.LF, index, splitter.compare);
+                index, found = last_index(splitter.text, Chars.LF, index, splitter.character_compare);
 
                 while found {
-                    defer index, found = last_index(splitter.text, Chars.LF, index, splitter.compare);
+                    defer index, found = last_index(splitter.text, Chars.LF, index, splitter.character_compare);
 
                     if #complete splitter.keep_separator == {
                         case .AS_PREFIX;
@@ -868,10 +744,10 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
             }
             else {
                 start_index := 0;
-                index, found := first_index(splitter.text, Chars.LF, splitter.compare);
+                index, found := first_index(splitter.text, Chars.LF, splitter.character_compare);
 
                 while found {
-                    defer index, found = first_index(splitter.text, Chars.LF, index + 1, splitter.compare);
+                    defer index, found = first_index(splitter.text, Chars.LF, index + 1, splitter.character_compare);
 
                     if #complete splitter.keep_separator == {
                         case .AS_PREFIX;
@@ -912,5 +788,4 @@ for_expansion :: (splitter: *Split_By_Line, body: Code, flags: For_Flags) #expan
             }
         }
     }
-
 }

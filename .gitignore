@@ -3,4 +3,4 @@
 *.exe
 *.pdb
 tests/data
-!/tools/index_profile.exe
+/tools/index_profile

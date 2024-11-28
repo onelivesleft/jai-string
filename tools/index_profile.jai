@@ -3,7 +3,6 @@
 #import "File_Utilities";
 #import "Sort";
 #import "Strings";
-heap :: #import "Strings_Alloc";
 jai_string :: #import "String";
 
 
@@ -41,7 +40,7 @@ main :: () {
             haystack_file = arg;
         }
         else if needle == "" {
-            needle = heap.apply_backslash(arg);
+            needle = apply_backslash(arg);
         }
         else {
             valid_args = false;
@@ -80,9 +79,9 @@ main :: () {
     boyer_moore_sse2  :: true;
     boyer_moore_avx2  :: true;
 
-    //#if kmp {
-    //    #load "../Strings_Shared/knuth_morris_pratt.jai";
-    //}
+    #if kmp {
+        #load "../Strings/knuth_morris_pratt.jai";
+    }
 
     format_float := *context.print_style.default_format_float;
     format_float.zero_removal = .NO;
@@ -95,11 +94,10 @@ main :: () {
     if no_case {
         find_index_from_left = jai_find_index_from_left_nocase;
         find_index_from_right = jai_find_index_from_right_nocase;
-        set_default_compare(ignore_case);
     }
     else {
-        set_default_compare(case_sensitive);
     }
+    compare := ifx no_case then ignore_case else case_sensitive;
 
     expected_first_checksum : u64;
     expected_last_checksum : u64;
@@ -216,26 +214,26 @@ main :: () {
             set_index_algorithm(first_index_proc, last_index_proc);
 
             t := seconds_since_init();
-            index, found := first_index(`haystack, `needle);
+            index, found := first_index(`haystack, `needle, compare);
             checksum : u64 = 0;
             total := 0;
             while found {
                 checksum = xor(checksum, xx index);
                 total += 1;
-                index, found = first_index(`haystack, `needle, index + 1);
+                index, found = first_index(`haystack, `needle, index + 1, compare);
             }
             entry.first_checksum += checksum;
             entry.first_total += total;
             entry.first_time += seconds_since_init() - t;
 
             t = seconds_since_init();
-            index, found = last_index(`haystack, `needle);
+            index, found = last_index(`haystack, `needle, compare);
             checksum = 0;
             total = 0;
             while found {
                 checksum = xor(checksum, xx index);
                 total += 1;
-                index, found = last_index(`haystack, `needle, index);
+                index, found = last_index(`haystack, `needle, index, compare);
             }
             entry.last_checksum += checksum;
             entry.last_total += total;
@@ -275,7 +273,7 @@ main :: () {
         all_ok := true;
         print("Testing: %\nNeedle:  %\nFound:   %\n", haystack_file, needle, expected_total);
         for entries {
-            print("%", heap.pad_end(it.name, 20));
+            print("%", pad_end(it.name, 20));
 
             valid := true;
             if it.first_checksum != expected_first_checksum {
@@ -308,7 +306,7 @@ main :: () {
 
         for entries {
             if !it_index  print("\e[0;32m");
-            print("%", heap.pad_end(it.name, 20));
+            print("%", pad_end(it.name, 20));
             first_color := "";
             if !it_index {
                 print("\e[m");
@@ -350,10 +348,10 @@ main :: () {
                 first_factor := sprint("%", jai_entry.first_time / it.first_time);
                 last_factor :=  sprint("%", jai_entry.last_time / it.last_time);
                 format_float.width = 6;
-                print("%1   = %4%2x\e[m / %5%3x\e[m\n", heap.pad_start(time, 7), heap.pad_start(first_factor, 7), heap.pad_start(last_factor, 7), first_color, last_color);
+                print("%1   = %4%2x\e[m / %5%3x\e[m\n", pad_start(time, 7), pad_start(first_factor, 7), pad_start(last_factor, 7), first_color, last_color);
             }
             else {
-                print("%\n", heap.pad_end(time, 7));
+                print("%\n", pad_end(time, 7));
             }
             if !it_index  print("\n");
         }

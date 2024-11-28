@@ -15,7 +15,7 @@ __
       //filename, path := split_into_two(line, " - ");
       //print("%\n%\n", filename, path);
       //filesstr = strings_alloc.join(filesstr, path, "\0");
-      filesstr = strings_alloc.join(filesstr, substring(line, first_index(line, " - ")+" - ".count), "\0");
+      filesstr = join(filesstr, substring(line, first_index(line, " - ")+" - ".count), "\0");
       //filesstr = strings_alloc.join(filesstr, substring(line, String.find_index_from_left(line, " - ")+" - ".count), "\0");
     }
     print("%\n", filesstr);
@@ -25,5 +25,4 @@ __
 
 String :: #import "String";
 #import "Strings";
-strings_alloc :: #import "Strings_Alloc";
 #import "Basic";

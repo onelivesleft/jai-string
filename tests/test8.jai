@@ -1,18 +1,16 @@
 #import "Basic";
 #import "Sort";
-#import "Strings"(index_algorithm=.SIMPLE);
-heap :: #import "Strings_Alloc";
+#import "Strings"(INDEX_ALGORITHM=.SIMPLE);
 jai_string :: #import "String";
 
 
 #load "data/shakespeare.jai";
 #load "data/degenerate.jai";
 
-
 main :: () {
     haystack :: shakespeare;// degenerate;
     needle :: " and "; //"ffffffffffffffffffffffffffffffffffffffffn";
-    times :: 30;
+    times :: 10;
     //needle :: "zealous";
 
     jai         :: true;
@@ -185,7 +183,7 @@ main :: () {
     print("\n\n");
 
     for entries {
-        print("%", heap.pad_end(it.name, 20));
+        print("%", pad_end(it.name, 20));
         time := sprint("%", it.time);
         if it.checksum != checksum {
             print("BAD CHECKSUM: % != %\n", it.checksum, checksum);
@@ -194,10 +192,10 @@ main :: () {
 
         #if jai {
             factor := sprint("%", jai_delta / it.time);
-            print("%   = %x\n", heap.pad_start(time, 7), heap.pad_start(factor, 7));
+            print("%   = %x\n", pad_start(time, 7), pad_start(factor, 7));
         }
         else {
-            print("%\n", heap.pad_end(time, 7));
+            print("%\n", pad_end(time, 7));
         }
         if !it_index  print("\n");
     }

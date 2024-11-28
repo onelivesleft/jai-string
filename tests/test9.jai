@@ -66,8 +66,6 @@ main :: () {
     }
 
     {
-        set_default_compare(case_sensitive);
-
         set_simd_mode(.SSE2);
         sse_delta : float64;
         sse_total : int;
@@ -108,14 +106,12 @@ main :: () {
     }
 
     {
-        set_default_compare(ignore_case);
-
         set_simd_mode(.SSE2);
         sse_delta : float64;
         sse_total : int;
         {
             t = seconds_since_init();
-            for 1..times  sse_total += count(haystack, needle);
+            for 1..times  sse_total += count(haystack, needle, ignore_case);
             sse_delta = seconds_since_init() - t;
         }
 
@@ -125,7 +121,7 @@ main :: () {
         avx2_total : int;
         {
             t = seconds_since_init();
-            for 1..times  avx2_total += count(haystack, needle);
+            for 1..times  avx2_total += count(haystack, needle, ignore_case);
             avx2_delta = seconds_since_init() - t;
         }
 
@@ -135,7 +131,7 @@ main :: () {
         scalar_total : int;
         {
             t = seconds_since_init();
-            for 1..times  scalar_total += count(haystack, needle);
+            for 1..times  scalar_total += count(haystack, needle, ignore_case);
             scalar_delta = seconds_since_init() - t;
         }
 

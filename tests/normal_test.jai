@@ -1,8 +1,7 @@
 // @Note this file must be saved as LF only! (Hmmm this probably isn't true any more)
 
 #import "Basic";
-
-#import "Strings"(index_algorithm=.BOYER_MOORE);
+#import "Strings"(INDEX_ALGORITHM=.BOYER_MOORE);
 
 jai_string :: #import "String";
 
@@ -125,10 +124,13 @@ run_tests :: () {
             for word: split("How about a nice game of chess?", #char " ")
                 print("%\n", word);
 
-        if errors.count != 0
+        if errors.count != 0 {
             print("Errors:\n%\n", errors);
-        else
+            exit(1);
+        }
+        else {
             print("All OK!\n");
+        }
     }
 
     set_index_algorithm(boyer_moore_first_index, boyer_moore_last_index);
@@ -345,9 +347,9 @@ run_tests :: () {
     test(100, replace(some_text, "e",  "a", 1,, temp), "soma text\there");
     test(101, replace(some_text, "e",  "a", 0,, temp), "soma taxt\thara");
 
-    temp0 := replace(some_text, "E",  "ae",   compare=ignore_case,, temp);
-    temp1 := replace(some_text, "AE", "e",    compare=ignore_case,, temp);
-    temp2 := replace(some_text, "S",  "e",    compare=ignore_case,, temp);
+    temp0 := replace(some_text, "E",  "ae",   character_compare=ignore_case,, temp);
+    temp1 := replace(some_text, "AE", "e",    character_compare=ignore_case,, temp);
+    temp2 := replace(some_text, "S",  "e",    character_compare=ignore_case,, temp);
     temp3 := replace(some_text, "E",  "a", 2, ignore_case,, temp);
     temp4 := replace(some_text, "E",  "a", 1, ignore_case,, temp);
     temp5 := replace(some_text, "E",  "a", 0, ignore_case,, temp);
@@ -482,13 +484,13 @@ run_tests :: () {
     test(165, pad_end("Hello", 8, #char "x"), "Helloxxx");
     test(166, pad_end("Hello", 12, "xyz"), "Hellozxyzxyz");
 
-    test(167, pad_start_and_end("Hello", 8), " Hello  ");
-    test(168, pad_start_and_end("Hello", 9), "  Hello  ");
-    test(169, pad_start_and_end("Hola", 8), "  Hola  ");
-    test(170, pad_start_and_end("Hola", 9), "  Hola   ");
-    test(171, pad_start_and_end("Hello", 8, "Hello"), "HHellolo");
-    test(172, pad_start_and_end("Hello", 8, #char "x"), "xHelloxx");
-    test(173, pad_start_and_end("Hello", 12, "xyz"), "xyzHellozxyz");
+    test(167, pad("Hello", 8), " Hello  ");
+    test(168, pad("Hello", 9), "  Hello  ");
+    test(169, pad("Hola", 8), "  Hola  ");
+    test(170, pad("Hola", 9), "  Hola   ");
+    test(171, pad("Hello", 8, "Hello"), "HHellolo");
+    test(172, pad("Hello", 8, #char "x"), "xHelloxx");
+    test(173, pad("Hello", 12, "xyz"), "xyzHellozxyz");
 
     test(174, repeat("Hello", 5), "HelloHelloHelloHelloHello");
 
@@ -1141,20 +1143,21 @@ __;
     test(452, third, "a bb cc ");
 
     split_into_parts : [5] string = ---;
-    split_into(*split_into_parts, " aa bb cc ", #char " ");
+    splitter := split(" aa bb cc ", #char " ");
+    into_array(*split_into_parts, splitter);
     test(453, split_into_parts, string.["", "aa", "bb", "cc", ""]);
 
-    result_count := split_into(*split_into_parts, " aa bb cc ", "bb");
+    into_result := into_array(*split_into_parts, split(" aa bb cc ", "bb"));
     test(454, split_into_parts, string.[" aa ", " cc ", "", "", ""]);
-    test(455, result_count, 2);
+    test(455, into_result, string.[" aa ", " cc "]);
 
-    result_count = split_into(*split_into_parts, " aa bb cc ", "bb", keep_separator = .AS_PREFIX);
+    into_result = into_array(*split_into_parts, split(" aa bb cc ", "bb", keep_separator = .AS_PREFIX));
     test(456, split_into_parts, string.[" aa ", "bb cc ", "", "", ""]);
-    test(457, result_count, 2);
+    test(457, into_result, string.[" aa ", "bb cc "]);
 
-    result_count = split_into(*split_into_parts, " aa bb cc ", "BB", keep_separator = .AS_PREFIX, compare = ignore_case);
+    into_result = into_array(*split_into_parts, split(" aa bb cc ", "BB", keep_separator = .AS_PREFIX, character_compare = ignore_case));
     test(458, split_into_parts, string.[" aa ", "bb cc ", "", "", ""]);
-    test(459, result_count, 2);
+    test(459, into_result, string.[" aa ", "bb cc "]);
 
     index = 0;
     for count_split(" aa bb cc ", 3) {

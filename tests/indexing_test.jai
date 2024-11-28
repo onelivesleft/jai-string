@@ -1,15 +1,20 @@
 #import "Basic";
 #import "Hash_Table";
 #import "Sort";
-#import "Time";
-#import "Strings";
-heap :: #import "Strings_Alloc";
+
 jai_string :: #import "String";
 
 
 #load "data/shakespeare.jai";
 #load "data/degenerate.jai";
 
+no_case :: false;
+#if no_case {
+    #import "Strings"(CHARACTER_COMPARE=.IGNORE_CASE);
+}
+else {
+    #import "Strings"(CHARACTER_COMPARE=.CASE_SENSITIVE);
+}
 
 main :: () {
     haystack :: shakespeare;// degenerate;
@@ -17,12 +22,11 @@ main :: () {
     //needle :: "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffN";
     //needle :: "nffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";
     //"THE end\n";//" and "; //"ffffffffffffffffffffffffffffffffffffffffn"; "zealous";
-    times :: 100;
-
-    no_case :: false;
-
+    times :: 10;
     debug :: false;
 
+    x :: true;
+    _ :: false;
     simple           :: x;
     jai              :: x;
     simple_sse2      :: x;
@@ -32,7 +36,6 @@ main :: () {
     boyer_moore_sse2 :: x;
     boyer_moore_avx2 :: x;
 
-    x :: true;  _ :: false;
 
     format_float := *context.print_style.default_format_float;
     format_float.zero_removal = .NO;
@@ -41,12 +44,10 @@ main :: () {
     #if no_case {
         find_index_from_left :: find_index_from_left_nocase;
         find_index_from_right :: find_index_from_right_nocase;
-        set_default_compare(ignore_case);
     }
     else {
         find_index_from_left :: jai_string.find_index_from_left;
         find_index_from_right :: jai_string.find_index_from_right;
-        set_default_compare(case_sensitive);
     }
 
     first_checksum : u64;
@@ -121,7 +122,7 @@ main :: () {
         }
 
         #if jai {{
-            t = get_time();
+            t = seconds_since_init();
             s := haystack;
             offset := 0;
             index := find_index_from_left(haystack, needle);
@@ -135,9 +136,9 @@ main :: () {
                 index = find_index_from_left(s, needle);
             }
             jai_entry.first_checksum += checksum;
-            jai_entry.first_time += get_time() - t;
+            jai_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             s = haystack;
             index = find_index_from_right(haystack, needle);
             checksum = 0;
@@ -147,13 +148,13 @@ main :: () {
                 index = find_index_from_right(s, needle);
             }
             jai_entry.last_checksum += checksum;
-            jai_entry.last_time += get_time() - t;
+            jai_entry.last_time += seconds_since_init() - t;
         }}
 
         #if boyer_moore {{
             set_index_algorithm(boyer_moore_first_index,boyer_moore_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             while found {
@@ -161,9 +162,9 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             boyer_moore_entry.first_checksum += checksum;
-            boyer_moore_entry.first_time += get_time() - t;
+            boyer_moore_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -171,13 +172,13 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             boyer_moore_entry.last_checksum += checksum;
-            boyer_moore_entry.last_time += get_time() - t;
+            boyer_moore_entry.last_time += seconds_since_init() - t;
         }}
 
         #if boyer_moore_sse2 {{
             set_index_algorithm(boyer_moore_sse2_first_index,boyer_moore_sse2_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             total := 0;
@@ -189,9 +190,9 @@ main :: () {
             }
             //print("BM: %\n", total);
             boyer_moore_sse2_entry.first_checksum += checksum;
-            boyer_moore_sse2_entry.first_time += get_time() - t;
+            boyer_moore_sse2_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -199,13 +200,13 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             boyer_moore_sse2_entry.last_checksum += checksum;
-            boyer_moore_sse2_entry.last_time += get_time() - t;
+            boyer_moore_sse2_entry.last_time += seconds_since_init() - t;
         }}
 
         #if boyer_moore_avx2 {{
             set_index_algorithm(boyer_moore_avx2_first_index,boyer_moore_avx2_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             total := 0;
@@ -217,9 +218,9 @@ main :: () {
             }
             //print("BM: %\n", total);
             boyer_moore_avx2_entry.first_checksum += checksum;
-            boyer_moore_avx2_entry.first_time += get_time() - t;
+            boyer_moore_avx2_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -227,13 +228,13 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             boyer_moore_avx2_entry.last_checksum += checksum;
-            boyer_moore_avx2_entry.last_time += get_time() - t;
+            boyer_moore_avx2_entry.last_time += seconds_since_init() - t;
         }}
 
         #if kmp {{
             set_index_algorithm(knuth_morris_pratt_first_index,knuth_morris_pratt_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             while found {
@@ -241,9 +242,9 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             kmp_entry.first_checksum += checksum;
-            kmp_entry.first_time += get_time() - t;
+            kmp_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -251,13 +252,13 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             kmp_entry.last_checksum += checksum;
-            kmp_entry.last_time += get_time() - t;
+            kmp_entry.last_time += seconds_since_init() - t;
         }}
 
         #if simple {{
             set_index_algorithm(simple_first_index, simple_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             while found {
@@ -265,9 +266,9 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             simple_entry.first_checksum += checksum;
-            simple_entry.first_time += get_time() - t;
+            simple_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -275,13 +276,13 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             simple_entry.last_checksum += checksum;
-            simple_entry.last_time += get_time() - t;
+            simple_entry.last_time += seconds_since_init() - t;
         }}
 
         #if simple_sse2 {{
             set_index_algorithm(simple_sse2_first_index, simple_sse2_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             while found {
@@ -289,9 +290,9 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             simple_sse2_entry.first_checksum += checksum;
-            simple_sse2_entry.first_time += get_time() - t;
+            simple_sse2_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -299,13 +300,13 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             simple_sse2_entry.last_checksum += checksum;
-            simple_sse2_entry.last_time += get_time() - t;
+            simple_sse2_entry.last_time += seconds_since_init() - t;
         }}
 
         #if simple_avx2 {{
             set_index_algorithm(simple_avx2_first_index, simple_avx2_last_index);
 
-            t = get_time();
+            t = seconds_since_init();
             index, found := first_index(haystack, needle);
             checksum : u64 = 0;
             while found {
@@ -313,9 +314,9 @@ main :: () {
                 index, found = first_index(haystack, needle, index + 1);
             }
             simple_avx2_entry.first_checksum += checksum;
-            simple_avx2_entry.first_time += get_time() - t;
+            simple_avx2_entry.first_time += seconds_since_init() - t;
 
-            t = get_time();
+            t = seconds_since_init();
             index, found = last_index(haystack, needle);
             checksum = 0;
             while found {
@@ -323,7 +324,7 @@ main :: () {
                 index, found = last_index(haystack, needle, index);
             }
             simple_avx2_entry.last_checksum += checksum;
-            simple_avx2_entry.last_time += get_time() - t;
+            simple_avx2_entry.last_time += seconds_since_init() - t;
         }}
     }
 
@@ -345,7 +346,7 @@ main :: () {
     print("\n\n");
 
     for entries {
-        print("%", heap.pad_end(it.name, 20));
+        print("%", pad_end(it.name, 20));
         time := sprint("% / %", it.first_time, it.last_time);
         if it.first_checksum != first_checksum {
             print("BAD FIRST CHECKSUM: % != %\n", it.first_checksum, first_checksum);
@@ -361,10 +362,10 @@ main :: () {
         #if jai {
             first_factor := sprint("%", jai_entry.first_time / it.first_time);
             last_factor :=  sprint("%", jai_entry.last_time / it.last_time);
-            print("%   = %x / %x\n", heap.pad_start(time, 7), heap.pad_start(first_factor, 7), heap.pad_start(last_factor, 7));
+            print("%   = %x / %x\n", pad_start(time, 7), pad_start(first_factor, 7), pad_start(last_factor, 7));
         }
         else {
-            print("% %\n", it.first_checksum, heap.pad_end(time, 7));
+            print("% %\n", it.first_checksum, pad_end(time, 7));
         }
         if !it_index  print("\n");
     }

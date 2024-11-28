@@ -8,8 +8,8 @@ filepath :: "index_profile.jai";
     set_build_options_dc(.{do_output = false});
 
     workspace := compiler_create_workspace();
-    build_options.emit_debug_info = .NONE;
-    set_optimization_level(*build_options, 3, 3);
+    build_options.output_executable_name = "index_profile";
+    set_optimization(*build_options, .VERY_OPTIMIZED, false);
     set_build_options(build_options, workspace);
 
     compiler_begin_intercept(workspace);

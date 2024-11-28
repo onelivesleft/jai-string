@@ -1,14 +1,32 @@
 # Change Log
 
-## [2.0.0] - 2024-11-
-# Renamed
+## [2.0.0] - 2024-11-28
+### Module structure
+Now simply a single module called `Strings`; no longer split into separate non-allocating/allocating modules (we have `,, allocator)` now)
+
+### Mutating in place vs allocating
+Any procedure which mutates as string in-place will take a pointer to string, rather than merely a string.
+```
+bar := to_upper(foo);  // returns a newly allocated string.
+to_upper(*foo);        // converts foo to uppercase in-place.
+```
+
+### Splitters
+Splitters are now all simply iterators (i.e. for-expansions).  You can use `to_array` to generate an expandable array from a splitter, or `into_array` to expand a splitter into an existing array.
+
+### Misc
+* Fixed threading
+* Fixed Scratch allocator
+
+### Renamed
 `unsafe_slice` -> `raw_slice`
 `unsafe_substring` -> `raw_substring`
 `trim_into` -> `trim_to`
 `trim_start_past` -> `trim_start_through`
 `trim_end_from` -> `trim_end_through`
 `trim_end_after` -> `trim_end_to`
-`pad_center` -> `pad_start_and_end`
+`advance_past` -> `advance_through`
+`pad_center` -> `pad`
 
 ## [1.0.9] - 2022-12-23
 * Removed copy_string in Shared (Basic copy_string is now identical)

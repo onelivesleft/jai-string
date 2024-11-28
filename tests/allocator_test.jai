@@ -1,23 +1,21 @@
 #import "Basic";
-#import "Time";
 #import "Scratch";
 #import "Strings";
-scratch :: #import "Strings_Alloc"(scratch_allocator);
 
 #load "data/shakespeare.jai";
 
 
 main :: () {
-    foo := scratch.copy_string(shakespeare);
+    foo := copy_string(shakespeare,, scratch);
 
     for count: 1 .. 1000 {
-        foo = scratch.replace(foo, "z", "#");
+        foo = replace(foo, "z", "#",, scratch);
         for < #char "y" .. #char "a" {
             from : u8 = cast(u8)it;
             next : u8 = cast(u8)it + 1;
-            foo = scratch.replace(foo, char_as_string(*from), char_as_string(*next));
+            foo = replace(foo, char_as_string(*from), char_as_string(*next),, scratch);
         }
-        foo = scratch.replace(foo, "#", "a");
+        foo = replace(foo, "#", "a",, scratch);
     }
 
     print(foo);

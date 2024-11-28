@@ -3,7 +3,7 @@ import time, sys
 haystack = open("data/shakespeare.jai").read().split("__WILLIAM\n")[1]
 needle = " and "
 
-times = 100
+times = 10
 
 index = haystack.find(needle)
 while index >= 0:
