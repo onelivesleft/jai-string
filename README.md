@@ -138,7 +138,7 @@ In the docs below, any time a parameter of type `%Tool` is specified, it means t
 The indexing algorithm set by `set_index_algorithm` is used internally in the module for most operations: any time you call things like `first_index`, `replace`, `split` it will be employed.
 Whereas other functions in the library will utilize SIMD features (SSE2 & AVX2) when told to with the `set_simd_mode` command, you must explicitly set an index algorithm to use them if that is what you wish<sup>*</sup>:  the default indexing algorithm is scalar `Boyer-Moore`, because it is good on practically any dataset; a safe choice.  Choosing a different indexing algorithm can provide impressive performance improvements, but this depends on the dataset you are working on (the specific strings and substrings you are searching with).  SIMD algorithms can be orders of magnitude faster, but they can also be catastrophically slow when facing degenerate datasets.  If you want to get the most performance out of the library then you should choose an appropriate indexing algorithm for your dataset.
 
-To help with this there is the `index_profile.exe` tool (in the `tools/` folder): provide it with a file and a typical search string from your data and it will show you how each available algorithm performs with the data you are manipulating.
+To help with this there is the `index_profile` tool (in the `tools/` folder): provide it with a file and a typical search string from your data and it will show you how each available algorithm performs with the data you are manipulating.
 
 <sup>*</sup> *(Though all the built-in indexing algorithms will detect if the needle is a single character long, and if so will use the relevant built-in character index algorithm, which will obey `set_simd_mode`)*
 
@@ -237,7 +237,7 @@ Modifies `haystack` in-place, moving its start point forward until it hits and r
 #### Splitting
 
 
-All split procedures return an iterator (a for-expansion).  If you want the subtrings to be in an array you can feed this iterator into `to_array` or `into_array`.
+All split procedures return an iterator (a for-expansion).  If you want the substrings to be in an array you can feed this iterator into `to_array` or `into_array`.
 
 
 * `split (text: string, separator: %Tool, skip_empty := false, max_results := 0, keep_separator := .NO, character_compare := default_compare)`<br>
