@@ -286,7 +286,7 @@ Executes the splitter and places its results into the array.  Returns an array_v
 If `clear_unused` is set then any trailing slots in the array after the resulting count will be cleared.
 ```jai
 parts : [20] string;
-view := split(*parts, "How about a nice game of chess?", #char " ");
+view := into_array(*parts, split("How about a nice game of chess?", #char " "));
 assert(view.count == 7);
 ```
 
