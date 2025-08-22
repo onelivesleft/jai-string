@@ -1144,18 +1144,18 @@ __;
 
     split_into_parts : [5] string = ---;
     splitter := split(" aa bb cc ", #char " ");
-    into_array(*split_into_parts, splitter);
+    to_array(*split_into_parts, splitter);
     test(453, split_into_parts, string.["", "aa", "bb", "cc", ""]);
 
-    into_result := into_array(*split_into_parts, split(" aa bb cc ", "bb"));
+    into_result := to_array(*split_into_parts, split(" aa bb cc ", "bb"));
     test(454, split_into_parts, string.[" aa ", " cc ", "", "", ""]);
     test(455, into_result, string.[" aa ", " cc "]);
 
-    into_result = into_array(*split_into_parts, split(" aa bb cc ", "bb", keep_separator = .AS_PREFIX));
+    into_result = to_array(*split_into_parts, split(" aa bb cc ", "bb", keep_separator = .AS_PREFIX));
     test(456, split_into_parts, string.[" aa ", "bb cc ", "", "", ""]);
     test(457, into_result, string.[" aa ", "bb cc "]);
 
-    into_result = into_array(*split_into_parts, split(" aa bb cc ", "BB", keep_separator = .AS_PREFIX, character_compare = ignore_case));
+    into_result = to_array(*split_into_parts, split(" aa bb cc ", "BB", keep_separator = .AS_PREFIX, character_compare = ignore_case));
     test(458, split_into_parts, string.[" aa ", "bb cc ", "", "", ""]);
     test(459, into_result, string.[" aa ", "bb cc "]);
 

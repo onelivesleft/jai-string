@@ -237,7 +237,7 @@ Modifies `haystack` in-place, moving its start point forward until it hits and r
 #### Splitting
 
 
-All split procedures return an iterator (a for-expansion).  If you want the substrings to be in an array you can feed this iterator into `to_array` or `into_array`.
+All split procedures return an iterator (a for-expansion).  If you want the substrings to be in an array you can feed this iterator into `to_array`.
 
 
 * `split (text: string, separator: %Tool, skip_empty := false, max_results := 0, keep_separator := .NO, character_compare := default_compare)`<br>
@@ -281,7 +281,7 @@ assert(words.count == 7);
 ```
 
 
-* `into_array (array: *[] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string`<br>
+* `to_array (array: *[] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string`<br>
 Executes the splitter and places its results into the array.  Returns an array_view over the array with the used count.
 If `clear_unused` is set then any trailing slots in the array after the resulting count will be cleared.
 ```jai

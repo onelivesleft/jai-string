@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.1] = 2025-08-22
+`into_array` -> `to_array`
+
 ## [2.0.0] - 2024-11-28
 ### Module structure
 Now simply a single module called `Strings`; no longer split into separate non-allocating/allocating modules (we have `,, allocator)` now)

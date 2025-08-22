@@ -51,7 +51,7 @@ to_array :: (splitter: $T/Splitter, reversed := false) -> [..] string {
     return result;
 }
 
-into_array :: (array: *[] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string {
+to_array :: (array: *[] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string {
     // @Note We set max_results so we don't overflow the destination array: the last entry in the array may
     //       therefor contain further potential splits.
 
@@ -71,9 +71,9 @@ into_array :: (array: *[] string, splitter: $T/Splitter, reversed := false, clea
     return result;
 }
 
-into_array :: inline (array: *[$N] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string {
+to_array :: inline (array: *[$N] string, splitter: $T/Splitter, reversed := false, clear_unused := true) -> [] string {
     array_view : [] string = array.*;
-    return into_array(*array_view, splitter, reversed, clear_unused);
+    return to_array(*array_view, splitter, reversed, clear_unused);
 }
 
 
