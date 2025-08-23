@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.2] = 2025-08-23
+* Fixed first_index bug where it ignored compare_character.
+
 ## [2.0.1] = 2025-08-22
 `into_array` -> `to_array`
 

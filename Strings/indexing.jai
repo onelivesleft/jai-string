@@ -309,7 +309,7 @@ first_index :: inline (haystack: string, needle: string, first_string_index: Str
 }
 
 first_index :: inline (haystack: string, needle: string, from_index: int, character_compare := default_character_compare) -> index: int, found: bool {
-    index, found := first_index(haystack, needle, from_index, context.strings_thread_data.string_first_index, default_character_compare);
+    index, found := first_index(haystack, needle, from_index, context.strings_thread_data.string_first_index, character_compare);
     return index, found;
 }
 
