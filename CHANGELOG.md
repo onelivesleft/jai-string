@@ -1,5 +1,8 @@
 # Change Log
 
+## [2.0.3] = 2025-12-20
+* Added `found_separtor` return value to `split_into_two`
+
 ## [2.0.2] = 2025-08-23
 * Fixed first_index bug where it ignored compare_character.
 

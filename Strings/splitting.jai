@@ -82,33 +82,33 @@ split_at_index :: (text: string, index: int) -> string, string {
 }
 
 
-split_into_two :: (text: string, separator: u8) -> string, string {
+split_into_two :: (text: string, separator: u8) -> string, string, found_separator: bool {
     index, found := first_index(text, separator);
-    if !found  return text, "";
-    return raw_slice(text, 0, index), raw_slice(text, index + 1);
+    if !found  return text, "", false;
+    return raw_slice(text, 0, index), raw_slice(text, index + 1), true;
 }
 
-split_into_two :: (text: string, separator: [] u8) -> string, string {
+split_into_two :: (text: string, separator: [] u8) -> string, string, found_separator: bool {
     index, found := first_index(text, separator);
-    if !found  return text, "";
-    return raw_slice(text, 0, index), raw_slice(text, index + 1);
+    if !found  return text, "", false;
+    return raw_slice(text, 0, index), raw_slice(text, index + 1), true;
 }
 
-split_into_two :: (text: string, separator: string) -> string, string {
+split_into_two :: (text: string, separator: string) -> string, string, found_separator: bool {
     index, found := first_index(text, separator);
-    if !found  return text, "";
-    return raw_slice(text, 0, index), raw_slice(text, index + separator.count);
+    if !found  return text, "", false;
+    return raw_slice(text, 0, index), raw_slice(text, index + separator.count), true;
 }
 
-split_into_two :: (text: string, separator: string, $$separator_proc: Index_Proc) -> string, string {
+split_into_two :: (text: string, separator: string, $$separator_proc: Index_Proc) -> string, string, found_separator: bool {
     from_index, found, to_index := first_index(text, separator, separator_proc);
-    if !found  return text, "";
-    return raw_slice(text, 0, from_index), raw_slice(text, to_index);
+    if !found  return text, "", false;
+    return raw_slice(text, 0, from_index), raw_slice(text, to_index), true;
 }
 
-split_into_two :: (text: string, separator: $T, keep_separator := Keep_Separator.NO, character_compare := default_character_compare) -> string, string {
-    parts : [2] string = ---;
-    split(*parts, text, separator, keep_separator = keep_separator, character_compare = character_compare);
+split_into_two :: (text: string, separator: $T, skip_empty := false, keep_separator := Keep_Separator.NO, character_compare := default_character_compare) -> string, string {
+    parts : [2] string;
+    to_array(*parts, split(text, separator, max_results=2, skip_empty=skip_empty, keep_separator=keep_separator, character_compare=character_compare));
     return parts[0], parts[1];
 }
 

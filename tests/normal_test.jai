@@ -1115,17 +1115,30 @@ __;
     test(437, count(really_long_string, cast([]u8)"ae"), count(really_long_string, #char "a") + count(really_long_string, #char "e"));
 
     first, second, third : string = ---;
-    first, second = split_into_two(" aa bb cc ", #char " ");
+    found: bool;
+    first, second, found = split_into_two(" aa bb cc ", #char " ");
     test(438, first, "");
     test(439, second, "aa bb cc ");
+    test(4390, found, true);
 
-    first, second = split_into_two(" aa bb cc ", "bb");
+    first, second, found = split_into_two(" aa bb cc ", "bb");
     test(440, first, " aa ");
     test(441, second, " cc ");
+    test(4410, found, true);
 
-    first, second = split_into_two(" aa bb cc ", cast([]u8)" a");
+    first, second, found = split_into_two(" aa bb cc ", cast([]u8)" a");
     test(442, first, "");
     test(443, second, "aa bb cc ");
+    test(4430, found, true);
+
+    first, second, found = split_into_two(" aa bb cc ", "x");
+    test(4431, first, " aa bb cc ");
+    test(4432, second, "");
+    test(4433, found, false);
+
+    first, second = split_into_two(" aa bb cc ", "BB", keep_separator=.AS_PREFIX, character_compare=ignore_case);
+    test(4434, first, " aa ");
+    test(4435, second, "bb cc ");
 
     first, second, third = split_into_three(" aa bb cc ", #char " ");
     test(444, first, "");
@@ -1228,4 +1241,6 @@ __;
     last_index_of_a := jai_string.find_index_from_right(last_index_test, "a");
     test(489, last_index(last_index_test, "a"), last_index_of_a);
     test(490, last_index(last_index_test, "A", ignore_case), last_index_of_a);
+
+
 }
