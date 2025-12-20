@@ -268,8 +268,8 @@ For example:
 ```
 
 
-* `split_into_two (text: string, separator: %Tool, keep_separator := .NO, character_compare := default_compare) -> string, string`<br>
-As split with max_results set to 2, but returns the two strings directly rather than an iterator.
+* `split_into_two (text: string, separator: %Tool, keep_separator := .NO, character_compare := default_compare) -> string, string, found_separator: bool`<br>
+As split with max_results set to 2, but returns the two strings directly rather than an iterator. Note that if you set keep_separator or character_compare it will no longer return `found_separator`.
 
 
 * `to_array (splitter: $T/Splitter, reversed := false) -> [..] string`<br>
