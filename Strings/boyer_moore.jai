@@ -6,8 +6,8 @@
 
 boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() first_index_header;
-    using context.boyer_moore_thread_data;
     if !context.boyer_moore_thread_data  context.boyer_moore_thread_data = New(Boyer_Moore_Thread_Data);
+    using context.boyer_moore_thread_data;
 
     if needle != last_used_needle || last_search_was_reversed {
         last_search_was_reversed = false;
@@ -40,8 +40,8 @@ boyer_moore_first_index :: (haystack: string, needle: string, start_index: int, 
 
 boyer_moore_last_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() last_index_header;
-    using context.boyer_moore_thread_data;
     if !context.boyer_moore_thread_data  context.boyer_moore_thread_data = New(Boyer_Moore_Thread_Data);
+    using context.boyer_moore_thread_data;
 
     if needle != last_used_needle || !last_search_was_reversed {
         last_search_was_reversed = true;
@@ -166,8 +166,8 @@ unsafe_boyer_moore_first_index :: (haystack: string, needle: string, start_index
 
 boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() first_index_header;
-    using context.boyer_moore_thread_data;
     if !context.boyer_moore_thread_data  context.boyer_moore_thread_data = New(Boyer_Moore_Thread_Data);
+    using context.boyer_moore_thread_data;
 
     if needle != last_used_needle || last_search_was_reversed {
         last_search_was_reversed = false;
@@ -369,8 +369,8 @@ boyer_moore_sse2_first_index :: (haystack: string, needle: string, start_index: 
 
 boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() last_index_header;
-    using context.boyer_moore_thread_data;
     if !context.boyer_moore_thread_data  context.boyer_moore_thread_data = New(Boyer_Moore_Thread_Data);
+    using context.boyer_moore_thread_data;
 
     if needle != last_used_needle || !last_search_was_reversed {
         last_search_was_reversed = true;
@@ -516,8 +516,8 @@ boyer_moore_sse2_last_index :: (haystack: string, needle: string, start_index: i
 
 boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() first_index_header;
-    using context.boyer_moore_thread_data;
     if !context.boyer_moore_thread_data  context.boyer_moore_thread_data = New(Boyer_Moore_Thread_Data);
+    using context.boyer_moore_thread_data;
 
     if needle != last_used_needle || last_search_was_reversed {
         last_search_was_reversed = false;
@@ -653,8 +653,8 @@ boyer_moore_avx2_first_index :: (haystack: string, needle: string, start_index: 
 
 boyer_moore_avx2_last_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() last_index_header;
-    using context.boyer_moore_thread_data;
     if !context.boyer_moore_thread_data  context.boyer_moore_thread_data = New(Boyer_Moore_Thread_Data);
+    using context.boyer_moore_thread_data;
 
     if needle != last_used_needle || !last_search_was_reversed {
         last_search_was_reversed = true;
