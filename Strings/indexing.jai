@@ -48,7 +48,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, character_compare
                     }
 
                     for haystack_ptr .. min(haystack_ptr + 15, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             return cast(int)(it - cast(u64)haystack.data), true;
 
                 case .AVX2;
@@ -88,7 +88,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, character_compare
                     }
 
                     for haystack_ptr .. min(haystack_ptr + 31, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             return cast(int)(it - cast(u64)haystack.data), true;
             }
 
@@ -175,7 +175,7 @@ first_index :: (haystack: string, needle: u8, from_index: int, character_compare
                     }
 
                     for haystack_ptr .. min(haystack_ptr + 15, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             return cast(int)(it - cast(u64)haystack.data), true;
 
                 case .AVX2;
@@ -251,14 +251,14 @@ first_index :: (haystack: string, needle: u8, from_index: int, character_compare
                     }
 
                     for haystack_ptr .. min(haystack_ptr + 31, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             return cast(int)(it - cast(u64)haystack.data), true;
             }
     }
 
     if !handled {
         for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
-            if character_compare.compare(<<cast(*u8)it, needle)
+            if character_compare.compare((.*)cast(*u8)it, needle)
                 return cast(int)(it - cast(u64)haystack.data), true;
     }
 
@@ -276,7 +276,7 @@ first_index :: (haystack: string, needle: [] u8, from_index: int, character_comp
 
     // @TODO Might be faster to loop over needle and return min(first_index(needle_char))
     for cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data + cast(u64)haystack.count - 1
-        if is_any(<<cast(*u8)it, needle, character_compare)
+        if is_any((.*)cast(*u8)it, needle, character_compare)
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
@@ -382,8 +382,8 @@ last_index :: (haystack: string, needle: u8, from_index: int, character_compare 
                                 haystack_ptr = next_haystack_ptr;
                         }
 
-                        for < haystack_ptr + 15 .. max(haystack_ptr, end)
-                            if character_compare.compare(<<cast(*u8)it, needle)
+                        for < max(haystack_ptr, end) .. haystack_ptr + 15
+                            if character_compare.compare((.*)cast(*u8)it, needle)
                                 return cast(int)(it - cast(u64)haystack.data), true;
                     }
 
@@ -428,8 +428,8 @@ last_index :: (haystack: string, needle: u8, from_index: int, character_compare 
                                 haystack_ptr = next_haystack_ptr;
                         }
 
-                        for < haystack_ptr + 32 .. max(haystack_ptr, end)
-                            if character_compare.compare(<<cast(*u8)it, needle)
+                        for < max(haystack_ptr, end) .. haystack_ptr + 32
+                            if character_compare.compare((.*)cast(*u8)it, needle)
                                 return cast(int)(it - cast(u64)haystack.data), true;
                     }
             }
@@ -514,8 +514,8 @@ last_index :: (haystack: string, needle: u8, from_index: int, character_compare 
                                 haystack_ptr = next_haystack_ptr;
                         }
 
-                        for < haystack_ptr + 15 .. max(haystack_ptr, end)
-                            if character_compare.compare(<<cast(*u8)it, needle)
+                        for < max(haystack_ptr, end) .. haystack_ptr + 15
+                            if character_compare.compare((.*)cast(*u8)it, needle)
                                 return cast(int)(it - cast(u64)haystack.data), true;
                     }
 
@@ -592,16 +592,16 @@ last_index :: (haystack: string, needle: u8, from_index: int, character_compare 
                                 haystack_ptr = next_haystack_ptr;
                         }
 
-                        for < haystack_ptr + 31 .. max(haystack_ptr, end)
-                            if character_compare.compare(<<cast(*u8)it, needle)
+                        for < max(haystack_ptr, end) .. haystack_ptr + 31
+                            if character_compare.compare((.*)cast(*u8)it, needle)
                                 return cast(int)(it - cast(u64)haystack.data), true;
                     }
             }
     }
 
     if !handled {
-        for < cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data
-            if character_compare.compare(<<cast(*u8)it, needle)
+        for < cast(u64)haystack.data .. cast(u64)haystack.data + cast(u64)from_index
+            if character_compare.compare((.*)cast(*u8)it, needle)
                 return cast(int)(it - cast(u64)haystack.data), true;
     }
 
@@ -620,16 +620,16 @@ last_index :: (haystack: string, needle: [] u8, from_index: int, character_compa
     from_index -= 1;
     validate_from_index(haystack);
 
-    for < cast(u64)haystack.data + cast(u64)from_index .. cast(u64)haystack.data
-        if is_any(<<cast(*u8)it, needle, character_compare)
+    for < cast(u64)haystack.data .. cast(u64)haystack.data + cast(u64)from_index
+        if is_any((.*)cast(*u8)it, needle, character_compare)
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
 }
 
 last_index :: (haystack: string, needle: [] u8, character_compare := default_character_compare) -> index: int, found: bool {
-    for < cast(u64)haystack.data + cast(u64)haystack.count - 1 .. cast(u64)haystack.data
-        if is_any(<<cast(*u8)it, needle, character_compare)
+    for < cast(u64)haystack.data .. cast(u64)haystack.data + cast(u64)haystack.count - 1
+        if is_any((.*)cast(*u8)it, needle, character_compare)
             return cast(int)(it - cast(u64)haystack.data), true;
 
     return -1, false;
@@ -642,7 +642,7 @@ last_index :: (haystack: string, needle: string, from_index: int, last_string_in
         return from_index, true;
     }
     else if needle.count == 1 {
-        index, found := last_index(haystack, << needle.data, from_index, character_compare);
+        index, found := last_index(haystack, (.*) needle.data, from_index, character_compare);
         return index, found;
     }
     else {
@@ -741,7 +741,7 @@ simple_first_index :: (haystack: string, needle: string, start_index: int, chara
     for start_of_match: cast(u64)haystack.data + cast(u64)start_index .. end {
         needle_index := needle.data;
         for character: start_of_match .. start_of_match + needle_end {
-            if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                 continue start_of_match;
             needle_index += 1;
         }
@@ -757,10 +757,10 @@ simple_last_index :: (haystack: string, needle: string, start_index: int, charac
 
     start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
     needle_end := cast(u64)needle.count - 1;
-    for < start_of_match: start .. cast(u64)haystack.data {
+    for < start_of_match: cast(u64)haystack.data .. start {
         needle_index := needle.data;
         for character: start_of_match .. start_of_match + needle_end {
-            if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                 continue start_of_match;
             needle_index += 1;
         }
@@ -778,9 +778,9 @@ unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int
     haystack_end_ptr := haystack.data + cast(u64)(haystack.count - 1);
     needle_end := cast(u64)needle.count - 1;
 
-    character_in_sentinel_slot := <<haystack_end_ptr;
-    <<haystack_end_ptr = <<needle.data;
-    defer <<haystack_end_ptr = character_in_sentinel_slot;
+    character_in_sentinel_slot := (.*)haystack_end_ptr;
+    (.*)haystack_end_ptr = (.*)needle.data;
+    defer (.*)haystack_end_ptr = character_in_sentinel_slot;
 
     ever : struct {};
     for_expansion :: (_: *type_of(ever), body: Code, flags: For_Flags) #expand {
@@ -792,16 +792,16 @@ unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int
     for outer: ever {
         defer haystack_ptr += 1;
 
-        if !character_compare.compare(<<cast(*u8)haystack_ptr, <<needle.data)  continue;
+        if !character_compare.compare((.*)cast(*u8)haystack_ptr, (.*)needle.data)  continue;
 
         if haystack_ptr >= last_possible_start_index {
             if haystack_ptr > last_possible_start_index
                 return -1, false;
 
-            <<haystack_end_ptr = character_in_sentinel_slot;
+            (.*)haystack_end_ptr = character_in_sentinel_slot;
             needle_ptr := needle.data + 1;
             for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
-                if !character_compare.compare(<<cast(*u8)character, <<needle_ptr)
+                if !character_compare.compare((.*)cast(*u8)character, (.*)needle_ptr)
                     return -1, false;
 
                 needle_ptr += 1;
@@ -812,7 +812,7 @@ unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int
 
         needle_ptr := needle.data + 1;
         for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
-            if !character_compare.compare(<<cast(*u8)character, <<needle_ptr)
+            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_ptr)
                 continue outer;
 
             needle_ptr += 1;
@@ -830,9 +830,9 @@ unsafe_simple_first_index :: (haystack: string, needle: string, start_index: int
 unsafe_simple_last_index :: (haystack: string, needle: string, start_index: int, character_compare: Character_Compare) -> index: int, found: bool {
     #insert,scope() last_index_header;
 
-    character_in_sentinel_slot := <<haystack.data;
-    <<haystack.data = <<needle.data;
-    defer <<haystack.data = character_in_sentinel_slot;
+    character_in_sentinel_slot := (.*)haystack.data;
+    (.*)haystack.data = (.*)needle.data;
+    defer (.*)haystack.data = character_in_sentinel_slot;
 
     ever : struct {};
     for_expansion :: (_: *type_of(ever), body: Code, flags: For_Flags) #expand {
@@ -846,15 +846,15 @@ unsafe_simple_last_index :: (haystack: string, needle: string, start_index: int,
     for outer: ever {
         defer haystack_ptr -= 1;
 
-        if !character_compare.compare(<<cast(*u8)haystack_ptr, <<needle.data)  continue;
+        if !character_compare.compare((.*)cast(*u8)haystack_ptr, (.*)needle.data)  continue;
 
         if haystack_ptr == cast(u64)haystack.data {
-            if <<haystack.data != character_in_sentinel_slot
+            if (.*)haystack.data != character_in_sentinel_slot
                 return -1, false;
 
             needle_ptr := needle.data + 1;
             for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
-                if !character_compare.compare(<<cast(*u8)character, <<needle_ptr)
+                if !character_compare.compare((.*)cast(*u8)character, (.*)needle_ptr)
                     return -1, false;
 
                 needle_ptr += 1;
@@ -865,7 +865,7 @@ unsafe_simple_last_index :: (haystack: string, needle: string, start_index: int,
 
         needle_ptr := needle.data + 1;
         for character: haystack_ptr + 1 .. haystack_ptr + needle_end {
-            if !character_compare.compare(<<cast(*u8)character, <<needle_ptr)
+            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_ptr)
                 continue outer;
 
             needle_ptr += 1;
@@ -1024,7 +1024,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             if haystack_ptr < end_simd {
                 needle_buffer : [16] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 16);
+                memset(needle_ptr, (.*)needle.data, 16);
 
                 results : struct { index, found : u16; };
                 results_data := *results;
@@ -1041,7 +1041,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if <<cast(*u8)character != <<needle_index {
+                            if (.*)cast(*u8)character != (.*)needle_index {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -1059,7 +1059,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if <<cast(*u8)character != <<needle_index
+                    if (.*)cast(*u8)character != (.*)needle_index
                         continue index;
                     needle_index += 1;
                 }
@@ -1078,7 +1078,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             if haystack_ptr < end_simd {
                 needle_buffer : [16] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 16);
+                memset(needle_ptr, (.*)needle.data, 16);
 
                 case_bit :: 32;
                 case_bytes := #insert #run make_16(case_bit);
@@ -1148,8 +1148,8 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            a := <<cast(*u8)character;
-                            b := <<needle_index;
+                            a := (.*)cast(*u8)character;
+                            b := (.*)needle_index;
                             if (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
                             != (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b) {
                                 haystack_ptr = second_character_index;
@@ -1169,8 +1169,8 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    a := <<cast(*u8)character;
-                    b := <<needle_index;
+                    a := (.*)cast(*u8)character;
+                    b := (.*)needle_index;
                     if (ifx a >= #char "A" && a <= #char "Z" then a | 32 else a)
                     != (ifx b >= #char "A" && b <= #char "Z" then b | 32 else b)
                         continue index;
@@ -1188,7 +1188,7 @@ simple_sse2_first_index :: (haystack: string, needle: string, start_index: int, 
             for haystack_ptr: cast(u64)haystack.data + cast(u64)start_index .. end {
                 needle_index := needle.data;
                 for character: haystack_ptr .. haystack_ptr + needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue haystack_ptr;
                     needle_index += 1;
                 }
@@ -1213,7 +1213,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
             if haystack_ptr > end_simd {
                 needle_buffer : [16] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 16);
+                memset(needle_ptr, (.*)needle.data, 16);
 
                 results : struct { index, found : u16; };
                 results_data := *results;
@@ -1227,7 +1227,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -1242,10 +1242,10 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                 }
             }
 
-            for < index: haystack_ptr .. end {
+            for < index: end .. haystack_ptr {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -1264,7 +1264,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
             if haystack_ptr > end_simd {
                 needle_buffer : [16] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 16);
+                memset(needle_ptr, (.*)needle.data, 16);
 
                 case_bit :: 32;
                 case_bytes := #insert #run make_16(case_bit);
@@ -1287,7 +1287,7 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -1302,10 +1302,10 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
                 }
             }
 
-            for < index: haystack_ptr .. end {
+            for < index: end .. haystack_ptr {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -1318,10 +1318,10 @@ simple_sse2_last_index :: (haystack: string, needle: string, start_index: int, c
         case;
             needle_end := needle.count - 1;
             start := cast(u64)haystack.data + cast(u64)(start_index - needle.count);
-            for < start_of_match: start .. cast(u64)haystack.data {
+            for < start_of_match: cast(u64)haystack.data .. start {
                 needle_index := needle.data;
                 for character: start_of_match .. start_of_match + cast(u64)needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue start_of_match;
                     needle_index += 1;
                 }
@@ -1469,7 +1469,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             if haystack_ptr < end_simd {
                 needle_buffer : [32] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 32);
+                memset(needle_ptr, (.*)needle.data, 32);
 
                 results : struct { index, found : u32; };
                 results_data := *results;
@@ -1482,7 +1482,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -1500,7 +1500,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -1519,7 +1519,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             if haystack_ptr < end_simd {
                 needle_buffer : [32] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 32);
+                memset(needle_ptr, (.*)needle.data, 32);
 
                 case_bit :: 32;
                 case_bytes := #insert #run make_32(case_bit);
@@ -1541,7 +1541,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
                         second_character_index := word_index + 1;
                         needle_index := needle.data + 1;
                         for character: second_character_index .. word_index + needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index) {
                                 haystack_ptr = second_character_index;
                                 break;
                             }
@@ -1559,7 +1559,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             for index: haystack_ptr .. end {
                 needle_index := needle.data;
                 for character: index .. index + needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -1575,7 +1575,7 @@ simple_avx2_first_index :: (haystack: string, needle: string, start_index: int, 
             for haystack_ptr: cast(u64)haystack.data + cast(u64)start_index .. end {
                 needle_index := needle.data;
                 for character: haystack_ptr .. haystack_ptr + needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue haystack_ptr;
                     needle_index += 1;
                 }
@@ -1600,7 +1600,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
             if haystack_ptr > end_simd {
                 needle_buffer : [32] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 32);
+                memset(needle_ptr, (.*)needle.data, 32);
 
                 results : struct { index, found : u32; };
                 results_data := *results;
@@ -1614,7 +1614,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -1629,10 +1629,10 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                 }
             }
 
-            for < index: haystack_ptr .. end {
+            for < index: end .. haystack_ptr {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -1651,7 +1651,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
             if haystack_ptr > end_simd {
                 needle_buffer : [32] u8;
                 needle_ptr := *needle_buffer;
-                memset(needle_ptr, <<needle.data, 32);
+                memset(needle_ptr, (.*)needle.data, 32);
 
                 case_bit :: 32;
                 case_bytes := #insert #run make_32(case_bit);
@@ -1674,7 +1674,7 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                         word_index := haystack_ptr - results.index - 1;
                         needle_index := needle.data + 1;
                         for character: word_index + 1 .. word_index + cast(u64)needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index) {
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index) {
                                 haystack_ptr = word_index;
                                 break;
                             }
@@ -1689,10 +1689,10 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
                 }
             }
 
-            for < index: haystack_ptr .. end {
+            for < index: end .. haystack_ptr {
                 needle_index := needle.data;
                 for character: index .. index + cast(u64)needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue index;
                     needle_index += 1;
                 }
@@ -1705,10 +1705,10 @@ simple_avx2_last_index :: (haystack: string, needle: string, start_index: int, c
         case;
             needle_end := needle.count - 1;
             start := cast(u64)haystack.data + cast(u64)(start_index - needle_end);
-            for < start_of_match: start .. cast(u64)haystack.data {
+            for < start_of_match: cast(u64)haystack.data .. start {
                 needle_index := needle.data;
                 for character: start_of_match .. start_of_match + cast(u64)needle_end {
-                    if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                    if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                         continue start_of_match;
                     needle_index += 1;
                 }
@@ -1767,7 +1767,7 @@ naive_with_simd_test_first_index :: (haystack: string, needle: string, start_ind
                     for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
                         needle_index := needle.data;
                         for character: test_index .. test_index + needle_end {
-                            if <<cast(*u8)character != <<needle_index
+                            if (.*)cast(*u8)character != (.*)needle_index
                                 continue test_index;
                             needle_index += 1;
                         }
@@ -1782,7 +1782,7 @@ naive_with_simd_test_first_index :: (haystack: string, needle: string, start_ind
                     if test_index < end_simd {
                         needle_buffer : [16] u8;
                         needle_ptr := *needle_buffer;
-                        memset(needle_ptr, <<needle.data, 16);
+                        memset(needle_ptr, (.*)needle.data, 16);
 
 #if true {
                         // 13.051240    13.722530
@@ -1812,7 +1812,7 @@ naive_with_simd_test_first_index :: (haystack: string, needle: string, start_ind
                                 second_index := word_index + 1;
                                 needle_index := needle.data + 1;
                                 for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
+                                    if (.*)cast(*u8)character != (.*)needle_index {
                                         test_index = second_index;
                                         break;
                                     }
@@ -1854,7 +1854,7 @@ else {
                                 second_index := word_index + 1;
                                 needle_index := needle.data + 1;
                                 for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
+                                    if (.*)cast(*u8)character != (.*)needle_index {
                                         test_index = second_index;
                                         break;
                                     }
@@ -1873,7 +1873,7 @@ else {
                     for index: test_index .. end {
                         needle_index := needle.data;
                         for character: test_index .. test_index + needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                                 continue index;
                             needle_index += 1;
                         }
@@ -1888,7 +1888,7 @@ else {
                     if test_index < end_simd {
                         needle_buffer : [32] u8;
                         needle_ptr := *needle_buffer;
-                        memset(needle_ptr, <<needle.data, 32);
+                        memset(needle_ptr, (.*)needle.data, 32);
 
                         results : struct { index, found : u32; };
                         results_data := *results;
@@ -1918,7 +1918,7 @@ else {
                                 second_index := word_index + 1;
                                 needle_index := needle.data + 1;
                                 for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
+                                    if (.*)cast(*u8)character != (.*)needle_index {
                                         test_index = second_index;
                                         break;
                                     }
@@ -1939,7 +1939,7 @@ else {
                                 needle_index := needle.data + 1;
                                 found := true;
                                 for character: second_index .. word_index + needle_end {
-                                    if <<cast(*u8)character != <<needle_index {
+                                    if (.*)cast(*u8)character != (.*)needle_index {
                                         found = false;
                                         break;
                                     }
@@ -1947,7 +1947,7 @@ else {
                                 }
                                 if found  return cast(int)(word_index - cast(u64)haystack.data), true;
 
-                                //results.index = ~(cast(u32)1 << results.index);
+                                //results.index = ~(cast(u32)1 (.*) results.index);
                                 //print("%\n", results.index);
 
                                 debug : u16;
@@ -1984,7 +1984,7 @@ else {
                     for index: test_index .. end {
                         needle_index := needle.data;
                         for character: test_index .. test_index + needle_end {
-                            if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                            if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                                 continue index;
                             needle_index += 1;
                         }
@@ -2005,7 +2005,7 @@ else {
         for test_index: cast(u64)haystack.data + cast(u64)start_index .. end {
             needle_index := needle.data;
             for character: test_index .. test_index + needle_end {
-                if !character_compare.compare(<<cast(*u8)character, <<needle_index)
+                if !character_compare.compare((.*)cast(*u8)character, (.*)needle_index)
                     continue test_index;
                 needle_index += 1;
             }

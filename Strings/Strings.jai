@@ -172,7 +172,7 @@ return result == 0;
 // @Note `needle` is guaranteed to be at least 2 characters long, as the call site is internal to the module and will use the u8 first_index when it's 1 character.
 // This won't work with multibyte chars! This is hugely inefficient!
 reverse_index_proc :: (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool {
-    for < haystack_index: haystack.count - 1 .. 0 {
+    for < haystack_index: 0 .. haystack.count - 1 {
         s := raw_slice(haystack, haystack_index);
         from_index, to_index, found := index_proc(s, needle, 0, false);
         if found && haystack_index + to_index <= boundary_index
@@ -982,7 +982,7 @@ reverse :: (str_ptr: *string) {
     }
 }
 
-reverse :: (str: string, $$null_terminate := false) -> string #must {
+reverse :: (str: string, $$null_terminate := false) -> string {
     if !str  return "";
 
     result := copy_string(str, null_terminate);
@@ -1058,7 +1058,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 15, end - 1)
-                        if <<cast(*u8)it == needle
+                        if (.*)cast(*u8)it == needle
                             total += 1;
 
                     return total;
@@ -1100,7 +1100,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 31, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1158,7 +1158,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 15, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1209,7 +1209,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 31, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1327,7 +1327,7 @@ replace :: (haystack_ptr: *string, needle: string, $$index: Index_Proc, replacem
     return change_count;
 }
 
-replace :: (haystack: string, needle: string, replacement: string, max_replacements := 0, character_compare := default_character_compare, $$null_terminate := false) -> string #must {
+replace :: (haystack: string, needle: string, replacement: string, max_replacements := 0, character_compare := default_character_compare, $$null_terminate := false) -> string {
     assert(max_replacements >= 0, "max_replacements cannot be negative");
 
     if haystack == ""  return "";
@@ -1345,7 +1345,7 @@ replace :: (haystack: string, needle: string, replacement: string, max_replaceme
     return builder_to_string(*builder);
 }
 
-replace :: (haystack: string, needle: string, index: Index_Proc, replacement: string, max_replacements := 0, $$null_terminate := false) -> string #must {
+replace :: (haystack: string, needle: string, index: Index_Proc, replacement: string, max_replacements := 0, $$null_terminate := false) -> string {
     if haystack == ""  return "";
 
     builder: String_Builder;
@@ -1364,7 +1364,7 @@ replace :: (haystack: string, needle: string, index: Index_Proc, replacement: st
 }
 
 
-copy_string :: (str: string, $$null_terminate: bool) -> string #must {
+copy_string :: (str: string, $$null_terminate: bool) -> string {
     if !str  return "";
 
     result : string = ---;
@@ -1382,7 +1382,7 @@ copy_string :: (str: string, $$null_terminate: bool) -> string #must {
 }
 
 
-join :: (strings: [] string, $$null_terminate := false) -> string #must {
+join :: (strings: [] string, $$null_terminate := false) -> string {
     if strings.count == 0  return "";
     if strings.count == 1  return copy_string(strings[0], null_terminate);
 
@@ -1405,7 +1405,7 @@ join :: (strings: [] string, $$null_terminate := false) -> string #must {
     return joined;
 }
 
-join :: (strings: [] string, separator: string, $$null_terminate := false) -> string #must {
+join :: (strings: [] string, separator: string, $$null_terminate := false) -> string {
     if strings.count == 0  return "";
     if strings.count == 1  return copy_string(strings[0], null_terminate);
     if !separator          return join(strings, null_terminate);
@@ -1431,11 +1431,11 @@ join :: (strings: [] string, separator: string, $$null_terminate := false) -> st
     return joined;
 }
 
-join :: (strings: [] string, separator: u8, $$null_terminate := false) -> string #must {
+join :: (strings: [] string, separator: u8, $$null_terminate := false) -> string {
     return join(strings, char_as_string(*separator), null_terminate);
 }
 
-join :: (splitter: $T/Splitter, reversed := false, $$null_terminate := false) -> string #must {
+join :: (splitter: $T/Splitter, reversed := false, $$null_terminate := false) -> string {
     builder: String_Builder;
 
     if reversed  for < splitter  append(*builder, it);
@@ -1446,7 +1446,7 @@ join :: (splitter: $T/Splitter, reversed := false, $$null_terminate := false) ->
     return builder_to_string(*builder);
 }
 
-join :: (splitter: $T/Splitter, separator: string, string, reversed := false, $$null_terminate := false) -> string #must {
+join :: (splitter: $T/Splitter, separator: string, string, reversed := false, $$null_terminate := false) -> string {
     builder: String_Builder;
 
     if reversed  for < splitter { if it_index  append(*builder, separator);  append(*builder, it); }
@@ -1457,16 +1457,16 @@ join :: (splitter: $T/Splitter, separator: string, string, reversed := false, $$
     return builder_to_string(*builder);
 }
 
-join :: (splitter: $T/Splitter, separator: u8, $$null_terminate := false) -> string #must {
+join :: (splitter: $T/Splitter, separator: u8, $$null_terminate := false) -> string {
     return join(splitter, char_as_string(*separator), null_terminate);
 }
 
-join :: inline (strings: .. string, $$null_terminate := false) -> string #must {
+join :: inline (strings: .. string, $$null_terminate := false) -> string {
     return join(strings, null_terminate);
 }
 
 
-pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_terminate := false) -> string #must {
+pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_terminate := false) -> string {
     assert(pad_with.count > 0, "pad_with cannot be empty");
 
     if str.count >= desired_count
@@ -1492,12 +1492,12 @@ pad_start :: (str: string, desired_count: int, pad_with := default_pad_with, $$n
     return padded;
 }
 
-pad_start :: inline (str: string, desired_count: int, pad_with: u8, $$null_terminate := false) -> string #must {
+pad_start :: inline (str: string, desired_count: int, pad_with: u8, $$null_terminate := false) -> string {
     return pad_start(str, desired_count, char_as_string(*pad_with), null_terminate);
 }
 
 
-pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_terminate := false) -> string #must {
+pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_terminate := false) -> string {
     assert(pad_with.count > 0, "pad_with cannot be empty");
 
     if str.count >= desired_count
@@ -1525,12 +1525,12 @@ pad_end :: (str: string, desired_count: int, pad_with := default_pad_with, $$nul
     return padded;
 }
 
-pad_end :: inline (str: string, desired_count: int, pad_with: u8, $$null_terminate := false) -> string #must {
+pad_end :: inline (str: string, desired_count: int, pad_with: u8, $$null_terminate := false) -> string {
     return pad_end(str, desired_count, char_as_string(*pad_with), null_terminate);
 }
 
 
-pad :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_terminate := false) -> string #must {
+pad :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_terminate := false) -> string {
     assert(pad_with.count > 0, "pad_with cannot be empty");
 
     if str.count >= desired_count
@@ -1572,12 +1572,12 @@ pad :: (str: string, desired_count: int, pad_with := default_pad_with, $$null_te
     return padded;
 }
 
-pad :: inline (str: string, desired_count: int, pad_with: u8, $$null_terminate := false) -> string #must {
+pad :: inline (str: string, desired_count: int, pad_with: u8, $$null_terminate := false) -> string {
     return pad(str, desired_count, char_as_string(*pad_with), null_terminate);
 }
 
 
-repeat :: (str: string, times: int, $$null_terminate := false) -> string #must {
+repeat :: (str: string, times: int, $$null_terminate := false) -> string {
     if str == "" || times <= 0  return "";
 
     terminating := null_terminate && !ends_with(str, #char "\0", case_sensitive);
@@ -1702,13 +1702,13 @@ to_lower :: (str_ptr: *string) {
     }
 
     for data .. end {
-        if <<cast(*u8)it >= #char "A" && <<cast(*u8)it <= #char "Z" {
-            <<cast(*u8)it += 32;
+        if (.*)cast(*u8)it >= #char "A" && (.*)cast(*u8)it <= #char "Z" {
+            (.*)cast(*u8)it += 32;
         }
     }
 }
 
-to_lower :: (str: string, $$null_terminate := false) -> string #must {
+to_lower :: (str: string, $$null_terminate := false) -> string {
     result := copy_string(str, null_terminate);
     to_lower(*result);
     return result;
@@ -1811,13 +1811,13 @@ to_upper :: (str_ptr: *string) {
     }
 
     for data .. end {
-        if <<cast(*u8)it >= #char "a" && <<cast(*u8)it <= #char "z" {
-            <<cast(*u8)it -= 32;
+        if (.*)cast(*u8)it >= #char "a" && (.*)cast(*u8)it <= #char "z" {
+            (.*)cast(*u8)it -= 32;
         }
     }
 }
 
-to_upper :: (str: string, $$null_terminate := false) -> string #must {
+to_upper :: (str: string, $$null_terminate := false) -> string {
     result := copy_string(str, null_terminate);
     to_upper(*result);
     return result;
@@ -1833,7 +1833,7 @@ to_capitalized :: (str_ptr: *string, preserve_caps := true) {
         to_lower(*raw_slice(str, 1));
 }
 
-to_capitalized :: (str: string, preserve_caps: = true, $$null_terminate := false) -> string #must {
+to_capitalized :: (str: string, preserve_caps: = true, $$null_terminate := false) -> string {
     if !str  return "";
 
     result := copy_string(str, null_terminate);
@@ -1843,7 +1843,7 @@ to_capitalized :: (str: string, preserve_caps: = true, $$null_terminate := false
 }
 
 
-snake_from_camel :: (str: string, preserve_caps := false, $$null_terminate := false) -> string #must {
+snake_from_camel :: (str: string, preserve_caps := false, $$null_terminate := false) -> string {
     if str == ""  return "";
 
     builder: String_Builder;
@@ -1874,7 +1874,7 @@ snake_from_camel :: (str: string, preserve_caps := false, $$null_terminate := fa
     return builder_to_string(*builder);
 }
 
-camel_from_snake :: (str: string, preserve_caps := false, $$null_terminate := false) -> string #must {
+camel_from_snake :: (str: string, preserve_caps := false, $$null_terminate := false) -> string {
     if str == ""  return "";
 
     builder: String_Builder;
@@ -1905,7 +1905,7 @@ is_upper :: inline (char: u8) -> bool { // Not utf
 }
 
 
-apply_backslash :: (str: string, $$null_terminate := false) -> string #must, well_formed: bool {
+apply_backslash :: (str: string, $$null_terminate := false) -> string, well_formed: bool {
     if str == ""  return "", true;
 
     builder: String_Builder;
@@ -1992,7 +1992,7 @@ apply_backslash :: (str: string, $$null_terminate := false) -> string #must, wel
 }
 
 
-escape :: (str: string, $$null_terminate := false) -> string #must {
+escape :: (str: string, $$null_terminate := false) -> string {
     if str == ""  return "";
 
     builder: String_Builder;
@@ -2077,7 +2077,7 @@ hex_char_value :: inline (c: u8) -> u8 {
 maybe_ensure_null_terminate :: (builder: *String_Builder, $$null_terminate: bool) #expand {
     if null_terminate {
         buffer := get_current_buffer(builder);
-        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
+        if buffer.count == 0 || (.*)(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(builder, #char "\0");
     }
 }

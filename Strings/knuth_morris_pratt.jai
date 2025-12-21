@@ -21,7 +21,7 @@ knuth_morris_pratt_first_index :: (haystack: string, needle: string, start_index
     needle_end := needle.count - 1;
     end := cast(u64)haystack.data + cast(u64)haystack.count - 1;
     for i: cast(u64)haystack.data + cast(u64)start_index .. end {
-        while j >= 0 && !character_compare.compare(<<cast(*u8)i, needle[j])
+        while j >= 0 && !character_compare.compare((.*)cast(*u8)i, needle[j])
             j = needle_table[j];
         if j == needle_end  return cast(s64)((i - cast(u64)j) - cast(u64)haystack.data), true;
         j += 1;
