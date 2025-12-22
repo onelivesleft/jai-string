@@ -172,7 +172,7 @@ return result == 0;
 // @Note `needle` is guaranteed to be at least 2 characters long, as the call site is internal to the module and will use the u8 first_index when it's 1 character.
 // This won't work with multibyte chars! This is hugely inefficient!
 reverse_index_proc :: (index_proc: Index_Proc, haystack: string, needle: string, boundary_index: int) -> from_index: int, to_index: int, found: bool {
-    for < haystack_index: haystack.count - 1 .. 0 {
+    for < haystack_index: 0 .. haystack.count - 1 {
         s := raw_slice(haystack, haystack_index);
         from_index, to_index, found := index_proc(s, needle, 0, false);
         if found && haystack_index + to_index <= boundary_index
@@ -1058,7 +1058,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 15, end - 1)
-                        if <<cast(*u8)it == needle
+                        if (.*)cast(*u8)it == needle
                             total += 1;
 
                     return total;
@@ -1100,7 +1100,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 31, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1158,7 +1158,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 15, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1209,7 +1209,7 @@ count :: (haystack: string, needle: u8, user_compare := default_character_compar
                     }
 
                     for data .. min(data + 31, end - 1)
-                        if character_compare.compare(<<cast(*u8)it, needle)
+                        if character_compare.compare((.*)cast(*u8)it, needle)
                             total += 1;
 
                     return total;
@@ -1702,8 +1702,8 @@ to_lower :: (str_ptr: *string) {
     }
 
     for data .. end {
-        if <<cast(*u8)it >= #char "A" && <<cast(*u8)it <= #char "Z" {
-            <<cast(*u8)it += 32;
+        if (.*)cast(*u8)it >= #char "A" && (.*)cast(*u8)it <= #char "Z" {
+            (.*)cast(*u8)it += 32;
         }
     }
 }
@@ -1811,8 +1811,8 @@ to_upper :: (str_ptr: *string) {
     }
 
     for data .. end {
-        if <<cast(*u8)it >= #char "a" && <<cast(*u8)it <= #char "z" {
-            <<cast(*u8)it -= 32;
+        if (.*)cast(*u8)it >= #char "a" && (.*)cast(*u8)it <= #char "z" {
+            (.*)cast(*u8)it -= 32;
         }
     }
 }
@@ -2077,7 +2077,7 @@ hex_char_value :: inline (c: u8) -> u8 {
 maybe_ensure_null_terminate :: (builder: *String_Builder, $$null_terminate: bool) #expand {
     if null_terminate {
         buffer := get_current_buffer(builder);
-        if buffer.count == 0 || <<(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
+        if buffer.count == 0 || (.*)(get_buffer_data(buffer) + buffer.count - 1) != #char "\0"
             append(builder, #char "\0");
     }
 }
